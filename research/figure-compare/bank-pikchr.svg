@@ -1,0 +1,39 @@
+<svg xmlns='http://www.w3.org/2000/svg' style='font-size:initial;' class="pikchr" viewBox="0 0 1028.36 253.08" data-pikchr-date="20260403102956">
+<text x="88.488" y="19.8" text-anchor="middle" fill="rgb(233,230,223)" font-size="125%" dominant-baseline="central">Before the loan</text>
+<path d="M88.488,63L434.088,63"  style="fill:none;stroke-width:2.16;stroke:rgb(233,230,223);" />
+<path d="M261.288,63L261.288,221.4"  style="fill:none;stroke-width:2.16;stroke:rgb(233,230,223);" />
+<text x="174.888" y="88.92" text-anchor="middle" fill="rgb(138,138,132)" font-size="80%" dominant-baseline="central">owns / is owed</text>
+<text x="347.688" y="88.92" text-anchor="middle" fill="rgb(138,138,132)" font-size="80%" dominant-baseline="central">owes</text>
+<text x="131.688" y="135" text-anchor="middle" fill="rgb(233,230,223)" dominant-baseline="central">Cash</text>
+<text x="239.688" y="135" text-anchor="end" fill="rgb(233,230,223)" dominant-baseline="central">$110</text>
+<text x="282.888" y="135" text-anchor="start" fill="rgb(233,230,223)" dominant-baseline="central">Deposits</text>
+<text x="426.888" y="135" text-anchor="end" fill="rgb(233,230,223)" dominant-baseline="central">$100</text>
+<text x="282.888" y="178.2" text-anchor="start" fill="rgb(233,230,223)" dominant-baseline="central">Owners</text>
+<text x="426.888" y="178.2" text-anchor="end" fill="rgb(233,230,223)" dominant-baseline="central">$10</text>
+<path d="M95.688,207L246.888,207"  style="fill:none;stroke-width:2.16;stroke:rgb(233,230,223);" />
+<path d="M275.688,207L426.888,207"  style="fill:none;stroke-width:2.16;stroke:rgb(233,230,223);" />
+<text x="239.688" y="235.8" text-anchor="end" fill="rgb(138,138,132)" dominant-baseline="central">$110</text>
+<text x="426.888" y="235.8" text-anchor="end" fill="rgb(138,138,132)" dominant-baseline="central">$110</text>
+<text x="661.133" y="19.8" text-anchor="middle" fill="rgb(233,230,223)" font-size="125%" dominant-baseline="central">After the loan</text>
+<path d="M661.133,63L1006.73,63"  style="fill:none;stroke-width:2.16;stroke:rgb(233,230,223);" />
+<path d="M833.933,63L833.933,221.4"  style="fill:none;stroke-width:2.16;stroke:rgb(233,230,223);" />
+<text x="747.533" y="88.92" text-anchor="middle" fill="rgb(138,138,132)" font-size="80%" dominant-baseline="central">owns / is owed</text>
+<text x="920.333" y="88.92" text-anchor="middle" fill="rgb(138,138,132)" font-size="80%" dominant-baseline="central">owes</text>
+<text x="704.333" y="135" text-anchor="middle" fill="rgb(233,230,223)" dominant-baseline="central">Cash</text>
+<text x="812.333" y="135" text-anchor="end" fill="rgb(233,230,223)" dominant-baseline="central">$110</text>
+<text x="704.333" y="178.2" text-anchor="middle" fill="rgb(155,58,74)" dominant-baseline="central">Loan</text>
+<text x="812.333" y="178.2" text-anchor="end" fill="rgb(155,58,74)" dominant-baseline="central">$80</text>
+<text x="855.533" y="135" text-anchor="start" fill="rgb(155,58,74)" dominant-baseline="central">Deposits</text>
+<text x="999.533" y="135" text-anchor="end" fill="rgb(155,58,74)" dominant-baseline="central">$180</text>
+<text x="855.533" y="178.2" text-anchor="start" fill="rgb(233,230,223)" dominant-baseline="central">Owners</text>
+<text x="999.533" y="178.2" text-anchor="end" fill="rgb(233,230,223)" dominant-baseline="central">$10</text>
+<path d="M668.333,207L819.533,207"  style="fill:none;stroke-width:2.16;stroke:rgb(233,230,223);" />
+<path d="M848.333,207L999.533,207"  style="fill:none;stroke-width:2.16;stroke:rgb(233,230,223);" />
+<text x="812.333" y="235.8" text-anchor="end" fill="rgb(138,138,132)" dominant-baseline="central">$190</text>
+<text x="999.533" y="235.8" text-anchor="end" fill="rgb(138,138,132)" dominant-baseline="central">$190</text>
+<polygon points="568.757,205.74 557.237,210.06 557.237,201.42" style="fill:rgb(155,58,74)"/>
+<path d="M467.957,205.74L562.997,205.74"  style="fill:none;stroke-width:2.16;stroke:rgb(155,58,74);" />
+<text x="518.357" y="217.44" text-anchor="middle" fill="rgb(155,58,74)" dominant-baseline="central">+$80</text>
+<text x="518.357" y="196.056" text-anchor="middle" fill="rgb(155,58,74)" font-size="80%" dominant-baseline="central">both sides</text>
+</svg>
+

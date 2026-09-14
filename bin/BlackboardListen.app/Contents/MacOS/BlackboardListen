@@ -1,0 +1,5 @@
+#!/bin/sh
+# Launched via `open -a` so that macOS treats the bundle (not the terminal) as responsible for mic + speech permissions.
+LOCALE=${1:-en-US}; OUT=${2:-/tmp/blackboard-listen.ndjson}
+DIR=$(cd "$(dirname "$0")" && pwd)
+"$DIR/stt-helper" "$LOCALE" > "$OUT" 2>&1

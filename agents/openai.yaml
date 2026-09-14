@@ -1,0 +1,7 @@
+interface:
+  display_name: "Blackboard"
+  short_description: "Lessons, quizzes and explanations on a black board"
+  default_prompt: "Use $blackboard to learn a topic on the board, e.g. learn how neural networks work"
+
+policy:
+  allow_implicit_invocation: false

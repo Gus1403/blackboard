@@ -1,0 +1,24 @@
+direction: right
+vars: {
+  d2-config: {
+    theme-id: 200
+    theme-overrides: {
+      N7: "#0c0c0c"
+      B1: "#9b3a4a"
+    }
+  }
+}
+before: "Before the loan" {
+  shape: sql_table
+  Cash: \$110
+  Deposits: \$100
+  Owners: \$10
+}
+after: "After the loan" {
+  shape: sql_table
+  Cash: \$110
+  Loan: \$80
+  Deposits: \$180
+  Owners: \$10
+}
+before -> after: "+\$80 both sides"

@@ -1,0 +1,870 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blackboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Patrick+Hand&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="/lib/rough.js"></script>
+<script src="/lib/fig.js"></script>
+<style>
+:root{--bg:#0c0c0c;--chalk:#e9e6df;--dim:#8a8a84;--acc:#9b3a4a;--acc2:#9b3a4a;--rule:#262626;--ok:#4ea672;--no:#c2564f;--display:'Playfair Display',Georgia,serif;--body:'Crimson Pro',Georgia,serif}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--chalk);font-family:var(--body);font-size:20px;line-height:1.6;-webkit-font-smoothing:antialiased}
+main{max-width:860px;margin:0 auto;padding:36px 32px 140px}
+.reading-progress{position:fixed;inset:0 0 auto;height:4px;z-index:1000;background:var(--rule);pointer-events:none}
+.reading-progress[hidden]{display:none}
+.reading-progress::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 23px,var(--bg) 23px 25px)}
+.reading-progress span{position:relative;display:block;width:0;height:100%;background:var(--acc);box-shadow:0 0 6px var(--acc)}
+.reading-progress span::after{content:'';position:absolute;right:0;top:0;width:2px;height:100%;background:var(--chalk);box-shadow:0 0 7px var(--acc)}
+.reading-progress[aria-valuenow="0"] span::after{display:none}
+a{color:inherit}
+h1,h2,h3{font-family:var(--display);font-weight:500;line-height:1.15;margin:0;text-wrap:balance}
+h1{font-size:44px;margin:18px 0 6px}
+h2{font-size:30px;margin:52px 0 14px}
+h3{font-size:23px;margin:28px 0 8px}
+p{margin:0 0 14px;max-width:66ch}
+ul,ol{max-width:66ch}
+li{margin:4px 0}
+strong{font-weight:600}
+.top{display:flex;align-items:center;gap:14px;font-size:17px;color:var(--dim);margin-bottom:10px}
+.back{display:inline-block;width:32px;height:32px;line-height:30px;text-align:center;border:1px solid var(--rule);border-radius:50%;text-decoration:none;color:var(--dim);font-size:18px}
+.back:hover{color:var(--chalk);border-color:var(--dim)}
+.eyebrow{display:flex;gap:18px;flex-wrap:wrap}
+.eyebrow b{color:var(--acc);font-weight:500}
+.byline{margin:-2px 0 14px;color:var(--dim);font-size:15px;font-style:italic}
+.byline span{font-style:normal;letter-spacing:.06em;text-transform:uppercase;font-size:13px}
+.hero{width:100%;height:260px;object-fit:cover;border-radius:4px;filter:saturate(.7) brightness(.72);margin:14px 0 4px;display:block}
+.credit{font-size:13px;color:var(--dim);margin:0 0 18px}
+.hand{color:var(--acc);font-size:21px;font-style:italic}
+.tag{display:inline-block;font-size:16px;color:var(--acc);font-style:italic;margin-left:8px;vertical-align:middle;text-decoration:none}
+.blk{position:relative;padding:2px 0 2px 14px;margin:6px 0}
+/* display math: the scroll box is the wrapper, with vertical padding, so tall
+   glyphs (integral signs, fraction numerators) are never shaved by overflow */
+.mathrow{overflow-x:auto;overflow-y:hidden;padding:10px 2px;margin:8px 0;scrollbar-width:thin;scrollbar-color:var(--rule) transparent}
+.katex-display{margin:0;padding:0;overflow:visible;text-align:left}
+.katex-display>.katex{text-align:left}.katex{font-size:1.12em}
+.katex .boxpad{border-color:var(--acc)!important}
+/* tables: booktabs — rules only at top, under the header, and at the bottom.
+   No vertical rules, no fills; row spacing does the separating. */
+.tablewrap{overflow-x:auto;overflow-y:hidden;padding:8px 0 12px;margin:20px 0 26px 14px;scrollbar-width:thin;scrollbar-color:var(--rule) transparent}
+.tablewrap table{border-collapse:collapse;width:auto;max-width:100%;font-variant-numeric:tabular-nums;border-top:1.5px solid var(--chalk);border-bottom:1.5px solid var(--chalk)}
+.tablewrap th{font-family:var(--body);font-weight:500;font-size:15px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);text-align:left;padding:12px 28px 10px 0;border-bottom:1px solid var(--rule);white-space:nowrap}
+.tablewrap th .katex{text-transform:none;letter-spacing:normal;font-size:1.05em;color:var(--chalk)}
+/* math never breaks mid-formula: a math column that does not fit scrolls the
+   table instead. Prose cells still wrap. */
+.tablewrap .katex,.tablewrap .katex-html{white-space:nowrap}
+.tablewrap td{padding:12px 28px 12px 0;vertical-align:baseline;text-align:left;line-height:1.35}
+.tablewrap th:last-child,.tablewrap td:last-child{padding-right:0}
+.tablewrap tbody tr:first-child td{padding-top:16px}
+.tablewrap tbody tr:last-child td{padding-bottom:16px}
+.tablewrap tbody tr:hover{background:rgba(255,255,255,.045)}
+.tablewrap th[align=right],.tablewrap td[align=right]{text-align:right}
+.tablewrap th[align=center],.tablewrap td[align=center]{text-align:center}
+.tablewrap .mathrow{padding:0;margin:0;overflow:visible}
+details{margin:6px 0 6px 14px}
+summary{cursor:pointer;padding:3px 6px 3px 28px;font-size:19px;color:var(--chalk);list-style:none;position:relative;border-radius:4px}
+summary::-webkit-details-marker{display:none}
+summary:hover{background:rgba(255,255,255,.05)}
+summary::before{content:"";position:absolute;left:9px;top:13px;border:5px solid transparent;border-left:7px solid var(--dim);transition:transform .15s}
+details[open]>summary::before{transform:rotate(90deg) translate(-2px,2px)}
+details>div{padding:2px 6px 8px 28px;color:var(--dim)}
+details>div p{color:var(--dim)}
+.exp{position:relative;margin:10px 0 16px 14px;padding:14px 22px 6px 20px;border-left:2px solid var(--acc);border-radius:0 8px 8px 0;background:rgba(255,255,255,.035);color:var(--chalk);font-size:20px;cursor:pointer;transform-origin:top center;perspective:900px}
+.exp>.exp{margin-left:0;margin-top:6px}
+.exp .explabel{font-family:var(--display);font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--acc);margin:0 0 8px}
+.exp .explabel::before{content:"✎ ";opacity:.8}
+.exp p{max-width:66ch}
+.exp .mathrow{margin:8px 0 12px}
+.exp>.x{display:none}
+.fold{display:grid;grid-template-rows:1fr;transition:grid-template-rows .35s cubic-bezier(.2,.7,.2,1)}
+.fold>.in{overflow:hidden;min-height:0;transform-origin:top center;transform:rotateX(0);transition:transform .35s cubic-bezier(.2,.7,.2,1),opacity .3s}
+.fold.closed{grid-template-rows:0fr}
+.fold.closed>.in{transform:rotateX(-60deg);opacity:0}
+.exp.pending{color:var(--dim);font-style:italic}
+.exp.pending .nubi{display:inline-block;width:7px;height:16px;background:#f2eee4;border-radius:2px;transform:rotate(20deg);vertical-align:-2px;margin-left:6px;animation:blink 1s steps(2) infinite;box-shadow:0 0 6px #fff6}
+.exp.error{color:var(--acc)}
+.asked{cursor:pointer}
+.asked{text-decoration:underline dotted var(--acc);text-underline-offset:4px}
+::selection{background:rgba(155,58,74,.45)}
+.pill{position:absolute;background:var(--chalk);color:var(--bg);font-size:15px;border-radius:4px;box-shadow:0 3px 10px rgba(0,0,0,.5);z-index:5;display:none;overflow:hidden;white-space:nowrap}
+.pill span{display:inline-block;padding:4px 10px;cursor:pointer}
+.pill span+span{border-left:1px solid rgba(0,0,0,.2)}
+.pill span:hover{background:rgba(0,0,0,.08)}
+.photo{margin:18px 0 22px}
+.photo img{width:100%;height:auto;display:block;border-radius:6px;filter:saturate(.85) brightness(.9)}
+.photo figcaption{font-size:15px;color:var(--dim);margin:8px 2px 0;line-height:1.45}
+.photo figcaption .credit{display:block;font-size:12.5px;opacity:.75;margin-top:2px}
+.photo.side{float:right;width:44%;max-width:380px;margin:6px 0 16px 28px;clear:right}
+.sidepair{display:grid;grid-template-columns:minmax(0,1fr) 40%;gap:28px;align-items:start;margin:6px 0}
+.sidepair .photo.side{float:none;width:auto;max-width:none;margin:8px 0 0}
+.sidepair .blk{margin:0}
+.sidepair p{max-width:none}
+.photo.wide{clear:both}
+.photo .finding{background:#111;border:1px dashed var(--rule);border-radius:6px;padding:26px 16px;color:var(--dim);font-style:italic;text-align:center}
+h2,h3,.quiz,.deck,.figure{clear:both}
+.figure{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:22px;align-items:center;margin:18px 0 18px 14px}
+.figure.wide{grid-template-columns:1fr;gap:10px}
+.figure img{width:100%;border-radius:3px;background:#0c0c0c}
+.figure svg.fig{width:100%;height:auto;display:block}
+.figure .fail{color:var(--acc);font-size:16px;white-space:pre-wrap}
+video.video{width:100%;border-radius:3px;background:#000;margin:12px 0;display:block}
+.figure figcaption{color:var(--dim);font-size:17px}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 12px}
+.btn{font-size:17px;padding:5px 14px;border:1px solid var(--rule);border-radius:2px;background:transparent;color:var(--chalk);cursor:pointer;font-family:var(--body)}
+.btn.on{border-color:var(--acc);color:var(--acc)}
+/* verdict layer — quiz answers only. Always filled with an icon, so it never
+   reads as the lesson's highlight even when the accent is the same hue. */
+.btn:disabled{cursor:default}
+.btn:disabled:hover{border-color:var(--rule)}
+.btn.picked{border-color:var(--chalk);color:var(--chalk)}
+.btn.picked:hover{border-color:var(--chalk)}
+.btn.ok,.btn.no{border-color:transparent;color:#0c0c0c;font-weight:600}
+.btn.ok:hover,.btn.no:hover{border-color:transparent}
+.btn.ok{background:var(--ok);animation:pop .34s cubic-bezier(.2,.9,.3,1)}
+.btn.no{background:var(--no)}
+.btn.ok::before{content:"\2713  "}
+.btn.no::before{content:"\2715  "}
+.btn.key{border-color:var(--ok);color:var(--ok)}
+.btn.key:hover{border-color:var(--ok)}
+.btn.key::before{content:"\2713  "}
+@keyframes pop{0%{transform:scale(1)}42%{transform:scale(1.07)}100%{transform:scale(1)}}
+.vb{display:inline-block;margin-left:10px;width:21px;height:21px;line-height:21px;text-align:center;border-radius:50%;color:#0c0c0c;font-size:13px;font-weight:700;vertical-align:-4px}
+.btn.primary{border-color:var(--chalk)}
+.btn:hover{border-color:var(--dim)}
+.trap{border-left:2px solid var(--acc);padding:2px 14px;margin:12px 0 12px 14px}
+.quiz .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.quiz .lbl{color:var(--dim);font-size:16px;min-width:64px}
+.mcqi{margin:8px 0 22px 14px}
+.mcqi .q{margin:0 0 8px}
+.mcqi label{display:block;padding:5px 10px;border-radius:4px;cursor:pointer;border:1px solid transparent}
+.mcqi label:hover{background:rgba(255,255,255,.05)}
+.mcqi input{appearance:none;-webkit-appearance:none;margin:0 12px 0 0;width:15px;height:15px;border:1px solid var(--dim);border-radius:50%;vertical-align:-2px;background:transparent;cursor:pointer}
+.mcqi input:checked{border-color:var(--chalk);box-shadow:inset 0 0 0 4px var(--chalk)}
+.mcqi.done input:checked{box-shadow:inset 0 0 0 4px var(--chalk)}
+.mcqi.done label{cursor:default}
+.mcqi.done label.right{color:var(--chalk)}
+.mcqi.done label.right::after{content:"\2713";display:inline-block;margin-left:10px;width:21px;height:21px;line-height:21px;text-align:center;border-radius:50%;background:var(--ok);color:#0c0c0c;font-size:13px;font-weight:700;vertical-align:-4px;animation:pop .34s cubic-bezier(.2,.9,.3,1)}
+.mcqi.done label.wrong::after{content:"\2715";display:inline-block;margin-left:10px;width:21px;height:21px;line-height:21px;text-align:center;border-radius:50%;background:var(--no);color:#0c0c0c;font-size:13px;font-weight:700;vertical-align:-4px}
+.mcqi.done label.wrong{color:var(--dim)}
+.mcqi .fb{margin-top:8px;min-height:1.4em;font-size:19px}
+.mcqi .fb .ok{color:var(--ok);font-weight:600}.mcqi .fb .bad{color:var(--no);font-weight:600}
+/* ---- quiz: multiple choice list ---- */
+#spot{position:absolute;border:2px solid var(--acc);border-radius:12px;pointer-events:none;z-index:5;animation:flash .8s ease-in-out 6;box-shadow:0 0 18px color-mix(in srgb,var(--acc) 45%,transparent)}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:.08}}
+.quiz .items{counter-reset:mcq}
+.mcqi{counter-increment:mcq}
+.mcqi .q::before{content:counter(mcq) ".";color:var(--dim);margin-right:10px;font-variant-numeric:tabular-nums}
+/* ---- flashcard deck: one card at a time, flips on Validate, slides to the next ---- */
+.deck{margin:12px 0 8px 14px;max-width:700px}
+.deckbar{display:flex;justify-content:space-between;align-items:baseline;color:var(--dim);font-size:15px;margin:0 4px 10px;font-variant-numeric:tabular-nums}
+.deckbar b{color:var(--chalk);font-weight:500}
+.deckbar .avg i{display:inline-block;width:7px;height:7px;border-radius:50%;border:1px solid var(--rule);margin-left:4px;vertical-align:1px}
+.deckbar .avg i.on{background:var(--ok);border-color:var(--ok)}
+.stage{perspective:1600px;position:relative}
+.fc{display:none;position:relative;transform-style:preserve-3d;transition:transform .6s cubic-bezier(.25,.8,.25,1),opacity .22s ease}
+.fc.cur{display:block}
+.fc.flip{transform:rotateY(180deg)}
+.fc.out{transform:translateX(-56px) rotate(-1.5deg);opacity:0}
+.fc.in{animation:cardin .38s cubic-bezier(.2,.8,.2,1)}
+@keyframes cardin{from{transform:translateX(56px) rotate(1.5deg);opacity:0}to{transform:none;opacity:1}}
+.fc.busy{animation:breathe 1.4s ease-in-out infinite}
+@keyframes breathe{0%,100%{filter:brightness(1)}50%{filter:brightness(1.18)}}
+/* front sits in flow and sets the height; back is laid over it. backface-visibility
+   alone is not reliable in every WebKit, so the faces also swap visibility at the
+   midpoint of the turn (the .3s delay is half the .6s flip). */
+.face{backface-visibility:hidden;-webkit-backface-visibility:hidden;border:1px solid var(--rule);border-radius:12px;background:#121212;padding:28px 30px 24px;box-sizing:border-box;min-height:280px;display:flex;flex-direction:column;box-shadow:0 12px 40px -18px #000;transition:visibility 0s linear .3s}
+.face.front{position:relative}
+.face.back{position:absolute;inset:0;width:100%;height:100%;transform:rotateY(180deg);overflow:auto}
+.fc.flip .face.front{visibility:hidden}
+.fc:not(.flip) .face.back{visibility:hidden}
+/* once the turn has finished, drop the 3D transforms: text in a rotated layer
+   loses subpixel antialiasing in WebKit and reads lighter than the front */
+.fc.flip.settled,.fc.flip.settled .face.back{transform:none}
+.fc.snap,.fc.snap .face{transition:none!important}
+.face.back{text-align:left}
+.face.back .key,.verdict p{color:var(--chalk)}
+.verdict .said,.verdict .missing,.verdict .peek{color:var(--dim)}
+.face .q{font-size:24px;line-height:1.35;margin:0;flex:1;display:flex;align-items:center}
+.face .q .katex{font-size:1.05em}
+.ansrow{display:flex;gap:10px;align-items:flex-end;margin-top:22px;border-top:1px solid var(--rule);padding-top:16px}
+.ansrow textarea.ans{flex:1;min-height:44px;box-sizing:border-box;background:transparent;color:var(--chalk);border:0;border-bottom:1px solid var(--rule);padding:6px 2px;font-family:var(--body);font-size:19px;line-height:1.4;resize:none;overflow:hidden}
+.ansrow textarea.ans:focus{outline:none;border-bottom-color:var(--chalk)}
+.ansrow textarea.ans::placeholder{color:var(--dim)}
+.btn.mic{white-space:nowrap}.btn.mic::before{content:"\25CF  ";color:var(--no)}
+.btn.mic.rec{border-color:var(--no);color:var(--no)}.btn.mic.rec::before{animation:blink 1s steps(2) infinite}
+.face .lbl{color:var(--dim);font-size:13px;letter-spacing:.09em;text-transform:uppercase;margin:0 0 8px}
+.face .key{font-size:20px;line-height:1.45}
+.face .key ul{margin:0;padding-left:20px}
+.verdict{margin-top:18px;border-top:1px solid var(--rule);padding-top:14px}
+.verdict .said{color:var(--dim);font-style:italic;margin:0 0 8px}
+.verdict .grade{display:flex;align-items:center;gap:12px;margin:0 0 6px}
+.verdict .grade b{font-weight:600}
+.verdict .grade.low b{color:var(--no)}
+.pips{display:inline-flex;gap:5px}
+.pips i{width:9px;height:9px;border-radius:50%;border:1px solid var(--rule);display:block}
+.pips i.on{background:var(--ok);border-color:var(--ok)}
+.grade.low .pips i.on{background:var(--no);border-color:var(--no)}
+.verdict p{margin:0 0 6px}
+.verdict .missing{color:var(--dim)}
+.verdict .peek{color:var(--dim);font-style:italic}
+.deckctl{display:flex;align-items:center;gap:10px;margin:14px 4px 0}
+.deckctl .sp{flex:1}
+.deckctl .nav{min-width:44px;text-align:center;font-size:18px;line-height:1}
+.deckctl .skip{color:var(--dim);border-color:transparent}
+.deckctl .skip:hover{border-color:var(--rule)}
+.deckctl .hint{color:var(--dim);font-size:14px}
+.fc.summary .face{align-items:center;justify-content:center;text-align:center}
+.fc.summary h3{margin:0 0 6px}
+.fc.summary p{color:var(--dim);margin:0 0 18px}
+.fc.summary .row{display:flex;gap:10px;justify-content:center}
+/* legacy ::: score blocks outside a deck */
+.score{margin:2px 0 26px 14px}
+.score .grade{display:flex;align-items:center;gap:12px;margin:0 0 6px}
+/* ---- more practice: mode tiles, topic chips, one action ---- */
+.quiz .more{margin:30px 0 0 14px;padding-top:22px;border-top:1px solid var(--rule)}
+.quiz .morelbl{color:var(--dim);font-size:13px;letter-spacing:.09em;text-transform:uppercase;margin:0 0 14px}
+.tiles{display:flex;gap:12px;margin:0 0 16px;max-width:700px}
+.tile{flex:1;text-align:left;border:1px solid var(--rule);border-radius:10px;padding:14px 16px 13px;background:transparent;color:var(--chalk);cursor:pointer;font-family:var(--body);transition:border-color .15s}
+.tile:hover{border-color:var(--dim)}
+.tile b{display:block;font-size:19px;font-weight:500}
+.tile span{display:block;color:var(--dim);font-size:15px;margin-top:3px}
+.tile.on{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:700px}
+.chips .lbl{color:var(--dim);font-size:15px;margin-right:2px}
+.chips .btn{font-size:15px;padding:4px 10px}
+.go{display:flex;align-items:center;gap:12px;margin-top:14px;max-width:700px}
+.go .sp{flex:1}
+.quiz.busy .gen{opacity:.6;pointer-events:none}
+.genbox{max-width:700px}
+/* loading: same shimmer idiom as the lesson skeleton, so waiting always looks the same */
+.sk span{display:block;height:13px;border-radius:3px;margin:13px 0;background:linear-gradient(90deg,#181818 0%,#2b2b28 45%,#181818 90%);background-size:220% 100%;animation:shimmer 1.8s linear infinite}
+.sk span:nth-child(1){width:70%}.sk span:nth-child(2){width:92%;animation-delay:.15s}.sk span:nth-child(3){width:54%;animation-delay:.3s}
+.skcard{border:1px solid var(--rule);border-radius:12px;padding:28px 30px;min-height:120px;margin-top:14px}
+.busylbl{color:var(--dim);font-style:italic;font-size:16px;margin:10px 0 0}
+.busylbl::after{content:'';display:inline-block;width:1.4em;text-align:left;animation:ellipsis 1.6s steps(1) infinite}
+@media (prefers-reduced-motion:reduce){.fc,.fc.in,.fc.busy{transition:none!important;animation:none!important}}
+.answer{color:var(--dim);font-style:italic}
+.video{aspect-ratio:16/9;width:100%;border:0;border-radius:2px;margin:12px 0}
+.src{font-size:17px;color:var(--dim)}.src b{color:var(--chalk);font-weight:500}
+hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+.check{border-left:1px solid var(--rule);padding:4px 18px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1a1a1a;border:1px solid var(--rule);color:var(--chalk);padding:12px 16px;border-radius:6px;font-size:16px;max-width:90vw;display:none;z-index:8}
+.toast code{font-family:ui-monospace,Menlo,monospace;font-size:14px;color:var(--dim)}
+.toast .btn{margin-left:10px;font-size:14px;padding:3px 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:22px;margin-top:24px}
+.hubbar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:6px 0 10px}
+.hubq{flex:1;min-width:220px;background:#101010;border:1px solid var(--rule);border-radius:6px;color:var(--chalk);font:inherit;font-size:18px;padding:9px 14px;outline:none}
+.hubq:focus{border-color:var(--dim)}
+.hubbar .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0}
+.hubbar .chip{background:none;border:1px solid var(--rule);border-radius:999px;color:var(--dim);font:inherit;font-size:15px;padding:4px 12px;cursor:pointer}
+.hubbar .chip.on{border-color:var(--acc);color:var(--acc)}
+.hubsec{margin-top:34px}
+.hubsec h2{font-size:26px;margin:0 0 12px}
+.hubsec h3{font-size:21px;margin:22px 0 10px}
+.hubsec h3 a{color:inherit;text-decoration:none}
+.hubsec h3 a:hover{color:var(--acc)}
+.hubsec .sub{font-family:var(--body);font-weight:400;font-size:15px;color:var(--dim);margin-left:12px;text-transform:none;letter-spacing:0}
+.row{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x proximity}
+.row .card{flex:0 0 220px;scroll-snap-align:start}
+.card.mini .strip{height:78px}
+.card.mini .t{font-size:17px}
+.card.mini .m{font-size:13px}
+.card[hidden],.course[hidden],.hubsec[hidden]{display:none}
+.card{display:block;text-decoration:none;color:inherit;border:1px solid var(--rule);border-radius:3px;overflow:hidden;background:#101010}
+.card:hover{border-color:var(--dim)}
+.card .strip{height:120px;background:#161616;object-fit:cover;width:100%;display:block;filter:saturate(.7) brightness(.7)}
+.card .body{padding:12px 14px 14px}
+.card .t{font-family:var(--display);font-size:20px;line-height:1.2;margin:0 0 6px}
+.card .m{font-size:15px;color:var(--dim);display:flex;justify-content:space-between;align-items:center}
+.card .dots{display:flex;gap:4px}
+.card .dot{width:8px;height:8px;border-radius:50%;background:var(--rule)}
+.card .dot.p{background:var(--acc)}
+.empty{color:var(--dim);font-style:italic}
+/* chalk write-in */
+.w{display:inline-block;animation:settle .45s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i)*22ms)}
+@keyframes settle{from{opacity:0;filter:blur(3px);transform:translateY(2px)}60%{opacity:.85;filter:blur(.6px)}to{opacity:1;filter:blur(0)}}
+h1.new,h2.new,h3.new{--wipe:linear-gradient(90deg,#000 40%,transparent 60%);mask-image:var(--wipe);-webkit-mask-image:var(--wipe);mask-size:250% 100%;-webkit-mask-size:250% 100%;animation:wipe var(--d,900ms) cubic-bezier(.3,0,.2,1) forwards}
+@keyframes wipe{from{mask-position:100% 0;-webkit-mask-position:100% 0}to{mask-position:0 0;-webkit-mask-position:0 0}}
+.mathrow.new{clip-path:inset(0 100% 0 0);animation:sweep var(--d,1200ms) linear forwards}
+@keyframes sweep{to{clip-path:inset(0 0 0 0)}}
+.blk.new{animation:rise .5s ease-out both}
+@keyframes rise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+#writing{margin:28px 0 80px}
+#writing .sk span{display:block;height:13px;border-radius:3px;margin:13px 0;background:linear-gradient(90deg,#181818 0%,#2b2b28 45%,#181818 90%);background-size:220% 100%;animation:shimmer 1.8s linear infinite}
+#writing .sk span:nth-child(1){width:88%}#writing .sk span:nth-child(2){width:96%;animation-delay:.15s}#writing .sk span:nth-child(3){width:62%;animation-delay:.3s}
+#writing .wl{color:var(--dim);font-style:italic;font-size:16px;margin-top:18px}
+#writing .wl::after{content:'';display:inline-block;width:1.4em;text-align:left;animation:ellipsis 1.6s steps(1) infinite}
+@keyframes shimmer{from{background-position:200% 0}to{background-position:-20% 0}}
+@keyframes ellipsis{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+#nub{position:fixed;width:9px;height:20px;border-radius:2px;background:#f2eee4;box-shadow:0 0 6px #fff6;transform:rotate(20deg);pointer-events:none;transition:left .12s,top .12s,opacity .4s;z-index:9;opacity:0}
+#nub.on{opacity:1}
+#nub.idle{animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.2}}
+@media (prefers-reduced-motion:reduce){.w,h1.new,h2.new,h3.new,.mathrow.new,.blk.new,.btn.ok,.mcqi.done label.right::after{animation:none!important;mask:none!important;-webkit-mask:none!important;clip-path:none!important;opacity:1!important;filter:none!important;transform:none!important}#nub{display:none}}
+</style>
+</head>
+<body>
+<div class="reading-progress" id="reading-progress" role="progressbar" aria-label="Lesson scroll progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><span></span></div>
+<svg width="0" height="0" style="position:absolute"><filter id="chalk"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.2"/></filter></svg>
+<main id="main"></main>
+<span class="pill" id="pill"><span data-k="line">Explain</span><span data-k="deep">In depth</span></span>
+<div class="toast" id="toast"></div>
+<div id="nub"></div>
+<script>
+const MODE="__MODE__", LESSON_ARG="__LESSON__", WS="__WS__";
+const WSB=WS?"/w/"+WS:"", WSQ=WS?"&ws="+WS:"";  // pages under /w/<slug>/ stay pinned to that workspace
+const $=s=>document.querySelector(s);
+const main=$('#main'), pill=$('#pill'), toast=$('#toast'), nub=$('#nub');
+let lessonId=LESSON_ARG, offset=0, hash='', blocks=0, srcLines=[], streaming=false, expCount=0, nubTimer=null, state={};
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Reading position only; never records lesson completion or mastery.
+const readingProgress=$('#reading-progress');
+let progressFrame=0;
+function updateReadingProgress(){
+  progressFrame=0;
+  readingProgress.hidden=MODE==='grid'||!main.querySelector('#title');
+  if(readingProgress.hidden)return;
+  const extent=document.documentElement.scrollHeight-window.innerHeight;
+  const ratio=extent>0?Math.max(0,Math.min(1,window.scrollY/extent)):1;
+  readingProgress.firstElementChild.style.width=`${ratio*100}%`;
+  readingProgress.setAttribute('aria-valuenow',String(Math.round(ratio*100)));
+}
+function scheduleReadingProgress(){
+  if(!progressFrame)progressFrame=requestAnimationFrame(updateReadingProgress);
+}
+window.addEventListener('scroll',scheduleReadingProgress,{passive:true});
+window.addEventListener('resize',scheduleReadingProgress);
+new ResizeObserver(scheduleReadingProgress).observe(main);
+scheduleReadingProgress();
+
+// ---------- markdown -> html ----------
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function mathify(src){
+  const slots=[];
+  src=src.replace(/\$\$([\s\S]+?)\$\$/g,(m,t)=>{slots.push('<div class="mathrow">'+katex.renderToString(t,{displayMode:true,throwOnError:false})+'</div>');return '\n@@M'+(slots.length-1)+'@@\n';});
+  // inline math: $…$ on one line, no space just inside either $. "$100 and $80" is money: its would-be body "100 and " ends in a space.
+  // A digit may open math ($4$, $0.5$): the closing $ must follow on the same line, which money never has.
+  src=src.replace(/(^|[^\\$])\$(?!\s)([^\n$]+?)(?<!\s)\$(?!\d)/g,(m,pre,t)=>{slots.push(katex.renderToString(t,{displayMode:false,throwOnError:false}));return pre+'@@M'+(slots.length-1)+'@@';});
+  src=src.replace(/\\\$/g,'$');
+  return {src,slots};
+}
+function unslot(html,slots){return html.replace(/<p>\s*@@M(\d+)@@\s*<\/p>/g,(m,i)=>slots[+i]).replace(/@@M(\d+)@@/g,(m,i)=>slots[+i]);}
+function md(src){
+  src=src.replace(/==([^=\n]+)==/g,'<span class="asked">$1</span>');
+  const {src:s2,slots}=mathify(src);
+  const html=unslot(marked.parse(s2,{mangle:false,headerIds:false}),slots);
+  return html.replace(/<table>/g,'<div class="tablewrap"><table>').replace(/<\/table>/g,'</table></div>');
+}
+function mdInline(src){return md(src).replace(/^<p>|<\/p>\s*$/g,'');}
+
+// split lesson body into top-level segments with source line numbers
+function segments(text,baseLine){
+  const lines=text.split('\n'); const out=[]; let i=0;
+  while(i<lines.length){
+    if(!lines[i].trim()){i++;continue}
+    const start=i;
+    if(/^::: /.test(lines[i])){let depth=1;i++;while(i<lines.length&&depth>0){if(/^::: /.test(lines[i]))depth++;else if(/^:::\s*$/.test(lines[i]))depth--;i++;}}
+    else if(/^\$\$/.test(lines[i].trim())){ if(!/\$\$.*\$\$/.test(lines[i])){i++;while(i<lines.length&&!/\$\$/.test(lines[i]))i++;} i++; if(i<lines.length&&/^units:/.test(lines[i]))i++; }
+    else if(/^```/.test(lines[i])){i++;while(i<lines.length&&!/^```/.test(lines[i]))i++;i++;}
+    else { i++; while(i<lines.length&&lines[i].trim()&&!/^(#{1,6} |::: |\$\$|```)/.test(lines[i]))i++; }
+    out.push({line:baseLine+start+1,raw:lines.slice(start,i).join('\n')});
+  }
+  return out;
+}
+
+function container(raw){
+  const m=raw.match(/^::: (\w+)\s*(.*)$/m); const kind=m[1], arg=(m[2]||'').trim();
+  const inner=raw.split('\n').slice(1,-1).join('\n');
+  switch(kind){
+    case 'checkin':{
+      const items=inner.split('\n').filter(l=>l.trim().startsWith('-')).map(l=>l.replace(/^\s*-\s*/,'').split('||'));
+      return '<div class="check">'+items.map(([q,a])=>`<details><summary>${mdInline(q.trim())}</summary><div>${md((a||'').trim())}</div></details>`).join('')+'</div>';
+    }
+    case 'numeric': return `<details><summary>numeric detail</summary><div>${md(inner)}</div></details>`;
+    case 'predict':{
+      const ls=inner.split('\n').filter(l=>l.trim()); const reveal=ls.find(l=>/^reveal:/.test(l));
+      const raw=ls.filter(l=>!/^reveal:/.test(l)).map(l=>l.replace(/^\s*-\s*/,''));
+      // a leading * marks the correct option; without one the block just commits and reveals
+      let key=-1; const opts=raw.map((o,i)=>{if(/^\*\s*/.test(o)){key=i;return o.replace(/^\*\s*/,'')}return o;});
+      return `<div class="predict" data-key="${key}"><div class="btns">${opts.map((o,i)=>`<button class="btn" data-choice="${i}">${mdInline(o)}</button>`).join('')}</div><details class="reveal"><summary>reveal</summary><div>${md((reveal||'').replace(/^reveal:\s*/,''))}</div></details></div>`;
+    }
+    case 'exp':{
+      const f=arg.split(/\s+/); const id=f[0]; const deep=f.includes('deep'); const folded=f.includes('folded'); expCount++;
+      // first line is "**label** — body"; the label becomes a chip, the body renders like any lesson block
+      let label='', body=inner; const lm=inner.match(/^\*\*([^*]+)\*\*\s*(?:—|-|:)\s*/); if(lm){label=lm[1].trim(); body=inner.slice(lm[0].length);}
+      const parts=segments(body,0).map(s=>/^::: /.test(s.raw)?container(s.raw):md(s.raw)).join('');
+      return `<div class="fold${folded?' closed':''}" data-for="${id}" data-label="${esc(label).toLowerCase()}"><div class="in"><div class="exp${deep?' deep':''}" data-id="${id}">${label?`<div class="explabel">${esc(label)}</div>`:''}${parts}</div></div></div>`;
+    }
+    case 'photo':{
+      // ::: photo [side|wide]   lines: query: <what to fetch> | src: <assets/… or https://…> | credit: … | caption: …
+      const side=/\bside\b/.test(arg); const kv={}; const rest=[];
+      inner.split('\n').forEach(l=>{ const m=l.match(/^(query|src|credit|caption|alt|missing):\s*(.*)$/); if(m)kv[m[1]]=m[2].trim(); else if(l.trim())rest.push(l); });
+      if(kv.missing&&!kv.src) return '';  // no licensed photo exists: better nothing than a wrong one
+      const cap=kv.caption||rest.join(' ');
+      const src=kv.src?(kv.src.startsWith('http')?kv.src:WSB+'/assets/'+kv.src.replace(/^assets\//,'')):'';
+      const body=src?`<img src="${src}" alt="${esc(kv.alt||kv.query||'')}" loading="lazy">`:`<div class="finding">finding a photo of ${esc(kv.query||'…')}<span class="nubi"></span></div>`;
+      return `<figure class="photo ${side?'side':'wide'}">${body}<figcaption>${cap?mdInline(cap):''}${kv.credit?`<span class="credit">${esc(kv.credit)}</span>`:''}</figcaption></figure>`;
+    }
+    case 'figure':{
+      const [path,flag]=arg.split(/\s+/); const src=path.startsWith('http')||path.startsWith('/')?path:WSB+'/assets/'+path.replace(/^assets\//,'');
+      const wide=flag==='wide'||/\.svg$/i.test(path);
+      const body=/\.svg$/i.test(path)?`<div class="svgslot" data-src="${src}"></div>`:`<img src="${src}" alt="">`;
+      return `<figure class="figure${wide?' wide':''}">${body}<figcaption>${md(inner)}</figcaption></figure>`;
+    }
+    case 'fig':{
+      let spec; try{spec=JSON.parse(inner.trim()||'{}')}catch(e){return `<figure class="figure wide"><p class="fail">fig ${esc(arg)}: spec is not valid JSON (${esc(e.message)})</p></figure>`;}
+      try{ const r=window.Fig.render(arg,spec); const cap=spec.caption?`<figcaption>${md(spec.caption)}</figcaption>`:''; const warn=r.warnings.length?`<p class="fail">${esc(r.warnings.join(' · '))}</p>`:''; return `<figure class="figure wide">${r.svg}${cap}${warn}</figure>`; }
+      catch(e){return `<figure class="figure wide"><p class="fail">fig ${esc(arg)}: ${esc(e.message)}</p></figure>`;}
+    }
+    case 'video':{
+      if(/\.(mp4|webm|mov)$/i.test(arg)){ const src=arg.startsWith('http')||arg.startsWith('/')?arg:WSB+'/assets/'+arg.replace(/^assets\//,''); return `<div><video class="video" src="${src}" controls playsinline preload="metadata"></video><p class="credit">${mdInline(inner)}</p></div>`; }
+      return `<div><iframe class="video" src="${arg}" allowfullscreen title="video"></iframe><p class="credit">${mdInline(inner)}</p></div>`;}
+    case 'quiz':{
+      const t=(inner.match(/topics:\s*(.+)/)||[])[1]||''; const topics=t.split(',').map(s=>s.trim()).filter(Boolean);
+      // Built-in items render in order (multiple choice as a numbered list). Every
+      // ::: card in the quiz, wherever it sits, joins one deck shown where the first
+      // card was; ::: score blocks attach to their card instead of rendering alone.
+      const segs=segments(inner.replace(/topics:.*\n?/,''),0);
+      const cards=[], scores={}, parts=[]; let deckAt=-1;
+      segs.forEach(sg=>{
+        const m=sg.raw.match(/^::: (\w+)\s*(.*)$/m);
+        if(m&&m[1]==='card'){ if(deckAt<0){deckAt=parts.length;parts.push('');} cards.push(parseCard(sg.raw)); return; }
+        if(m&&m[1]==='score'){ const [it,nn]=(m[2]||'').trim().split(/\s+/); if(it&&!/^\d+$/.test(it)){scores[it]={n:+nn||0,body:sg.raw.split('\n').slice(1,-1).join('\n')};return;} }
+        parts.push(/^::: /.test(sg.raw)?container(sg.raw):md(sg.raw));
+      });
+      if(deckAt>=0)parts[deckAt]=deckHtml(cards,scores);
+      const chips=[`<button class="btn topic on" data-all="1">All topics</button>`].concat(topics.map(x=>`<button class="btn topic">${esc(x)}</button>`)).join('');
+      return `<div class="quiz" data-topics="${esc(topics.join('|'))}"><div class="items">${parts.join('')}</div><div class="more"><p class="morelbl">More practice</p><div class="tiles"><button class="tile on" data-mode="cards"><b>Flashcards</b><span>Say it or type it. Graded 1 to 5, then the card turns.</span></button><button class="tile" data-mode="mcq"><b>Multiple choice</b><span>Three options, one right. Checked as you click.</span></button></div><div class="chips"><span class="lbl">Topic</span>${chips}</div><div class="go"><span class="sp"></span><button class="btn primary gen">Generate 4 →</button></div><div class="genbox"></div></div></div>`;
+    }
+    case 'mcq':{
+      const [item,key]=arg.split(/\s+/); const ls=inner.split('\n').filter(l=>l.trim());
+      const why=(ls.find(l=>/^why:/.test(l))||'').replace(/^why:\s*/,'');
+      const stem=ls.filter(l=>!/^\s*-/.test(l)&&!/^why:/.test(l)).join('\n'); const opts=ls.filter(l=>/^\s*-/.test(l)).map(l=>l.replace(/^\s*-\s*/,''));
+      const order=opts.map((o,i)=>i).sort(()=>Math.random()-.5);
+      return `<div class="mcqi" data-item="${item}" data-key="${key||''}" data-why="${esc(why)}"><p class="q">${mdInline(stem)}</p>${order.map(i=>`<label><input type="radio" name="${item}" value="${'abcd'[i]}">${mdInline(opts[i])}</label>`).join('')}<div class="fb"></div></div>`;
+    }
+    case 'score':{
+      const [it,nn]=String(arg||'').split(/\s+/); const n=+nn||+it||0;
+      return `<div class="score" data-item="${esc(/^\d+$/.test(it||'')?'':it)}" data-n="${n}"><p class="grade${n<=2?' low':''}"><b>Score ${n} / 5</b>${pips(n)}</p>${md(inner)}</div>`;
+    }
+    case 'card':{ return deckHtml([parseCard(raw)],{}); }
+    case 'recall':{ return deckHtml([{id:arg||'r',q:inner.trim(),answer:'',must:[]}],{}); }
+    case 'trap': return `<div class="trap">${md(inner)}</div>`;
+    default: return `<div class="${kind}">${md(inner)}</div>`;
+  }
+}
+
+function parseCard(raw){
+  const m=raw.match(/^::: card\s*(\S*)/m); const ls=raw.split('\n').slice(1,-1);
+  const must=ls.filter(l=>/^must:/.test(l.trim())).map(l=>l.trim().replace(/^must:\s*/,''));
+  const answer=(ls.find(l=>/^answer:/.test(l.trim()))||'').trim().replace(/^answer:\s*/,'');
+  const q=ls.filter(l=>l.trim()&&!/^(must|answer):/.test(l.trim())).join('\n').trim();
+  return {id:(m&&m[1])||('c'+Math.random().toString(36).slice(2,6)),q,answer,must};
+}
+function pips(n){return `<span class="pips">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span>`;}
+function verdictHtml(n,body){
+  // body is the ::: score block text: *"quote"*, rationale, Missing: …
+  const ls=body.split('\n').map(l=>l.trim()).filter(Boolean);
+  const said=(ls.find(l=>/^\*".*"\*$/.test(l))||'').replace(/^\*"|"\*$/g,'');
+  const missing=(ls.find(l=>/^Missing:/.test(l))||'').replace(/^Missing:\s*/,'');
+  const rest=ls.filter(l=>l!==`*"${said}"*`&&!/^Missing:/.test(l)).join(' ');
+  return `${said?`<p class="said">“${mdInline(said)}”</p>`:''}<p class="grade${n<=2?' low':''}"><b>Score ${n} / 5</b>${pips(n)}</p>${rest?`<p>${mdInline(rest)}</p>`:''}${missing?`<p class="missing">Missing: ${mdInline(missing)}</p>`:''}`;
+}
+function deckHtml(cards,scores){
+  const n=cards.length;
+  const faces=cards.map((c,i)=>{
+    const sc=scores[c.id];
+    const key=c.answer?mdInline(c.answer):(c.must.length?`<ul>${c.must.map(m=>`<li>${mdInline(m)}</li>`).join('')}</ul>`:'<em>No answer key on this card.</em>');
+    return `<div class="fc${sc?' graded':''}" data-item="${esc(c.id)}" data-i="${i}" data-n="${sc?sc.n:''}"><div class="face front"><div class="q"><div>${mdInline(c.q)}</div></div><div class="ansrow"><textarea class="ans" rows="1" placeholder="Answer here, or press Speak"${sc?' disabled':''}></textarea><button class="btn mic"${sc?' disabled':''}>Speak</button></div></div><div class="face back"><p class="lbl">Answer</p><div class="key">${key}</div><div class="verdict">${sc?verdictHtml(sc.n,sc.body):''}</div></div></div>`;
+  }).join('');
+  return `<div class="deck" data-n="${n}"><div class="deckbar"><span class="pos"><b>1</b> / ${n}</span><span class="avg"></span></div><div class="stage">${faces}<div class="fc summary"><div class="face"><h3>Deck done</h3><p class="sum"></p><div class="row"><button class="btn again">Start over</button><button class="btn primary moreq">Generate more</button></div></div></div></div><div class="deckctl"><button class="btn nav prev" title="previous (←)">←</button><span class="hint"></span><span class="sp"></span><button class="btn skip">Show answer</button><button class="btn primary val">Validate</button><button class="btn nav next" title="next (→)">→</button></div></div>`;
+}
+function renderSegment(seg){
+  let raw=seg.raw, units=null;
+  const um=raw.match(/\nunits:\s*(.+)$/); if(um){units=um[1];raw=raw.replace(/\nunits:.*$/,'');}
+  let html;
+  if(/^::: /.test(raw)) html=container(raw);
+  else if(/^⚠️/.test(raw.trim())) html=`<div class="trap">${md(raw)}</div>`;
+  else html=md(raw);
+  if(units) html+=`<details><summary>symbols &amp; units</summary><div>${md(units)}</div></details>`;
+  const el=document.createElement('section'); el.className='blk'; el.id='b'+(++blocks); el.dataset.line=seg.line; el.innerHTML=html;
+  // check-in tag: 'Heading · from lesson NNNN: Title' -> tag link
+  el.querySelectorAll('h3').forEach(h=>{h.innerHTML=h.innerHTML.replace(/\s*·\s*from lesson (\d{4}):\s*(.+)$/,(m,n,t)=>` <a class="tag" href="${WSB}/lessons/${n}">from lesson ${n}: ${t}</a>`)});
+  // course tag
+  el.querySelectorAll('p').forEach(p=>{p.innerHTML=p.innerHTML.replace(/\s*→ (Exam: [^<]+|background)\s*$/,(m,t)=>`<span class="tag">→ ${t}</span>`)});
+  return el;
+}
+
+// ---------- animation ----------
+function animate(el){
+  if(reduced) return;
+  el.classList.add('new');
+  el.querySelectorAll('h1,h2,h3').forEach(h=>{h.classList.add('new');h.style.setProperty('--d',Math.min(2000,h.textContent.length*40)+'ms');h.addEventListener('animationend',()=>{h.classList.remove('new');h.style.mask='';h.style.webkitMask=''},{once:true});});
+  el.querySelectorAll('.mathrow').forEach(k=>{k.classList.add('new');k.style.setProperty('--d',Math.min(2500,(k.getBoundingClientRect().width||400)*3)+'ms');k.addEventListener('animationend',()=>k.classList.remove('new'),{once:true});});
+  const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement.closest('.katex,code,pre,summary,button,h1,h2,h3')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+  const nodes=[];let i=0;while(walker.nextNode())nodes.push(walker.currentNode);
+  for(const n of nodes){if(!n.data.trim())continue;const frag=document.createDocumentFragment();
+    for(const part of n.data.split(/(\s+)/)){if(!part)continue;if(/^\s+$/.test(part)){frag.append(part);continue;}const s=document.createElement('span');s.className='w';s.style.setProperty('--i',i++);s.textContent=part;frag.append(s);}
+    n.replaceWith(frag);}
+  setTimeout(()=>{el.querySelectorAll('.w').forEach(s=>s.replaceWith(s.textContent));el.classList.remove('new')},Math.min(6000,i*22+700));
+}
+function inlineSvgs(){
+  // a figure file can land after the page rendered (the writer draws it last): retry a missing one every 4s for a minute
+  main.querySelectorAll('.svgslot[data-src]:not([data-done])').forEach(sl=>{sl.dataset.done=1;
+    const tries=+(sl.dataset.tries||0);
+    fetch(sl.dataset.src).then(r=>{ if(!r.ok) throw new Error(r.status); return r.text(); })
+      .then(t=>{ if(!/<svg[\s>]/.test(t)) throw new Error('not svg'); sl.outerHTML=t.replace(/<\?xml[^>]*>/,'').replace(/<svg /,'<svg class="fig" '); })
+      .catch(()=>{ if(tries<15){ sl.dataset.tries=tries+1; sl.innerHTML='<p class="fail">drawing…</p>'; setTimeout(()=>{ delete sl.dataset.done; inlineSvgs(); },4000); } else sl.innerHTML='<p class="fail">could not load '+esc(sl.dataset.src)+'</p>'; });});
+}
+function setWriting(on){
+  let sk=document.getElementById('writing');
+  if(on){ if(!sk){sk=document.createElement('div');sk.id='writing';sk.innerHTML='<div class="sk"><span></span><span></span><span></span></div><p class="wl">Writing the lesson</p>';} main.appendChild(sk); }
+  else if(sk) sk.remove();
+}
+function followIfAtBottom(el){
+  const gap=document.documentElement.scrollHeight-window.innerHeight-window.scrollY;
+  if(gap<420) el.scrollIntoView({behavior:'smooth',block:'end'});
+}
+function moveNub(el){
+  if(reduced) return;
+  const r=el.getBoundingClientRect(); nub.style.left=(Math.min(r.right,window.innerWidth-40)+6)+'px'; nub.style.top=(r.bottom-22)+'px';
+  nub.classList.add('on'); nub.classList.remove('idle'); clearTimeout(nubTimer);
+  nubTimer=setTimeout(()=>{nub.classList.add('idle'); setTimeout(()=>nub.classList.remove('on'),3000)},1500);
+}
+
+// ---------- lesson page ----------
+function frontMatter(text){
+  const m=text.match(/^---\n([\s\S]*?)\n---\n/); const fm={}; let body=text, fmLines=0;
+  if(m){m[1].split('\n').forEach(l=>{const i=l.indexOf(':');if(i>0)fm[l.slice(0,i).trim()]=l.slice(i+1).trim().replace(/^"|"$/g,'');});body=text.slice(m[0].length);fmLines=m[0].split('\n').length-1;}
+  return {fm,body,fmLines};
+}
+// One lesson, one highlight colour. The board stays chalk on black; the accent
+// is the only colour in the lesson layer. `accent:` in the front matter picks
+// it by name or hex, otherwise it cycles by lesson number so neighbouring
+// lessons never look alike. `accent2:` adds an optional second colour.
+const ACCENTS={red:'#9b3a4a',blue:'#3f6f9b',green:'#4a8b5f',amber:'#a8762f',violet:'#7a5a9b',teal:'#3d8080'};
+const ACCENT_ORDER=['red','blue','green','amber','violet','teal'];
+function resolveAccent(v,fallback){
+  if(!v) return fallback;
+  const k=String(v).trim().toLowerCase();
+  if(ACCENTS[k]) return ACCENTS[k];
+  if(/^#[0-9a-f]{3,8}$/.test(k)) return k;
+  return fallback;
+}
+function applyAccent(fm){
+  const n=parseInt(lessonId,10), i=(isNaN(n)?1:n)-1;
+  const cycled=ACCENTS[ACCENT_ORDER[((i%ACCENT_ORDER.length)+ACCENT_ORDER.length)%ACCENT_ORDER.length]];
+  const acc=resolveAccent(fm.accent,cycled);
+  const root=document.documentElement.style;
+  root.setProperty('--acc',acc);
+  root.setProperty('--acc2',resolveAccent(fm.accent2,acc));
+}
+function header(fm,meta){
+  const num=lessonId||(meta&&meta.id)||'';
+  const parts=[]; if(fm.course)parts.push(esc(fm.course)); if(num)parts.push(`Lesson <b>${num}</b>`); if(fm.exam)parts.push(`<b>→ Exam:</b> ${esc(fm.exam)}`);
+  let h=`<div class="top"><a class="back" href="${WSB}/lessons" title="all lessons">←</a><div class="eyebrow">${parts.map(p=>`<span>${p}</span>`).join('')}</div></div>`;
+  // banner first: the photo is the first thing on the page, title and byline under it
+  if(fm.photo){const src=fm.photo.startsWith('http')?fm.photo:WSB+'/assets/'+fm.photo.replace(/^assets\//,'');h+=`<img class="hero" src="${src}" alt="">`;if(fm.credit)h+=`<p class="credit">${esc(fm.credit)}</p>`;}
+  if(fm.title) h+=`<h1 id="title">${esc(fm.title)}</h1>`;
+  if(fm.model) h+=`<p class="byline">by <span>${esc(fm.model)}</span></p>`;
+  return h;
+}
+let headerDone=false, body='';
+async function loadLesson(){
+  const r=await fetch(`/api/lesson?id=${lessonId}&from=${offset}&hash=${hash}${WSQ}`).then(r=>r.json());
+  if(r.missing){main.innerHTML='<p class="empty">No lesson yet. Ask for one in the chat.</p>';return}
+  if(r.reset){main.innerHTML='';blocks=0;headerDone=false;body='';offset=0;}
+  if(!r.text&&!r.reset)return;
+  body+=r.text; offset=r.offset; if(r.hash)hash=r.hash; else hash=await md5(body);
+  // header once front matter is complete
+  if(!headerDone){const {fm,body:b,fmLines}=frontMatter(body); if(/^---\n[\s\S]*?\n---\n/.test(body)||!body.startsWith('---')){main.insertAdjacentHTML('afterbegin',header(fm,null));headerDone=true;document.title=(fm.title?fm.title+' · ':'')+'Blackboard';renderedUpto=0;bodyStart=fmLines;fmCache=fm;applyAccent(fm);} else return;}
+  const {body:b}=frontMatter(body);
+  const segs=segments(b,bodyStart);
+  const fresh=segs.slice(renderedUpto);
+  fresh.forEach((s,k)=>{ if(fmCache.title&&/^# /.test(s.raw)&&renderedUpto+k===0)return; // title already in header
+    const el=renderSegment(s); main.appendChild(el); if(r.reset&&!streaming)return; animate(el); moveNub(el);});
+  renderedUpto=segs.length;
+  wire();
+}
+let renderedUpto=0, bodyStart=0, fmCache={};
+async function md5(s){ // cheap stand-in: server sends hash on reset; between appends we recompute via subtle if available
+  try{const b=await crypto.subtle.digest('SHA-1',new TextEncoder().encode(s));return 'sha1:'+Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}catch(_){return ''}
+}
+// The server compares md5 of the first N bytes; since we cannot md5 client-side cheaply, we keep the server's hash after reset
+// and, on append, ask again with from/hash from the last full reset. To keep it simple: after each append we re-request from 0 only when the server says reset.
+
+// ---------- grid page ----------
+function card(l,w,big){
+  const base='/w/'+w.slug; const src=l.photo?(l.photo.startsWith('http')?l.photo:base+'/assets/'+l.photo.replace(/^assets\//,'')):'';
+  const dots=l.scores.slice(-6).map(s=>`<span class="dot${s>=3?' p':''}"></span>`).join('');
+  return `<a class="card${big?'':' mini'}" href="${base}/lessons/${l.id}" data-q="${esc((l.title+' '+l.course+' '+l.exam+' '+l.id).toLowerCase())}" data-ws="${w.slug}">${src?`<img class="strip" src="${src}" alt="">`:'<div class="strip"></div>'}<div class="body"><p class="t">${esc(l.title)}</p><div class="m"><span>${l.id}${big?'':' · '+esc(w.name)} · ${l.date}</span><span class="dots">${dots}</span></div></div></a>`;
+}
+function grid(st){
+  document.title='Lessons · Blackboard';
+  const wss=st.workspaces||[]; const mine=wss.find(w=>w.slug===st.slug)||wss[0];
+  const total=wss.reduce((n,w)=>n+w.count,0);
+  let h=`<div class="top"><div class="eyebrow"><span>${wss.length} folder${wss.length===1?'':'s'}</span><span>${total} lesson${total===1?'':'s'}</span></div></div><h1>Lessons</h1>`;
+  if(!total){h+='<p class="empty">Nothing yet. Ask for a lesson in the chat.</p>';main.innerHTML=h;return}
+  h+=`<div class="hubbar"><input class="hubq" type="search" placeholder="Search every lesson" autocomplete="off"><div class="chips">${wss.map(w=>`<button class="chip" data-ws="${w.slug}">${esc(w.name)}</button>`).join('')}</div></div>`;
+  const all=wss.flatMap(w=>w.lessons.map(l=>({l,w}))).sort((a,b)=>b.l.mtime-a.l.mtime);
+  h+=`<section class="hubsec" data-sec="recent"><h2>Recent</h2><div class="row">${all.slice(0,5).map(x=>card(x.l,x.w,false)).join('')}</div></section>`;
+  if(mine) h+=`<section class="hubsec" data-sec="mine" data-ws="${mine.slug}"><h2>${esc(mine.name)}<span class="sub">this folder · ${mine.count}</span></h2><div class="grid">${mine.lessons.slice().reverse().map(l=>card(l,mine,true)).join('')}</div></section>`;
+  const others=wss.filter(w=>w!==mine);
+  if(others.length) h+=`<section class="hubsec" data-sec="others"><h2>Other folders on this computer</h2>${others.map(w=>`<div class="course" data-ws="${w.slug}"><h3><a href="/w/${w.slug}/lessons">${esc(w.name)}</a><span class="sub">${w.count} lesson${w.count===1?'':'s'} · last ${w.last}</span></h3><div class="row">${w.lessons.slice().reverse().map(l=>card(l,w,false)).join('')}</div></div>`).join('')}</section>`;
+  main.innerHTML=h;
+  // search + course chips filter every card; empty sections hide themselves
+  const q=main.querySelector('.hubq'); let chip='';
+  const apply=()=>{ const t=q.value.trim().toLowerCase(); main.querySelectorAll('.card').forEach(c=>{ c.hidden=!(c.dataset.q.includes(t)&&(!chip||c.dataset.ws===chip)); }); main.querySelectorAll('.course').forEach(c=>{ c.hidden=![...c.querySelectorAll('.card')].some(x=>!x.hidden); }); main.querySelectorAll('.hubsec').forEach(sc=>{ sc.hidden=![...sc.querySelectorAll('.card')].some(x=>!x.hidden); }); };
+  q.oninput=apply; main.querySelectorAll('.chip').forEach(b=>{ b.onclick=()=>{ chip=chip===b.dataset.ws?'':b.dataset.ws; main.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.ws===chip)); apply(); }; });
+  q.focus();
+}
+
+// ---------- actions ----------
+async function ask(req){
+  req.lesson=lessonId; if(WS)req.ws=WS;
+  const r=await fetch('/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)}).then(r=>r.json()).catch(()=>({error:'bridge down'}));
+  if(r.fallback==='paste'){toast.innerHTML=`Paste in chat: <code>${esc(r.command)}</code><button class="btn" id="copy">copy</button>`;toast.style.display='block';$('#copy').onclick=()=>{navigator.clipboard.writeText(r.command);toast.style.display='none'};setTimeout(()=>toast.style.display='none',20000);}
+  else if(r.error){toast.textContent='Bridge not running. Run render.sh again.';toast.style.display='block';setTimeout(()=>toast.style.display='none',5000);}
+  return r;
+}
+let range=null;
+document.addEventListener('mouseup',e=>{if(pill.contains(e.target))return;setTimeout(()=>{const sel=window.getSelection();if(!sel||sel.isCollapsed||!sel.toString().trim()||MODE==='grid'){pill.style.display='none';return}
+  range=sel.getRangeAt(0);const r=range.getBoundingClientRect();pill.style.display='block';pill.style.left=(r.left+window.scrollX)+'px';pill.style.top=(r.top+window.scrollY-36)+'px';},0)});
+pill.addEventListener('mousedown',e=>{e.preventDefault();const k=e.target.dataset.k;if(!k||!range)return;
+  let node=range.commonAncestorContainer;node=node.nodeType===1?node:node.parentElement;
+  const exp=node.closest('.exp'), blk=node.closest('.blk');
+  const text=range.toString().trim().replace(/\s+/g,' ').slice(0,200);
+  // same words already explained under this block: open that note, do not write a second one
+  if(!exp&&blk){ const lab=text.split(/\s+/).slice(0,6).join(' ').toLowerCase(); const hit=notesAfter(blk).find(f=>f.dataset.label===lab); if(hit){ hit.classList.remove('closed'); hit.querySelector('.exp').scrollIntoView({behavior:'smooth',block:'center'}); ask({kind:'fold',id:hit.dataset.for,folded:false}); window.getSelection().removeAllRanges(); pill.style.display='none'; return; } }
+  const pending='p'+Date.now();
+  const req={kind:'explain',depth:k,text,block:blk?blk.id:'',line:blk?+blk.dataset.line:0,pending};
+  if(exp){ const wholeLine=text.length>40&&exp.textContent.trim().startsWith(text.slice(0,30)); if(k==='deep'&&wholeLine)req.grow=exp.dataset.id; else req.parent=exp.dataset.id; }
+  // placeholder unfolds immediately
+  const label=text.split(/\s+/).slice(0,6).join(' ');
+  const ph=document.createElement('div'); ph.className='fold closed'; ph.dataset.pending=pending;
+  ph.innerHTML=`<div class="in"><div class="exp pending${k==='deep'?' deep':''}"><div class="explabel">${esc(label)}</div>writing<span class="nubi"></span></div></div>`;
+  const host=exp?exp:(blk||main); if(exp)exp.appendChild(ph); else host.insertAdjacentElement('afterend',ph);
+  setTimeout(()=>ph.classList.remove('closed'),30);
+  try{ if(!exp&&blk){ const m=document.createElement('span'); m.className='asked'; range.surroundContents(m);} }catch(_){}
+  ask(req).then(r=>{ if(r&&r.error){ph.querySelector('.exp').classList.add('error');ph.querySelector('.exp').innerHTML='<div class="explabel">'+esc(label)+'</div>'+esc(r.error)} });
+  window.getSelection().removeAllRanges(); pill.style.display='none';
+});
+const foldOf=el=>el&&(el.classList.contains('fold')?el:(el.classList.contains('blk')&&el.firstElementChild&&el.firstElementChild.classList.contains('fold')?el.firstElementChild:null));
+function notesAfter(blk){ const out=[]; let n=blk.nextElementSibling; while(n){ const f=foldOf(n); if(!f)break; out.push(f); n=n.nextElementSibling; } return out; }
+function blockBefore(fold){ let n=fold.classList.contains('fold')&&fold.parentElement.classList.contains('blk')?fold.parentElement:fold; n=n.previousElementSibling; while(n&&foldOf(n))n=n.previousElementSibling; return n&&n.classList.contains('blk')&&!foldOf(n)?n:null; }
+function markAsked(root,label){
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement.closest('.katex-mathml,.asked,.fold,script,style')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+  label=label.toLowerCase().replace(/\u00a0/g,' '); let n; while((n=walker.nextNode())){ const i=n.data.toLowerCase().replace(/\u00a0/g,' ').indexOf(label); if(i<0)continue; const r=document.createRange(); r.setStart(n,i); r.setEnd(n,i+label.length); const m=document.createElement('span'); m.className='asked'; try{r.surroundContents(m);}catch(_){} return true; }
+  return false;
+}
+const pendingIds=new Set(); let knownExp=new Set(); let lastRaws=[];
+// Which top-level segments changed between two renders: [first, lastExclusive) in the new list.
+function changedRange(prev,next){
+  if(!prev.length)return null;
+  let p=0; while(p<prev.length&&p<next.length&&prev[p]===next[p])p++;
+  let q=0; while(q<prev.length-p&&q<next.length-p&&prev[prev.length-1-q]===next[next.length-1-q])q++;
+  return p<next.length-q?[p,next.length-q]:null;
+}
+// cmux-style attention: scroll to what was just written and pulse a frame around it.
+function spotlight(els){
+  if(!els.length)return;
+  const first=els[0]; const tall=first.offsetHeight>window.innerHeight*0.75;
+  first.scrollIntoView({behavior:reduced?'auto':'smooth',block:tall?'start':'center'});
+  els.forEach(el=>{ if(!streaming)animate(el); });
+  const rs=els.map(e=>e.getBoundingClientRect()); const top=Math.min(...rs.map(r=>r.top))+window.scrollY, bot=Math.max(...rs.map(r=>r.bottom))+window.scrollY;
+  const left=Math.min(...rs.map(r=>r.left)), right=Math.max(...rs.map(r=>r.right));
+  document.getElementById('spot')?.remove();
+  const f=document.createElement('div'); f.id='spot'; Object.assign(f.style,{top:(top-14)+'px',left:(left-18)+'px',width:(right-left+36)+'px',height:(bot-top+28)+'px'});
+  document.body.appendChild(f); setTimeout(()=>f.remove(),5000);
+}
+async function checkPending(){
+  const phs=[...main.querySelectorAll('.fold[data-pending]')]; if(!phs.length)return;
+  const st=await fetch('/api/pending').then(r=>r.json()).catch(()=>({}));
+  phs.forEach(ph=>{const p=st[ph.dataset.pending]; if(!p)return; if(p.status==='error'){const e=ph.querySelector('.exp');e.classList.remove('pending');e.classList.add('error');e.innerHTML=e.innerHTML.replace(/writing<span[^>]*><\/span>$/,esc(p.error||'failed'))} else if(p.status==='done'){pendingIds.add(p.id); const have=main.querySelector(`.fold[data-for="${p.id}"]`); if(have){ ph.remove(); have.classList.remove('closed'); have.querySelector('.exp').scrollIntoView({behavior:'smooth',block:'center'}); }} });
+}
+setInterval(checkPending,900);
+// resolve one pending id, for the quiz panel and the flashcards
+function poll(id,done,tries=200){
+  const t=setInterval(async()=>{
+    if(--tries<0){clearInterval(t);done({status:'error',error:'timed out'});return}
+    const st=await fetch('/api/pending').then(r=>r.json()).catch(()=>null);
+    const p=st&&st[id]; if(!p||p.status==='writing')return;
+    clearInterval(t); done(p);
+  },700);
+}
+// ---------- flashcard deck ----------
+const deckState={};   // lessonId -> {i, flipped:{item:true}, typed:{item:text}}; survives the full re-render a file change causes
+function wireDeck(d){
+  const st=deckState[lessonId]||(deckState[lessonId]={i:0,flipped:{},typed:{}});
+  const cards=[...d.querySelectorAll('.fc:not(.summary)')], n=cards.length, sum=d.querySelector('.fc.summary');
+  const pos=d.querySelector('.pos'), avg=d.querySelector('.avg'), hint=d.querySelector('.hint');
+  const prev=d.querySelector('.prev'), next=d.querySelector('.next'), val=d.querySelector('.val'), skip=d.querySelector('.skip');
+  let i=Math.min(st.i,n); // n = summary
+  const cur=()=>i<n?cards[i]:sum;
+  function paintBar(){
+    const g=cards.filter(c=>c.dataset.n!==''); const m=g.length?g.reduce((a,c)=>a+ +c.dataset.n,0)/g.length:0;
+    avg.innerHTML=g.length?`${g.length} graded · avg ${m.toFixed(1)}${pips(Math.round(m))}`:'';
+    pos.innerHTML=i<n?`<b>${i+1}</b> / ${n}`:`<b>${n}</b> / ${n}`;
+  }
+  function paintCtl(){
+    const c=cur(), graded=c.classList.contains('graded')||c.classList.contains('peeked');
+    prev.disabled=i===0; next.disabled=i>=n||!(graded);
+    val.hidden=i>=n||graded; skip.hidden=i>=n||graded;
+    hint.textContent=i>=n?'':(graded?'→ for the next card':'Enter to validate');
+    if(i>=n){ const g=cards.filter(c=>c.dataset.n!==''); const m=g.length?g.reduce((a,c)=>a+ +c.dataset.n,0)/g.length:0; const weak=g.filter(c=>+c.dataset.n<=2).length; sum.querySelector('.sum').textContent=`${n} cards · ${g.length} graded · average ${m.toFixed(1)}`+(weak?` · ${weak} to retry`:''); }
+  }
+  function show(k,dir){
+    const from=cur(); i=k; st.i=i; const to=cur();
+    if(from===to){to.classList.add('cur');}
+    else if(dir){ from.classList.add('out'); setTimeout(()=>{from.classList.remove('cur','out','in'); to.classList.add('cur','in'); to.addEventListener('animationend',()=>to.classList.remove('in'),{once:true}); focusAns(to);},200); }
+    else { from.classList.remove('cur','in','out'); to.classList.add('cur'); focusAns(to); }
+    const fl=!!st.flipped[to.dataset.item]; to.classList.add('snap'); to.classList.toggle('flip',fl); to.classList.toggle('settled',fl); void to.offsetWidth; to.classList.remove('snap'); fitBack(to);
+    paintBar(); paintCtl();
+  }
+  function focusAns(c){ const t=c.querySelector('.ans'); if(t&&!t.disabled)setTimeout(()=>t.focus(),50); }
+  function fitBack(c){ const f=c.querySelector('.face.front'), b=c.querySelector('.face.back'); if(!f||!b)return; if(c.classList.contains('flip')&&b.getBoundingClientRect().width>200){ f.style.minHeight=Math.min(900,Math.max(280,b.scrollHeight))+'px'; } else if(!c.classList.contains('flip')) f.style.minHeight=''; }
+  cards.forEach(c=>{
+    const item=c.dataset.item, ta=c.querySelector('.ans'), mic=c.querySelector('.mic');
+    if(st.typed[item]&&!ta.disabled)ta.value=st.typed[item];
+    ta.oninput=()=>{st.typed[item]=ta.value; ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px';};
+    ta.onkeydown=e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault(); if(c===cur()&&!val.hidden)val.click();} };
+    if(mic)mic.onclick=async()=>{
+      if(mic.classList.contains('rec'))return; mic.classList.add('rec'); mic.textContent='Listening';
+      try{ const r=await fetch('/api/listen',{method:'POST'}).then(x=>x.json());
+        if(r.text){ta.value=(ta.value?ta.value.trim()+' ':'')+r.text; st.typed[item]=ta.value; ta.dispatchEvent(new Event('input')); ta.focus();}
+        else hint.textContent=r.error||'no transcript';
+      }catch(e){hint.textContent='mic unavailable';}
+      mic.classList.remove('rec'); mic.textContent='Speak';
+    };
+    // a card that already carries a score shows its back when reached
+    if(c.classList.contains('graded'))st.flipped[item]=st.flipped[item]!==false;
+  });
+  val.onclick=()=>{
+    const c=cur(); if(!c||c.classList.contains('busy')||i>=n)return;
+    const ta=c.querySelector('.ans'), answer=ta.value.trim(); if(!answer){ta.focus();return;}
+    c.classList.add('busy'); val.disabled=true; hint.textContent='Grading';
+    const pending='p'+Date.now();
+    ask({kind:'grade',item:c.dataset.item,answer,pending}).then(r=>{
+      if(r&&r.error){c.classList.remove('busy');val.disabled=false;hint.textContent=r.error;return;}
+      poll(pending,p=>{
+        c.classList.remove('busy'); val.disabled=false;
+        if(p.status==='error'){hint.textContent=p.error||'failed';return;}
+        // paint the verdict from the pending payload now; the file write that follows persists it
+        c.dataset.n=p.score; c.classList.add('graded'); ta.disabled=true; const mic=c.querySelector('.mic'); if(mic)mic.disabled=true;
+        c.querySelector('.verdict').innerHTML=verdictHtml(+p.score,`*"${answer}"*\n${p.rationale||''}\n${p.missing?'Missing: '+p.missing:''}`);
+        st.flipped[c.dataset.item]=true; c.classList.add('flip'); fitBack(c); paintBar(); paintCtl(); next.focus();
+      });
+    });
+  };
+  skip.onclick=()=>{ const c=cur(); if(i>=n)return; c.classList.add('peeked'); c.querySelector('.verdict').innerHTML='<p class="peek">Not graded.</p>'; st.flipped[c.dataset.item]=true; c.classList.add('flip'); fitBack(c); paintCtl(); };
+  next.onclick=()=>{ if(i<n)show(i+1,1); };
+  prev.onclick=()=>{ if(i>0)show(i-1,0); };
+  sum.querySelector('.again').onclick=()=>{ show(0,0); };
+  sum.querySelector('.moreq').onclick=()=>{ const g=main.querySelector('.quiz .more'); if(g)g.scrollIntoView({behavior:'smooth',block:'center'}); };
+  function setFlip(c,on){
+    if(on){ c.classList.add('flip'); }
+    else { if(c.classList.contains('settled')){ c.classList.add('snap'); c.classList.remove('settled'); void c.offsetWidth; c.classList.remove('snap'); } c.classList.remove('flip'); }
+    st.flipped[c.dataset.item]=on; fitBack(c);
+  }
+  cards.forEach(c=>c.addEventListener('transitionend',e=>{ if(e.propertyName==='transform'&&e.target===c&&c.classList.contains('flip'))c.classList.add('settled'); }));
+  d.onclick=e=>{ const c=e.target.closest('.fc'); if(c&&c===cur()&&(c.classList.contains('graded')||c.classList.contains('peeked'))&&!e.target.closest('button,textarea')){ setFlip(c,!c.classList.contains('flip')); } };
+  d.onkeydown=e=>{ if(e.target.matches('textarea'))return; if(e.key==='ArrowRight'&&!next.disabled)next.click(); if(e.key==='ArrowLeft'&&!prev.disabled)prev.click(); };
+  d.tabIndex=-1;
+  show(i,0);
+  cards.forEach(c=>{const ta=c.querySelector('.ans'); if(ta&&ta.value){ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';}});
+}
+// ---------- more practice panel ----------
+function wirePanel(q){
+  q.querySelectorAll('.topic').forEach(b=>b.onclick=()=>{q.querySelectorAll('.topic').forEach(o=>o.classList.remove('on'));b.classList.add('on')});
+  q.querySelectorAll('.tile').forEach(b=>b.onclick=()=>{q.querySelectorAll('.tile').forEach(o=>o.classList.remove('on'));b.classList.add('on')});
+  const g=q.querySelector('.gen'); if(!g)return;
+  g.onclick=()=>{
+    if(q.classList.contains('busy'))return;
+    const on=q.querySelector('.topic.on'); const t=on&&on.dataset.all?'all':(on?on.textContent:'all');
+    const m=(q.querySelector('.tile.on')||{}).dataset.mode||'cards';
+    const box=q.querySelector('.genbox'); q.classList.add('busy');
+    box.innerHTML=(m==='cards'?'<div class="skcard"><div class="sk"><span></span><span></span></div></div>':'<div class="sk"><span></span><span></span><span></span></div>')+`<p class="busylbl">Writing ${m==='cards'?'flashcards':'questions'}</p>`;
+    const pending='p'+Date.now();
+    ask({kind:'quiz',topic:t,mode:m,count:4,pending}).then(r=>{
+      if(r&&r.error){q.classList.remove('busy');box.innerHTML='<p class="busylbl">'+esc(r.error)+'</p>';return}
+      poll(pending,st=>{
+        q.classList.remove('busy');
+        if(st.status==='error'){box.innerHTML='<p class="busylbl">'+esc(st.error||'failed')+'</p>';return}
+        box.innerHTML='';
+        // the items arrive with the file; land on them once they render
+        const ids=st.ids||[]; if(ids.length){ const ds=deckState[lessonId]; if(m==='cards'&&ds){ const deck=main.querySelector('.deck'); const idx=deck?[...deck.querySelectorAll('.fc:not(.summary)')].findIndex(c=>c.dataset.item===ids[0]):-1; if(idx>=0)ds.i=idx; }
+          setTimeout(()=>{ const el=m==='cards'?main.querySelector('.deck'):main.querySelector(`.mcqi[data-item="${ids[0]}"]`); if(el)el.scrollIntoView({behavior:'smooth',block:'center'}); },400); }
+      });
+    });
+  };
+}
+function wire(){
+  main.querySelectorAll('.exp').forEach(e=>{e.onclick=ev=>{if(ev.target.closest('a')||window.getSelection().toString().trim())return; if(e.classList.contains('pending'))return; const w=e.closest('.fold'); if(!w)return; ev.stopPropagation(); const closed=!w.classList.contains('closed'); w.classList.toggle('closed',closed); ask({kind:'fold',id:e.dataset.id,folded:closed}); }});
+  // a side photo and the block that follows it share a two-column row, so the text never jumps width mid-paragraph
+  main.querySelectorAll('.blk > .photo.side').forEach(ph=>{ const b=ph.parentElement; if(b.parentElement.classList.contains('sidepair'))return; const nxt=b.nextElementSibling; if(!nxt||!nxt.classList.contains('blk')||nxt.querySelector('h2,h3,.photo,.figure,.quiz,.deck'))return; const pair=document.createElement('div'); pair.className='sidepair'; b.parentElement.insertBefore(pair,b); pair.appendChild(nxt); pair.appendChild(b); });
+  // every note underlines its words in the block above it, even when the words sit inside rendered math
+  main.querySelectorAll('.fold[data-label]').forEach(f=>{ const lab=f.dataset.label; if(!lab||f.closest('.exp'))return; const b=blockBefore(f); if(!b)return; if([...b.querySelectorAll('.asked')].some(a=>a.textContent.trim().toLowerCase()===lab))return; markAsked(b,lab); });
+  main.querySelectorAll('.asked').forEach(a=>{a.onclick=ev=>{const words=a.textContent.trim().toLowerCase(); const blk=a.closest('.blk'); let w=blk?notesAfter(blk).find(f=>f.dataset.label===words):null; if(!w)w=[...main.querySelectorAll('.fold')].find(f=>f.dataset.label===words); if(!w)return; ev.preventDefault(); ev.stopPropagation(); const open=w.classList.contains('closed'); w.classList.toggle('closed',!open); if(open){w.querySelector('.exp').scrollIntoView({behavior:'smooth',block:'center'})} ask({kind:'fold',id:w.dataset.for,folded:!open}); }});
+  main.querySelectorAll('.predict .btn').forEach(b=>{b.onclick=()=>{const pr=b.closest('.predict');if(pr.dataset.done)return;pr.dataset.done=1;
+    const key=+(pr.dataset.key??-1), choice=+b.dataset.choice, graded=key>=0, ok=graded&&choice===key;
+    if(graded){ b.classList.add(ok?'ok':'no'); if(!ok){const kb=pr.querySelector(`.btn[data-choice="${key}"]`); if(kb)kb.classList.add('key');} }
+    else b.classList.add('picked');
+    pr.querySelectorAll('.btn').forEach(x=>x.disabled=true);
+    pr.querySelector('.reveal').open=true;
+    ask({kind:'predict',block:b.closest('.blk').id,choice,correct:graded?ok:null});}});
+  main.querySelectorAll('.quiz').forEach(wirePanel);
+  main.querySelectorAll('.deck').forEach(wireDeck);
+  main.querySelectorAll('.mcqi input').forEach(inp=>{inp.onchange=()=>{const it=inp.closest('.mcqi');if(it.classList.contains('done'))return;it.classList.add('done');const ok=inp.value===it.dataset.key;const lab=inp.closest('label');lab.classList.add(ok?'right':'wrong');it.querySelectorAll('input').forEach(x=>{x.disabled=true;if(x.value===it.dataset.key)x.closest('label').classList.add('right')});it.querySelector('.fb').innerHTML=(ok?'<span class="ok">Correct.</span>':'<span class="bad">Not quite.</span>')+(it.dataset.why?' '+mdInline(it.dataset.why):'');ask({kind:'mcq',item:it.dataset.item,choice:inp.value,correct:ok});}});
+}
+
+// ---------- boot ----------
+async function boot(){
+  state=await fetch('/api/state?x=1'+WSQ+(MODE==='grid'?'&all=1':'')).then(r=>r.json());
+  streaming=state.streaming;
+  if(MODE==='grid'){grid(state);return}
+  if(!lessonId)lessonId=state.current;
+  if(!lessonId){main.innerHTML='<p class="empty">No lesson yet. Ask for one in the chat.</p>'}
+  else await loadLesson();
+  let busy=false;
+  async function sync(d){ if(busy)return; busy=true; try{
+    if(d){streaming=d.streaming; if(MODE==='lesson'&&!LESSON_ARG&&d.current&&d.current!==lessonId){location.href=WSB+'/';return}}
+    const r=await fetch(`/api/lesson?id=${lessonId}&from=${offset}&hash=${hash}${WSQ}`).then(r=>r.json());
+    if(r.reset){offset=0;hash='';await loadLessonWith(r);} else if(r.text){await loadLessonWith(r);}
+    setWriting(streaming);
+  } finally{busy=false} }
+  try{ window.es=new EventSource('/events?id='+lessonId+WSQ); window.es.addEventListener('change',e=>sync(JSON.parse(e.data))); }catch(_){}
+  // polling fallback (covers webviews where EventSource is flaky)
+  setInterval(async()=>{ try{const st=await fetch('/api/state?x=1'+WSQ).then(r=>r.json()); if(state.page_version&&st.page_version!==state.page_version){location.reload();return} if(!(window.es&&window.es.readyState===1)) await sync({current:st.current,streaming:st.streaming});}catch(_){} },1500);
+}
+async function loadLessonWith(r){
+  if(r.reset){const keep=[...main.querySelectorAll('.fold[data-pending]')]; main.innerHTML='';blocks=0;headerDone=false;body='';renderedUpto=0; window.__ph=keep;}
+  body+=r.text; offset=r.offset; if(r.hash)hash=r.hash;
+  if(!headerDone){const {fm,fmLines}=frontMatter(body); if(/^---\n[\s\S]*?\n---\n/.test(body)||!body.startsWith('---')){main.insertAdjacentHTML('afterbegin',header(fm,null));headerDone=true;document.title=(fm.title?fm.title+' · ':'')+'Blackboard';bodyStart=fmLines;fmCache=fm;applyAccent(fm);setWriting(streaming);} else {setWriting(streaming);return;}}
+  const {body:b}=frontMatter(body); const segs=segments(b,bodyStart); const fresh=segs.slice(renderedUpto);
+  const raws=segs.map(s=>s.raw); const chg=r.reset?changedRange(lastRaws,raws):null; const hot=[];
+  fresh.forEach((s,k)=>{ const idx=renderedUpto+k; if(fmCache.title&&/^# /.test(s.raw)&&idx===0)return; const el=renderSegment(s); main.appendChild(el); if(chg&&idx>=chg[0]&&idx<chg[1])hot.push(el); if(!r.reset||streaming){animate(el);moveNub(el);} if(streaming)followIfAtBottom(el); });
+  lastRaws=raws;
+  if(hot.length&&!streaming)setTimeout(()=>spotlight(hot),60);
+  setWriting(streaming);
+  // newly written explanations: unfold with the chalk animation; keep everything else still
+  const now=new Set([...main.querySelectorAll('.exp[data-id]')].map(e=>e.dataset.id));
+  if(r.reset&&knownExp.size){ now.forEach(id=>{ if(!knownExp.has(id)){ const w=main.querySelector(`.fold[data-for="${id}"]`); if(w){ w.classList.add('closed'); const e=w.querySelector('.exp'); setTimeout(()=>{w.classList.remove('closed');animate(e);},30); } } }); }
+  knownExp=now;
+  renderedUpto=segs.length; wire(); inlineSvgs();
+  // deep link: /lessons/NNNN#e3 opens that note, #b12 scrolls to that block
+  if(r.reset&&location.hash){ const h=location.hash.slice(1); const t=main.querySelector(`.exp[data-id="${h}"]`)||document.getElementById(h); if(t){ const f=t.closest('.fold'); if(f)f.classList.remove('closed'); setTimeout(()=>t.scrollIntoView({block:'center'}),80); } }
+}
+// hash: the server hashes the first N bytes with md5; the client cannot md5 cheaply, so we ask the server for it on every reset
+// and keep offset/hash pairs consistent by only ever appending. loadLesson (initial) delegates to loadLessonWith.
+loadLesson=async function(){const r=await fetch(`/api/lesson?id=${lessonId}&from=0&hash=${WSQ}`).then(r=>r.json());if(r.missing){main.innerHTML='<p class="empty">No lesson yet. Ask for one in the chat.</p>';return}await loadLessonWith(r);};
+boot().catch(e=>{window.bootError=String(e&&e.stack||e);console.error('boot',e)});
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "blackboard",
+  "version": "0.1.0",
+  "description": "A teaching skill for Claude Code and Codex. Lessons, step-by-step derivations, explain-on-select, and quizzes rendered on a persistent black board in your browser.",
+  "keywords": [
+    "claude-code",
+    "codex",
+    "agent-skill",
+    "teaching",
+    "lessons"
+  ],
+  "author": "Caio Jahn",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "roughjs": "^4.6.6"
+  },
+  "repository": "github:caioba-codes/blackboard"
+}\n
