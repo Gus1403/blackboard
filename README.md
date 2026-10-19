@@ -4,6 +4,14 @@ A teaching skill for Claude Code and Codex. You ask for a lesson, the agent writ
 
 ![board](board/screenshot.png)
 
+## Why not just ask in chat
+
+Chat is fine for a quick answer, but it's a bad place to learn math. Here the lesson shows the column typeset, and the chat answer to "what was done to get these?" comes back as raw `e^{2x} → 1/2 e^{2x}`. That's harder to read than the lesson it explains.
+
+![a chat answer full of unrendered math](board/chat-example.png)
+
+On the board the same answer is written one step per line, rendered, with the reason beside each step, inside the lesson it belongs to.
+
 ## Install
 
 Clone it into your skills folder, then install the figure dependencies once:
