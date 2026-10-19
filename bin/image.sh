@@ -1,22 +1,38 @@
 #!/bin/zsh
-# image.sh "<visual subject>" <NNNN> [ws]   Pick one real landscape photo, save to $WS/lessons/assets/NNNN.jpg, print YAML lines.
+# image.sh "<visual subject>" <NNNN> [ws]   Pick one real landscape photo, save to a unique asset in $WS/lessons/assets, print YAML lines.
 # Sources: NASA (space subjects) → Openverse (no key) → Unsplash (UNSPLASH_KEY, hotlinked) → Wikimedia Commons.
 set -e
 SUBJ=$1; ID=$2; WS=${3:-$PWD}; [ -d "$WS/lessons" ] || WS=$WS/learn
+BIN=${0:A:h}
 OUT="$WS/lessons/assets"; mkdir -p "$OUT"
 UA="blackboard-skill/1.0 (student study tool; contact: local)"
-python3 - "$SUBJ" "$ID" "$OUT" "$UA" "${UNSPLASH_KEY:-}" <<'PY'
+python3 - "$SUBJ" "$ID" "$OUT" "$UA" "${UNSPLASH_KEY:-}" "$BIN" <<'PY'
 import json,os,re,sys,urllib.request,urllib.parse
-subj,lid,out,ua,ukey=sys.argv[1:]
+subj,lid,out,ua,ukey,bin_dir=sys.argv[1:]
+sys.path.insert(0,bin_dir)
+from pathlib import Path
+from banner_guard import claim
+owners=list(Path(out).parent.glob(f"{lid}-*.md"))
+# Inline lesson photos are not banners and have their own IDs (NNNN-pN).
+owner=owners[0] if len(owners)==1 else None
+if re.fullmatch(r"[0-9]{4}",lid) and owner is None:
+    sys.exit("Create exactly one NNNN-*.md lesson before selecting its banner")
 REJECT=re.compile(r"\b(people|person|man|woman|girl|boy|portrait|face|selfie|text|poster|screenshot|illustration|drawing|clipart|vector|logo|ai[- ]generated|render|3d)\b",re.I)
 def get(url,headers=None):
     req=urllib.request.Request(url,headers={"User-Agent":ua,**(headers or {})})
     with urllib.request.urlopen(req,timeout=20) as r: return r.read()
 def save(url,credit,hotlink=False):
-    if hotlink:
-        print(f"photo: {url}\ncredit: {credit}"); return True
-    data=get(url); p=os.path.join(out,f"{lid}.jpg")
-    open(p,"wb").write(data); print(f"photo: assets/{lid}.jpg\ncredit: {credit}"); return True
+    data=None if hotlink else get(url)
+    if data is not None and not (data.startswith(b"\xff\xd8\xff") or data.startswith(b"\x89PNG\r\n\x1a\n")):
+        return False  # reject HTML error pages and non-raster responses
+    if owner:
+        photo=claim(owner,data,url,credit,out,lid)
+        if not photo: return False
+    elif hotlink: photo=url
+    else:
+        p=os.path.join(out,f"{lid}.jpg"); open(p,"wb").write(data); photo=f"assets/{lid}.jpg"
+    print(f"photo: {photo}\ncredit: {credit}\nphoto_source: {url}")
+    return True
 def ok(*texts): return not any(REJECT.search(t or "") for t in texts)
 def clean(t): return re.sub(r"\.(jpe?g|png|tiff?)$","",(t or "Untitled").replace("_"," ")).strip()
 q=urllib.parse.quote(subj)
@@ -67,7 +83,7 @@ if ukey:
             try: get(it["links"]["download_location"]+("&" if "?" in it["links"]["download_location"] else "?")+f"client_id={ukey}")
             except Exception: pass
             u=it["urls"]["regular"]; name=it["user"]["name"]; link=it["user"]["links"]["html"]
-            save(u,f"Photo by {name} on Unsplash ({link}?utm_source=blackboard&utm_medium=referral)",hotlink=True); sys.exit(0)
+            if save(u,f"Photo by {name} on Unsplash ({link}?utm_source=blackboard&utm_medium=referral)",hotlink=True): sys.exit(0)
     except Exception as e: print("unsplash failed:",e,file=sys.stderr)
 # Wikimedia Commons featured / quality
 for cat in ("Featured pictures on Wikimedia Commons","Quality images"):

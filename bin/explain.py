@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """explain.py <lesson.md> '<request json>'
 
-Headless writer for the board's Explain / In depth. Called by bridge.py in a background thread.
+Headless writer for the board's expandable Explain callouts. Called by bridge.py in a background thread.
 Request: {"text": selected words, "depth": "line"|"deep", "block": "b12", "line": 42,
           "parent": "e3" (nested) | null, "grow": "e5" (rewrite in place) | null, "pending": "p123" (page placeholder id)}
 Writes the ::: exp block into the lesson file and prints {"id": "e8"}.
@@ -15,6 +15,15 @@ text = (req.get("text") or "").strip()
 depth = req.get("depth", "line")
 parent, grow = req.get("parent"), req.get("grow")
 src = open(path).read()
+# No line from the page (it happens): find the selected words in the body instead of falling back to line 1,
+# which would drop the callout into the front matter above the title.
+if not req.get("line") and text:
+    _fm = re.match(r"^---\n.*?\n---\n", src, re.S)
+    _k = src.find(text, _fm.end() if _fm else 0)
+    if _k < 0:
+        _k = src.find(" ".join(text.split()[:4]), _fm.end() if _fm else 0)
+    if _k >= 0:
+        req["line"] = src[:_k].count("\n") + 1
 
 def next_id(s):
     ids = [int(x) for x in re.findall(r"^::: exp e(\d+)", s, re.M)]
@@ -28,8 +37,34 @@ def context_lines(s, line, radius=40):
     lo, hi = max(0, line - radius), min(len(lines), line + radius)
     return "\n".join(lines[lo:hi])
 
+def atomic_spans(lines):
+    """0-based (start, end) line spans that must never be split: fenced code, ::: interactive JSON, tables.
+    They can hold blank lines, so a paragraph search alone would insert a note in the middle of them."""
+    spans, i = [], 0
+    while i < len(lines):
+        ln = lines[i]
+        if re.match(r"^\s*(```|~~~)", ln):
+            fence = ln.strip()[:3]; j = i + 1
+            while j < len(lines) and not lines[j].strip().startswith(fence):
+                j += 1
+            spans.append((i, min(j, len(lines) - 1))); i = j + 1; continue
+        if re.match(r"^::: interactive\b", ln):
+            j = i + 1
+            while j < len(lines) and not re.match(r"^:::\s*$", lines[j]):
+                j += 1
+            spans.append((i, min(j, len(lines) - 1))); i = j + 1; continue
+        if ln.lstrip().startswith("|"):
+            j = i
+            while j + 1 < len(lines) and lines[j + 1].lstrip().startswith("|"):
+                j += 1
+            spans.append((i, j)); i = j + 1; continue
+        i += 1
+    return spans
+
+
 def block_at(s, line):
-    """The markdown block (paragraph / $$ block / container) containing 1-based `line`."""
+    """The markdown block (paragraph / $$ block / container) containing 1-based `line`, widened to the whole
+    fenced code block, interactive block or table it touches, so a note is always inserted after those."""
     lines = s.split("\n")
     i = max(0, min(len(lines) - 1, line - 1))
     a = i
@@ -38,9 +73,16 @@ def block_at(s, line):
     b = i
     while b < len(lines) - 1 and lines[b + 1].strip() != "":
         b += 1
+    spans = atomic_spans(lines)
+    changed = True
+    while changed:
+        changed = False
+        for x, y in spans:
+            if x <= b and y >= a and (x < a or y > b):
+                a, b, changed = min(a, x), max(b, y), True
     return a, b, "\n".join(lines[a:b + 1])
 
-RULES = """You write one explanation for a student reading a lesson on a black board. It is a note pinned under the sentence they selected, typeset exactly like the lesson.
+RULES = """You write one explanation for a student reading a lesson on a black board. It appears in an expandable callout under the selected paragraph.
 Rules: plain and direct. No "students often", no "it's important to note", no throat-clearing, no praise, no summary sentence, no em dashes, no binary contrasts ("not X but Y"). Use only terms the lesson has already introduced or define them in the same sentence.
 If the selected words name a rule, law, theorem, identity, method or technical term, the FIRST thing you write is what it is, in general form, before saying how it is used here. A name is not an explanation. Example: for "De Morgan" start with the law itself, $\\overline{{A+B}} = \\overline{{A}}\\,\\overline{{B}}$ and $\\overline{{AB}} = \\overline{{A}}+\\overline{{B}}$, then show it on this line.
 Math typesetting: symbols inline with $...$. Any equation, and especially a chain of equal signs, goes on its own line as a display block:
@@ -52,7 +94,7 @@ Never write a chain like "= ... = ..." inside a sentence. One equation per displ
 {tag}
 Output only the note. Do not repeat or quote the selected words at the start. No label, no quotation marks around the answer, no markdown heading."""
 
-length = "Length: one to three short sentences, plus one display equation when the words name a rule or formula." if depth == "line" else "Length: one paragraph, 4 to 8 sentences, plus one or two display equations."
+length = "Length: explain the selected passage clearly in a short paragraph. Add steps or a display equation when needed to resolve the question. Avoid unrelated background." if depth == "line" else "Length: one paragraph, 4 to 8 sentences, plus one or two display equations."
 tag = 'End with " → Exam: <problem it serves>" if the lesson text names an exam problem for this block, otherwise end with " → background".' if course_mode(src) else "Do not add any trailing tag."
 a, b, block = block_at(src, int(req.get("line") or 1))
 prompt = RULES.format(length=length, tag=tag) + f"""
@@ -86,7 +128,19 @@ def run_writer(prompt):
         out = out.strip().split("\n\n")[-1].strip()
     return out
 
-label = " ".join(text.split()[:6])
+def note_label(t):
+    """First six words, extended so a $formula$ is never cut in half (the board's noteLabel does the same)."""
+    dg = re.match(r"\s*\[diagram: ([^;\]]+)", t)
+    if dg: t = "Diagram: " + dg.group(1)
+    t = re.sub(r"\s*\(in \$[\s\S]*$", "", t)
+    out = []
+    for w in t.split():
+        out.append(w)
+        j = " ".join(out)
+        if (len(out) >= 6 and j.count("$") % 2 == 0) or len(out) >= 40: break
+    j = " ".join(out)
+    return j.replace("$", "") if j.count("$") % 2 else j
+label = note_label(text)
 def existing_note(s, line, label):
     """Id of a top-level ::: exp with this label sitting right after the block at `line`, or None."""
     a, b, _ = block_at(s, line)
@@ -122,7 +176,17 @@ body = re.sub(r'^\*\*[^*]+\*\*\s*[—:-]\s*', '', body)
 # never let the writer's output open/close containers
 body = body.replace("\n:::", "\n\\:::")
 
-s = src
+# The writer can take minutes; the file may have changed meanwhile (another callout, a fold, an edit). Re-read it under
+# a lock and find the selected block again by its text, so nothing written in between is lost and ids never collide.
+import fcntl, hashlib, tempfile
+_lock = open(os.path.join(tempfile.gettempdir(), "bb-explain-" + hashlib.md5(os.path.abspath(path).encode()).hexdigest() + ".lock"), "w")
+fcntl.flock(_lock, fcntl.LOCK_EX)
+s = open(path).read()
+line_now = int(req.get("line") or 1)
+if block.strip() and s != src:
+    k = s.find(block)
+    if k >= 0:
+        line_now = s[:k].count("\n") + 1 + max(0, line_now - (a + 1))
 lines = s.split("\n")
 if grow:
     m = re.search(rf"^::: exp {re.escape(grow)}(?P<flags>[^\n]*)\n\*\*(?P<label>[^*]+)\*\* — (?P<body>.*?)(?=\n(?:::: exp |:::\s*$))", s, re.S | re.M)
@@ -153,13 +217,9 @@ if not grow:
         else:
             parent = None
     if not parent:
-        # mark the selected words once in the block, then insert after the block
+        # Leave the selected paragraph untouched; insert the callout after it
         lines = s.split("\n")
-        a2, b2, blk = block_at(s, int(req.get("line") or 1))
-        if text and f"=={text}==" not in blk and not blk.lstrip().startswith("$$") and not blk.lstrip().startswith("::: "):
-            blk2 = blk.replace(text, f"=={text}==", 1)
-            lines[a2:b2 + 1] = blk2.split("\n")
-            b2 = a2 + len(blk2.split("\n")) - 1
+        a2, b2, blk = block_at(s, line_now)
         # skip existing exp blocks that directly follow, so siblings keep order
         j = b2 + 1
         while j < len(lines):

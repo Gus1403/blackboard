@@ -62,3 +62,8 @@ When the agent runs on a machine nobody is looking at, render as usual (`board/r
 ```
 
 Keep the bridge up so a later `/blackboard` command edits the same lesson. Board → agent clicks (predict, ×) have no live channel there; the user answers in the chat and the agent feeds it as the matching command. Never open a browser window on a headless host just to render the board.
+
+
+## Lesson writer routing
+
+New lessons and substantial rewrites always use a dedicated writer agent selected independently of the parent chat model. Follow [LESSON-WRITER.md](./LESSON-WRITER.md) before authoring: quick evidence/availability check, explicit model and effort, host-native delegation or a headless same-host writer, then parent verification. Never change the parent session model or global defaults.

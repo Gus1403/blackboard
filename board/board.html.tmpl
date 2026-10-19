@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Blackboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Patrick+Hand&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Patrick+Hand&family=Press+Start+2P&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
@@ -17,12 +17,27 @@
 html{background:var(--bg)}
 body{margin:0;background:var(--bg);color:var(--chalk);font-family:var(--body);font-size:20px;line-height:1.6;-webkit-font-smoothing:antialiased}
 main{max-width:860px;margin:0 auto;padding:36px 32px 140px}
-.reading-progress{position:fixed;inset:0 0 auto;height:4px;z-index:1000;background:var(--rule);pointer-events:none}
-.reading-progress[hidden]{display:none}
-.reading-progress::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 23px,var(--bg) 23px 25px)}
-.reading-progress span{position:relative;display:block;width:0;height:100%;background:var(--acc);box-shadow:0 0 6px var(--acc)}
-.reading-progress span::after{content:'';position:absolute;right:0;top:0;width:2px;height:100%;background:var(--chalk);box-shadow:0 0 7px var(--acc)}
-.reading-progress[aria-valuenow="0"] span::after{display:none}
+/* right rail: a ruler of the lesson. One mark per ## (major sections only; ### stay in the Contents drawer), vertical fill = reading position */
+.rail{position:fixed;top:78px;bottom:28px;right:6px;width:34px;z-index:1001;pointer-events:auto;cursor:pointer;touch-action:none;--pos:0}
+/* the rail replaces the system scrollbar on lesson pages: drag it or click anywhere on it to scroll */
+html.railmode{scrollbar-width:none}
+html.railmode::-webkit-scrollbar,html.railmode body::-webkit-scrollbar{display:none;width:0;height:0}
+.rail.drag,.rail.drag *{cursor:grabbing}
+.rail[hidden]{display:none}
+/* track and fill take the lesson's accent; ticks sit left of the track like a ruler */
+.rail::before{content:'';position:absolute;right:8px;top:0;bottom:0;width:3px;border-radius:2px;background:color-mix(in srgb,var(--acc) 22%,#161616)}
+.rail .fill{position:absolute;right:8px;top:0;width:3px;height:calc(var(--pos)*100%);border-radius:2px;background:var(--acc);box-shadow:0 0 8px color-mix(in srgb,var(--acc) 55%,transparent);pointer-events:none}
+.rail .tick{position:absolute;right:0;width:34px;height:14px;margin-top:-7px;padding:0;border:0;background:none;cursor:pointer;pointer-events:auto}
+.rail .tick::before{content:'';position:absolute;right:15px;top:6px;width:8px;height:2px;border-radius:1px;background:var(--chalk);opacity:.32;transition:opacity .2s,width .15s,background .2s}
+.rail .tick.h3::before{top:6.5px;width:4px;height:1px;opacity:.22}
+.rail .tick.past::before{background:var(--acc);opacity:.9}
+.rail .tick.cur::before{background:var(--acc);opacity:1;width:12px;height:3px;top:5.5px;box-shadow:0 0 6px var(--acc)}
+.rail .tick.h3.cur::before{width:7px;height:2px;top:6px}
+.rail .tick:hover::before{opacity:1;width:14px}
+.rail .tick.h3:hover::before{width:8px}
+.rail .tick::after{content:attr(data-t);position:absolute;right:38px;top:50%;transform:translateY(-50%);max-width:min(420px,70vw);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#111;border:1px solid var(--rule);color:var(--chalk);font:15px var(--body);padding:4px 10px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .15s}
+.rail .tick:hover::after,.rail .tick:focus-visible::after{opacity:1}.rail .tick:focus-visible{outline:1px solid var(--dim);outline-offset:2px}
+@media (max-width:980px){.rail{right:2px;width:24px}.rail::before,.rail .fill{right:5px}.rail .tick{width:24px}.rail .tick::before{right:11px;width:6px}.rail .tick.h3::before{width:3px}.rail .tick.cur::before{width:9px}.rail .tick::after{right:28px}}
 a{color:inherit}
 h1,h2,h3{font-family:var(--display);font-weight:500;line-height:1.15;margin:0;text-wrap:balance}
 h1{font-size:44px;margin:18px 0 6px}
@@ -46,13 +61,15 @@ strong{font-weight:600}
 .blk{position:relative;padding:2px 0 2px 14px;margin:6px 0}
 /* display math: the scroll box is the wrapper, with vertical padding, so tall
    glyphs (integral signs, fraction numerators) are never shaved by overflow */
-.mathrow{overflow-x:auto;overflow-y:hidden;padding:10px 2px;margin:8px 0;scrollbar-width:thin;scrollbar-color:var(--rule) transparent}
+.mathrow{overflow-x:auto;overflow-y:hidden;padding:10px 2px;margin:8px 0}
 .katex-display{margin:0;padding:0;overflow:visible;text-align:left}
 .katex-display>.katex{text-align:left}.katex{font-size:1.12em}
 .katex .boxpad{border-color:var(--acc)!important}
 /* tables: booktabs — rules only at top, under the header, and at the bottom.
    No vertical rules, no fills; row spacing does the separating. */
-.tablewrap{overflow-x:auto;overflow-y:hidden;padding:8px 0 12px;margin:20px 0 26px 14px;scrollbar-width:thin;scrollbar-color:var(--rule) transparent}
+.tablewrap{overflow-x:auto;overflow-y:hidden;padding:8px 0 12px;margin:20px 0 26px 14px}
+.mathrow,.tablewrap,.mcqi .answer-copy,main pre{scrollbar-width:none}
+.mathrow::-webkit-scrollbar,.tablewrap::-webkit-scrollbar,.mcqi .answer-copy::-webkit-scrollbar,main pre::-webkit-scrollbar{display:none}
 .tablewrap table{border-collapse:collapse;width:auto;max-width:100%;font-variant-numeric:tabular-nums;border-top:1.5px solid var(--chalk);border-bottom:1.5px solid var(--chalk)}
 .tablewrap th{font-family:var(--body);font-weight:500;font-size:15px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);text-align:left;padding:12px 28px 10px 0;border-bottom:1px solid var(--rule);white-space:nowrap}
 .tablewrap th .katex{text-transform:none;letter-spacing:normal;font-size:1.05em;color:var(--chalk)}
@@ -75,27 +92,39 @@ summary::before{content:"";position:absolute;left:9px;top:13px;border:5px solid 
 details[open]>summary::before{transform:rotate(90deg) translate(-2px,2px)}
 details>div{padding:2px 6px 8px 28px;color:var(--dim)}
 details>div p{color:var(--dim)}
-.exp{position:relative;margin:10px 0 16px 14px;padding:14px 22px 6px 20px;border-left:2px solid var(--acc);border-radius:0 8px 8px 0;background:rgba(255,255,255,.035);color:var(--chalk);font-size:20px;cursor:pointer;transform-origin:top center;perspective:900px}
-.exp>.exp{margin-left:0;margin-top:6px}
-.exp .explabel{font-family:var(--display);font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--acc);margin:0 0 8px}
-.exp .explabel::before{content:"✎ ";opacity:.8}
-.exp p{max-width:66ch}
-.exp .mathrow{margin:8px 0 12px}
-.exp>.x{display:none}
-.fold{display:grid;grid-template-rows:1fr;transition:grid-template-rows .35s cubic-bezier(.2,.7,.2,1)}
-.fold>.in{overflow:hidden;min-height:0;transform-origin:top center;transform:rotateX(0);transition:transform .35s cubic-bezier(.2,.7,.2,1),opacity .3s}
-.fold.closed{grid-template-rows:0fr}
-.fold.closed>.in{transform:rotateX(-60deg);opacity:0}
-.exp.pending{color:var(--dim);font-style:italic}
-.exp.pending .nubi{display:inline-block;width:7px;height:16px;background:#f2eee4;border-radius:2px;transform:rotate(20deg);vertical-align:-2px;margin-left:6px;animation:blink 1s steps(2) infinite;box-shadow:0 0 6px #fff6}
-.exp.error{color:var(--acc)}
-.asked{cursor:pointer}
-.asked{text-decoration:underline dotted var(--acc);text-underline-offset:4px}
-::selection{background:rgba(155,58,74,.45)}
+.fold{margin:14px 0 20px;border:2px solid color-mix(in srgb,var(--acc) 78%,var(--chalk));border-radius:16px 9px 18px 10px/10px 17px 9px 15px;background:rgba(6,8,7,.34);box-shadow:inset 0 0 18px rgba(236,235,227,.035),0 0 6px color-mix(in srgb,var(--acc) 18%,transparent);color:var(--chalk);overflow:hidden}
+.exp{position:relative;font-size:20px}
+.exphead{display:flex;align-items:center;gap:6px;padding:6px 10px}
+.exptoggle{display:flex;align-items:center;gap:9px;flex:1;min-width:0;text-align:left;background:none;border:0;color:color-mix(in srgb,var(--acc) 65%,var(--chalk));font:inherit;font-size:17px;padding:8px 4px;cursor:pointer}
+.exptoggle::before{content:"▾";width:12px;flex-shrink:0}
+.fold.closed>.in>.exp>.exphead>.exptoggle::before{content:"▸"}
+.exp .explabel{overflow-wrap:anywhere}
+.expbody{padding:0 24px 14px;color:#ece8da}
+.expbody p{max-width:66ch}
+.expbody .mathrow{margin:8px 0 12px}
+.fold.closed>.in>.exp>.expbody{display:none}
+.expremove{border:0;background:none;color:var(--dim);cursor:pointer;font-size:22px;padding:5px 8px}
+.exptoggle:focus-visible,.expremove:focus-visible{outline:2px solid var(--acc);outline-offset:1px;border-radius:4px}
+.exp.pending .expbody{color:var(--dim)}
+.exp.error .expbody{color:#e3b2a2}
+.defined{cursor:pointer;text-decoration:underline dotted var(--acc);text-underline-offset:4px}
+.defined:focus-visible{outline:1px solid var(--acc);outline-offset:3px}
+/* selection is one colour everywhere: the lesson accent, text and math alike */
+::selection{background:color-mix(in srgb,var(--acc) 42%,transparent);color:inherit}
+/* math is selected by whole visual line: KaTeX glyph boxes get no native highlight, bands are drawn per row instead */
+.katex::selection,.katex *::selection{background:transparent}
+figure svg ::selection,figure svg::selection{background:transparent;fill:inherit}
+#selbands{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;z-index:4}
+.selband{position:absolute;border-radius:2px;background:color-mix(in srgb,var(--acc) 42%,transparent);pointer-events:none}
 .pill{position:absolute;background:var(--chalk);color:var(--bg);font-size:15px;border-radius:4px;box-shadow:0 3px 10px rgba(0,0,0,.5);z-index:5;display:none;overflow:hidden;white-space:nowrap}
 .pill span{display:inline-block;padding:4px 10px;cursor:pointer}
 .pill span+span{border-left:1px solid rgba(0,0,0,.2)}
 .pill span:hover{background:rgba(0,0,0,.08)}
+.defpop{position:absolute;z-index:6;display:none;max-width:320px;background:#111;color:var(--chalk);border:1px solid #2c2c2c;border-left:3px solid var(--acc);border-radius:6px;box-shadow:0 6px 22px rgba(0,0,0,.6);padding:9px 12px 10px;font:15.5px/1.45 var(--body)}
+.defpop .term{display:block;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
+.defpop .body .katex{font-size:1em}
+.defpop.err{border-left-color:#b4544f;color:var(--dim)}
+.defpop .nubi{display:inline-block;width:7px;height:7px;margin-left:2px;border-radius:50%;background:var(--acc);animation:blink 1s steps(2) infinite}
 .photo{margin:18px 0 22px}
 .photo img{width:100%;height:auto;display:block;border-radius:6px;filter:saturate(.85) brightness(.9)}
 .photo figcaption{font-size:15px;color:var(--dim);margin:8px 2px 0;line-height:1.45}
@@ -142,22 +171,42 @@ video.video{width:100%;border-radius:3px;background:#000;margin:12px 0;display:b
 .quiz .lbl{color:var(--dim);font-size:16px;min-width:64px}
 .mcqi{margin:8px 0 22px 14px}
 .mcqi .q{margin:0 0 8px}
-.mcqi label{display:block;padding:5px 10px;border-radius:4px;cursor:pointer;border:1px solid transparent}
-.mcqi label:hover{background:rgba(255,255,255,.05)}
-.mcqi input{appearance:none;-webkit-appearance:none;margin:0 12px 0 0;width:15px;height:15px;border:1px solid var(--dim);border-radius:50%;vertical-align:-2px;background:transparent;cursor:pointer}
-.mcqi input:checked{border-color:var(--chalk);box-shadow:inset 0 0 0 4px var(--chalk)}
-.mcqi.done input:checked{box-shadow:inset 0 0 0 4px var(--chalk)}
-.mcqi.done label{cursor:default}
+/* a stem or check-in question with code: the code is a normal code box, the question sentence on its own line */
+.qblock>p{margin:8px 0}.qblock>pre{margin:10px 0}.mcqi .q.qblock::before{display:block;margin-bottom:4px}
+.check summary .qblock{display:inline-block;vertical-align:top;width:calc(100% - 24px)}
+.mcqi .optcode{margin:0;font-size:.85em;white-space:pre-wrap;background:none;padding:0}
+.mcqi .answers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}
+.mcqi .answers.long{grid-template-columns:1fr}
+.mcqi label{position:relative;display:flex;align-items:center;gap:16px;min-height:94px;padding:20px;border-radius:8px;cursor:pointer;border:1px solid #55564f;background:rgba(255,255,255,.025);box-sizing:border-box;transition:background .15s,border-color .15s}
+.mcqi label:hover{background:rgba(255,255,255,.065);border-color:var(--chalk)}
+.mcqi label:focus-within{outline:2px solid var(--chalk);outline-offset:3px}
+.mcqi label:has(input:checked){border-color:var(--chalk);background:rgba(255,255,255,.08)}
+.mcqi input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.mcqi .answer-icon{flex:0 0 34px;width:34px;height:34px;display:grid;place-items:center;color:var(--answer-color);font-family:Arial,sans-serif;font-size:29px;line-height:1}
+.mcqi .answer-copy{min-width:0;overflow-wrap:anywhere;font-size:21px;line-height:1.45;overflow-x:auto;overflow-y:hidden;padding:6px 0}
+.mcqi .answer-copy .katex{font-size:1em}
+.mcqi.done label.right{border-color:var(--ok)}
+.mcqi.done label.wrong{border-color:var(--no)}
+.mcqi.done label::after{flex-shrink:0}
+@media(max-width:720px){.mcqi .answers{grid-template-columns:1fr}.mcqi label{padding:16px;min-height:80px}.mcqi .answer-copy{font-size:19px}}
 .mcqi.done label.right{color:var(--chalk)}
 .mcqi.done label.right::after{content:"\2713";display:inline-block;margin-left:10px;width:21px;height:21px;line-height:21px;text-align:center;border-radius:50%;background:var(--ok);color:#0c0c0c;font-size:13px;font-weight:700;vertical-align:-4px;animation:pop .34s cubic-bezier(.2,.9,.3,1)}
 .mcqi.done label.wrong::after{content:"\2715";display:inline-block;margin-left:10px;width:21px;height:21px;line-height:21px;text-align:center;border-radius:50%;background:var(--no);color:#0c0c0c;font-size:13px;font-weight:700;vertical-align:-4px}
 .mcqi.done label.wrong{color:var(--dim)}
 .mcqi .fb{margin-top:8px;min-height:1.4em;font-size:19px}
 .mcqi .fb .ok{color:var(--ok);font-weight:600}.mcqi .fb .bad{color:var(--no);font-weight:600}
+/* answer feedback uses the explanation-callout look: olive block, titled header, ivory body */
+.mcqi .fb:empty{display:none}
+.mcqi .mreset{margin-top:8px;padding:4px 12px;border:1px solid var(--rule);border-radius:6px;background:transparent;color:var(--dim);font:15px var(--body);cursor:pointer}
+.mcqi .mreset:hover,.mcqi .mreset:focus-visible{color:var(--chalk);border-color:var(--dim)}
+.mcqi .mreset[hidden]{display:none}
+.mcqi .fbc{margin-top:10px;border:1px solid #b8aa7130;border-radius:8px;background:#30352b;overflow:hidden}
+.mcqi .fbh{display:flex;align-items:center;gap:9px;padding:9px 16px 4px;font-size:17px;font-weight:600}
+.mcqi .fbc.ok .fbh{color:var(--ok)}.mcqi .fbc.bad .fbh{color:#e3b2a2}
+.mcqi .fbb{padding:0 22px 12px 16px;color:#ece8da;font-size:19px;font-weight:400}
+.mcqi .fbb p{margin:4px 0;max-width:66ch}.mcqi .fbb .mathrow{margin:8px 0}
 /* ---- quiz: multiple choice list ---- */
-#spot{position:absolute;border:2px solid var(--acc);border-radius:12px;pointer-events:none;z-index:5;animation:flash .8s ease-in-out 6;box-shadow:0 0 18px color-mix(in srgb,var(--acc) 45%,transparent)}
-@keyframes flash{0%,100%{opacity:1}50%{opacity:.08}}
-.quiz .items{counter-reset:mcq}
+#main{counter-reset:mcq}
 .mcqi{counter-increment:mcq}
 .mcqi .q::before{content:counter(mcq) ".";color:var(--dim);margin-right:10px;font-variant-numeric:tabular-nums}
 /* ---- flashcard deck: one card at a time, flips on Validate, slides to the next ---- */
@@ -269,6 +318,9 @@ hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
 .hubsec h3{font-size:21px;margin:22px 0 10px}
 .hubsec h3 a{color:inherit;text-decoration:none}
 .hubsec h3 a:hover{color:var(--acc)}
+.openall{margin-left:14px;vertical-align:middle;font:500 13px var(--body);color:var(--dim);background:transparent;border:1px solid var(--rule);border-radius:999px;padding:4px 12px;cursor:pointer;text-transform:none;letter-spacing:0}
+.openall:hover{color:var(--acc);border-color:var(--acc)}
+.openall .note{margin-left:8px;color:var(--acc)}
 .hubsec .sub{font-family:var(--body);font-weight:400;font-size:15px;color:var(--dim);margin-left:12px;text-transform:none;letter-spacing:0}
 .row{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x proximity}
 .row .card{flex:0 0 220px;scroll-snap-align:start}
@@ -276,8 +328,12 @@ hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
 .card.mini .t{font-size:17px}
 .card.mini .m{font-size:13px}
 .card[hidden],.course[hidden],.hubsec[hidden]{display:none}
-.card{display:block;text-decoration:none;color:inherit;border:1px solid var(--rule);border-radius:3px;overflow:hidden;background:#101010}
+.card{position:relative;display:block;text-decoration:none;color:inherit;border:1px solid var(--rule);border-radius:3px;overflow:hidden;background:#101010}
 .card:hover{border-color:var(--dim)}
+.card .nt{position:absolute;top:8px;right:8px;width:30px;height:30px;display:grid;place-items:center;border-radius:6px;background:rgba(10,10,10,.72);border:1px solid var(--rule);color:var(--ink);opacity:0;transition:opacity .15s;cursor:pointer}
+.card:hover .nt,.card:focus-within .nt,.card .nt:focus-visible{opacity:1}
+.card .nt:hover{border-color:var(--acc);color:var(--acc)}
+@media (hover:none){.card .nt{opacity:1}}
 .card .strip{height:120px;background:#161616;object-fit:cover;width:100%;display:block;filter:saturate(.7) brightness(.7)}
 .card .body{padding:12px 14px 14px}
 .card .t{font-family:var(--display);font-size:20px;line-height:1.2;margin:0 0 6px}
@@ -286,8 +342,26 @@ hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
 .card .dot{width:8px;height:8px;border-radius:50%;background:var(--rule)}
 .card .dot.p{background:var(--acc)}
 .empty{color:var(--dim);font-style:italic}
+
+.interactive{margin:22px 0;padding:20px;border:1px solid #b8aa7140;border-radius:8px;background:#1c211d}
+.interactive h4{margin:0 0 12px;color:#d1bb83;font:22px var(--display)}
+/* code stays inside the lesson column at every zoom: it scrolls inside its own block, never the page, and is
+   sized against the prose (0.8em of the 20px body, Menlo) so a ~70-character line fits at 100% */
+main pre{max-width:100%;box-sizing:border-box;overflow-x:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8em;line-height:1.5;tab-size:4}
+main pre code{font:inherit}
+.interactive pre{overflow:auto;margin:12px 0;white-space:pre}
+.trace-line{display:block;padding:0 8px;border-left:3px solid transparent}
+.trace-line.active{background:#d1bb8318;border-color:#d1bb83;color:#f4e8bf}
+.trace-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.trace-state{display:flex;gap:16px;flex-wrap:wrap;margin:12px 0}
+.trace-state pre{margin:0;min-width:120px}
+.interactive label{display:block}.interactive input[type=range]{width:min(100%,360px);accent-color:#c8bc83}
+.interactive svg{display:block;width:100%;max-width:640px;height:auto}
+.interactive .axis{stroke:#777c70;stroke-width:1}.interactive .curve{fill:none;stroke:#d1bb83;stroke-width:3}
+
 /* chalk write-in */
-.w{display:inline-block;animation:settle .45s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i)*22ms)}
+.w{display:inline-block;clip-path:inset(0 100% 0 0);animation:chalk-write var(--duration,150ms) steps(var(--letters,5),end) var(--delay,0ms) both}
+@keyframes chalk-write{from{clip-path:inset(0 100% 0 0);filter:blur(.5px)}to{clip-path:inset(0 0 0 0);filter:blur(0)}}
 @keyframes settle{from{opacity:0;filter:blur(3px);transform:translateY(2px)}60%{opacity:.85;filter:blur(.6px)}to{opacity:1;filter:blur(0)}}
 h1.new,h2.new,h3.new{--wipe:linear-gradient(90deg,#000 40%,transparent 60%);mask-image:var(--wipe);-webkit-mask-image:var(--wipe);mask-size:250% 100%;-webkit-mask-size:250% 100%;animation:wipe var(--d,900ms) cubic-bezier(.3,0,.2,1) forwards}
 @keyframes wipe{from{mask-position:100% 0;-webkit-mask-position:100% 0}to{mask-position:0 0;-webkit-mask-position:0 0}}
@@ -306,16 +380,280 @@ h1.new,h2.new,h3.new{--wipe:linear-gradient(90deg,#000 40%,transparent 60%);mask
 #nub.on{opacity:1}
 #nub.idle{animation:blink 1s steps(2) infinite}
 @keyframes blink{50%{opacity:.2}}
-@media (prefers-reduced-motion:reduce){.w,h1.new,h2.new,h3.new,.mathrow.new,.blk.new,.btn.ok,.mcqi.done label.right::after{animation:none!important;mask:none!important;-webkit-mask:none!important;clip-path:none!important;opacity:1!important;filter:none!important;transform:none!important}#nub{display:none}}
+/* The chalk-writing reveal plays even with Reduce Motion on (Caio asked for it, like the XP celebration): it is short and never loops. */
+@media (prefers-reduced-motion:reduce){.btn.ok,.mcqi.done label.right::after{animation:none!important;mask:none!important;-webkit-mask:none!important;clip-path:none!important;opacity:1!important;filter:none!important;transform:none!important}#nub{display:none}}
+
+/* contents: drawer from the left + section ticks on the reading-progress bar */
+main h2,main h3{scroll-margin-top:70px}
+/* `board: slate` lessons: a real blackboard photo (board/slate.jpg: "Black smooth textured paper background", magnific.com (Freepik) free license, attribution required; vignette flattened),
+   darkened so text stays readable, fixed behind the page; text gets a faint chalk bloom */
+html.slate{--bg:#141614;--rule:#2c302c;--chalkmask:url("data:image/png;base64,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")}
+/* The photo is the root background, scrolling natively with the text (same speed, composited, no JS).
+   slate.jpg is the photo stacked on its own mirror, so it tiles down the page without a seam. */
+html.slate{background:linear-gradient(rgba(6,6,6,.42),rgba(6,6,6,.42)),url("/lib/slate.jpg") 0 0/100% auto repeat-y,#121212}
+html.slate body{background:transparent} /* an opaque body would cover the root background */
+html.slate #topbar{background:linear-gradient(rgba(12,14,13,.92) 60%,rgba(12,14,13,0))}
+html.slate main{color:#ecebe3;text-shadow:0 0 1px rgba(236,235,227,.35)}
+html.slate main .katex{text-shadow:0 0 1px rgba(236,235,227,.3)}
+/* chalk grain: a fine speckle mask (board/chalk.png, inlined as --chalkmask so it can never fail to load: a missing mask hides the text) knocks tiny gaps into text, math and diagrams, like chalk skipping
+   on the slate. A static mask, no filters, so scrolling stays composited. Not on photos, buttons or form controls. */
+html.slate main .blk :is(p,li,h1,h2,h3,h4,td,th,figcaption,.mathrow,.figure svg,.predict,.check){-webkit-mask:var(--chalkmask) 0 0/128px 128px repeat;mask:var(--chalkmask) 0 0/128px 128px repeat}
+html.slate #title,html.slate main header h1{-webkit-mask:var(--chalkmask) 0 0/128px 128px repeat;mask:var(--chalkmask) 0 0/128px 128px repeat}
+/* margin notes (`&& reason` in derivations): a chalk margin — dashed rule, accent chalk, smaller, "why" label on the first */
+.katex .mnote{display:inline-block;position:relative;margin-left:1.1em;padding-left:.85em;font-size:.8em;color:color-mix(in srgb,var(--acc) 70%,var(--chalk));border-left:2px dashed color-mix(in srgb,var(--acc) 45%,transparent)}
+.katex .mnote.first::before{content:'why';position:absolute;left:.85em;top:-1.35em;font:600 11px var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--acc);opacity:.75}
+/* Step lead-ins: boxed in a hand-drawn chalk frame in the lesson's accent */
+main p > strong.step{position:relative;display:inline-block;padding:1px 9px 2px;margin:0 4px 0 -2px;color:var(--chalk)}
+/* ---------- one pen ----------
+   Everything new is written by a single pen, top to bottom: words letter by letter (.w), math swept left to right (.ink),
+   shapes and diagram strokes drawn along their path (.drawn), figure labels faded in (.ink-fade). JS gives each piece its
+   --delay/--duration on one shared clock, so two blocks never write at the same time. */
+.ink{clip-path:inset(-4px 100% -4px 0);animation:inksweep var(--duration,600ms) linear var(--delay,0ms) both}
+.katex.ink{display:inline-block}
+@keyframes inksweep{from{clip-path:inset(-4px 100% -4px 0)}to{clip-path:inset(-4px 0 -4px 0)}}
+.drawn{stroke-dasharray:100;stroke-dashoffset:100;animation:draw var(--duration,600ms) cubic-bezier(.45,.05,.4,1) var(--delay,0ms) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.ink-fade{opacity:0;animation:inkfade var(--duration,250ms) ease-out var(--delay,0ms) forwards}
+@keyframes inkfade{to{opacity:1}}
+/* chalk shapes: hand-drawn SVG paths sized to their text (JS), so they can be drawn like a hand draws them */
+#toc .chalkdeco{display:none}
+.chalkdeco{position:absolute;pointer-events:none;overflow:visible}
+.chalkdeco path{fill:none;stroke:var(--acc);stroke-linecap:round;stroke-linejoin:round}
+main h3>.chalkdeco.ul{left:-4px;bottom:-4px;width:calc(100% + 12px);height:12px}
+main p>strong.step>.chalkdeco.box{left:-3px;top:-4px;width:calc(100% + 6px);height:calc(100% + 8px)}
+html.slate .chalkdeco{-webkit-mask:var(--chalkmask) 0 0/128px 128px repeat;mask:var(--chalkmask) 0 0/128px 128px repeat}
+/* the chalk stick that follows the pen */
+#nub{transition:left .09s linear,top .09s linear,opacity .4s}
+/* ---------- brainstorm: notes on the board while the lesson is researched; erased with a felt eraser ---------- */
+#brainstorm{position:relative;margin:30px 0 70px;min-height:160px}
+#brainstorm .bl{position:relative;width:max-content;max-width:100%;margin:4px 0 8px;font:30px/1.3 'Patrick Hand',cursive;color:#ecebe3;transform:rotate(var(--tilt,0deg))}
+#brainstorm .bl.head{color:color-mix(in srgb,var(--acc) 65%,#ecebe3)}
+#brainstorm .bl.sub{margin-left:34px;font-size:26px}
+#brainstorm .smudge{position:absolute;margin:0;filter:blur(4px);opacity:.2;transition:opacity 1.6s ease-out;pointer-events:none}
+.eraser{position:absolute;left:0;top:0;width:78px;height:36px;border-radius:6px;pointer-events:none;z-index:5;
+  background:linear-gradient(#4a4036 0 58%,#b9ad97 58% 100%);box-shadow:0 3px 8px #000b,inset 0 1px 0 #ffffff22}
+/* ### subtitles: underlined with a hand-drawn chalk stroke in the lesson's accent, so they read as sub-steps of the ## above */
+main h3{display:table;position:relative;padding-bottom:9px}
+/* one control, top right: the ring is the lesson's XP and the button that opens Contents */
+#tocbtn{position:fixed;top:14px;right:14px;z-index:1004;width:42px;height:42px;border-radius:50%;border:0;background:#0f0f0f;color:var(--chalk);display:none;place-items:center;cursor:pointer;padding:0;box-shadow:0 0 0 1px var(--rule)}
+#tocbtn.show{display:grid}
+#tocbtn:hover,#tocbtn[aria-expanded="true"]{box-shadow:0 0 0 1px var(--dim)}
+#tocbtn .ring{position:absolute;inset:3px;width:36px;height:36px;transform:rotate(-90deg)}
+#tocbtn .ring circle{fill:none;stroke-width:3}
+#tocbtn .ring .trk{stroke:#262626}
+#tocbtn .ring .arc{stroke:var(--acc);stroke-linecap:round;stroke-dasharray:100.53;stroke-dashoffset:100.53;transition:stroke-dashoffset .6s cubic-bezier(.2,.8,.2,1),stroke .3s;filter:drop-shadow(0 0 3px color-mix(in srgb,var(--acc) 70%,transparent))}
+#tocbtn.full .ring .arc{stroke:#d9b44a;filter:drop-shadow(0 0 4px #d9b44a)}
+#tocbtn .rl{position:relative;font:600 12px/1 var(--body);letter-spacing:.02em;font-variant-numeric:lining-nums tabular-nums}
+#tocbtn .ico{position:relative;width:16px;height:16px;color:var(--dim)}
+#tocbtn .dot{position:absolute;top:2px;left:2px;width:9px;height:9px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 2px #0c0c0c,0 0 6px var(--acc)}
+#tocshade{position:fixed;inset:0;background:#0009;z-index:1002;opacity:0;pointer-events:none;transition:opacity .2s}
+#tocshade.open{opacity:1;pointer-events:auto}
+#toc{position:fixed;top:0;right:0;bottom:0;width:min(340px,86vw);z-index:1003;background:#0f0f0f;border-left:1px solid var(--rule);transform:translateX(102%);transition:transform .24s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;box-shadow:-12px 0 40px #000a}
+#toc.open{transform:none}
+#toc .tochead{display:flex;align-items:baseline;gap:12px;padding:24px 72px 14px 22px;border-bottom:1px solid var(--rule)}
+#toc .tochead .xpsum{margin-left:auto;font:14px var(--body);color:var(--dim);white-space:nowrap;font-variant-numeric:lining-nums tabular-nums}
+#toc .tochead .xpsum b{color:var(--ok);font-weight:600}
+#toc .tochead b{font-family:var(--display);font-size:22px;font-weight:500;color:var(--chalk)}
+#toc .tochead kbd{font:13px var(--body);color:var(--dim);border:1px solid var(--rule);border-radius:4px;padding:1px 6px}
+#toc ol{list-style:none;margin:0;padding:10px 0 48px;overflow-y:auto;flex:1}
+#toc li a{display:flex;gap:10px;align-items:baseline;padding:7px 20px 7px 14px;color:var(--dim);text-decoration:none;font:17px/1.3 var(--body);border-left:3px solid transparent}
+#toc li a:hover{color:var(--chalk);background:#161616}
+#toc li.h3 a{padding-left:40px;font-size:15.5px}
+#toc li.in>a{color:var(--chalk)}
+#toc li.cur>a{color:var(--chalk);border-left-color:var(--acc);background:#141414}
+#toc .mk{flex:0 0 14px;font-size:13px;color:var(--ok)}
+#toc .lbl{flex:1;min-width:0}
+#toc .lbl .katex{font-size:1em}
+#toc .sc{font-size:14px;color:var(--chalk);white-space:nowrap}
+#toc .new{flex:0 0 7px;width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 6px var(--acc);align-self:center}
+@media (prefers-reduced-motion:reduce){#toc,#tocshade{transition:none}}
+/* right-answer celebration: gold pixel burst, floating +1 XP, ring pulse; a bigger one when the quiz is cleared */
+#fx{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:1006;image-rendering:pixelated}
+.xpfloat{position:fixed;z-index:1007;pointer-events:none;font:12px/1 'Press Start 2P',monospace;color:#d9b44a;text-shadow:2px 2px 0 #3a2e10,0 0 8px #d9b44a88;animation:xprise 1s steps(14) forwards;white-space:nowrap}
+.xpfloat.combo{color:#e9e6df;font-size:10px;text-shadow:2px 2px 0 #3a2e10}
+@keyframes xprise{0%{transform:translate(-50%,0);opacity:0}12%{opacity:1}75%{opacity:1}100%{transform:translate(-50%,-54px);opacity:0}}
+.mcqi label.right.win{animation:winflash .7s steps(6)}
+@keyframes winflash{0%,34%,68%{background:#d9b44a2e;box-shadow:inset 0 0 0 2px #d9b44a}17%,51%,100%{background:transparent;box-shadow:none}}
+#tocbtn.bump{animation:hpbump .45s steps(6)}
+@keyframes hpbump{0%,100%{box-shadow:0 0 0 1px var(--rule)}30%,70%{box-shadow:0 0 0 2px var(--acc),0 0 14px color-mix(in srgb,var(--acc) 60%,transparent)}}
+/* XP as a health bar: the Contents button fills the top-right space between the search box and the edge */
+#tocbtn{--sw:min(460px,calc(100vw - 420px));width:calc((100vw - var(--sw))/2 - 26px);border-radius:21px;padding:0 14px 0 13px;gap:11px;justify-content:stretch}
+#tocbtn.show{display:flex;align-items:center}
+#tocbtn .ring{display:none}
+#tocbtn .ico{flex:0 0 16px}
+#tocbtn .hplbl{flex:0 0 auto;font:10px/1 'Press Start 2P',monospace;color:var(--acc);letter-spacing:.04em}
+#tocbtn .hp{flex:1;min-width:24px;height:14px;display:flex;gap:2px;padding:2px;box-sizing:border-box;border:1px solid color-mix(in srgb,var(--acc) 45%,#2a2a2a);border-radius:3px;background:#0a0a0a}
+#tocbtn .hp i{flex:1;border-radius:1px;background:color-mix(in srgb,var(--acc) 14%,#151515);transition:background .35s,box-shadow .35s}
+#tocbtn .hp i.on{background:var(--acc);box-shadow:0 0 6px color-mix(in srgb,var(--acc) 60%,transparent)}
+#tocbtn.full .hp i.on{background:#d9b44a;box-shadow:0 0 6px #d9b44a99}
+#tocbtn.full .hplbl{color:#d9b44a}
+#tocbtn .rl{flex:0 0 auto;font:600 14px/1 var(--body);color:var(--chalk)}
+#tocbtn .dot{top:-2px;left:auto;right:-2px}
+@media (max-width:760px){#tocbtn{width:150px}#topbar{padding-right:178px}#tocbtn .hplbl{display:none}}
+
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.28)}100%{transform:scale(1)}}
+#cleared{position:fixed;left:50%;top:38%;z-index:1007;pointer-events:none;transform:translate(-50%,-50%);text-align:center;font:18px/1.6 'Press Start 2P',monospace;color:#d9b44a;text-shadow:3px 3px 0 #3a2e10,0 0 18px #d9b44a99;animation:cleared 2.4s steps(24) forwards}
+#cleared small{display:block;font-size:10px;color:#e9e6df;margin-top:10px;letter-spacing:.08em}
+@keyframes cleared{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}10%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}18%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
+/* the celebration is short and was asked for, so it plays even with Reduce Motion on */
+/* zoom: scales the lesson column and the chat's messages and composer; fixed controls keep their size. Remembered per browser. */
+main,#chatlist,#chatform{zoom:var(--z,1)}
+/* top bar: one row of 42px controls on a shared centre line; search is centred on the viewport */
+#topbar{position:fixed;top:0;left:0;right:0;height:70px;z-index:1003;display:none;align-items:center;gap:8px;padding:0 14px;background:linear-gradient(#0c0c0c 60%,#0c0c0c00);pointer-events:none;--tb:42px}
+html.railmode #topbar{display:flex}
+#topbar>*{pointer-events:auto}
+#toplessons,#zoomctl,#topsearch input{height:var(--tb);box-sizing:border-box;background:#0f0f0f;box-shadow:0 0 0 1px var(--rule);border:0}
+#toplessons{width:var(--tb);flex:0 0 var(--tb);display:grid;place-items:center;border-radius:50%;color:var(--dim);text-decoration:none}
+#toplessons svg{width:18px;height:18px}
+#toplessons:hover,#toplessons:focus-visible,#zoomctl button:focus-visible{color:var(--chalk);box-shadow:0 0 0 1px var(--dim);outline:none}
+#zoomctl{display:flex;align-items:center;gap:0;border-radius:calc(var(--tb)/2);padding:0 4px}
+#zoomctl button{width:32px;height:32px;border:0;border-radius:50%;background:none;color:var(--dim);font:20px/1 var(--body);cursor:pointer;padding:0;display:grid;place-items:center}
+#zoomctl button:hover{color:var(--chalk);background:#1a1a1a}
+#zoomctl button:disabled{opacity:.3;cursor:default;background:none}
+#zoomctl .zv{width:auto;min-width:46px;padding:0 4px;border-radius:12px;font:13px var(--body);font-variant-numeric:lining-nums tabular-nums;letter-spacing:.02em}
+#topsearch{position:absolute;left:50%;top:14px;transform:translateX(-50%);width:min(460px,calc(100vw - 420px))}
+#topsearch input{width:100%;border-radius:calc(var(--tb)/2);color:var(--chalk);font:16px var(--body);padding:0 44px 0 42px;outline:none;-webkit-appearance:none;appearance:none}
+#topsearch input::-webkit-search-cancel-button{display:none}
+#topsearch input::placeholder{color:var(--dim)}
+#topsearch input:focus{box-shadow:0 0 0 1px color-mix(in srgb,var(--acc) 70%,var(--dim))}
+#topsearch svg{position:absolute;left:16px;top:13px;width:16px;height:16px;color:var(--dim);pointer-events:none}
+#topsearch kbd{position:absolute;right:14px;top:11px;height:20px;line-height:18px;box-sizing:border-box;font:12px var(--body);color:var(--dim);border:1px solid var(--rule);border-radius:5px;padding:0 6px}
+#topsearch input:focus~kbd,#topsearch input:not(:placeholder-shown)~kbd{display:none}
+#topresults{position:absolute;top:50px;left:0;right:0;max-height:min(60vh,440px);overflow:auto;background:#0f0f0f;border:1px solid var(--rule);border-radius:10px;box-shadow:0 14px 40px #000c;padding:6px;display:none}
+#topresults.open{display:block}
+#topresults a{display:block;padding:8px 12px;border-radius:6px;color:var(--chalk);text-decoration:none;font:17px/1.3 var(--body)}
+#topresults a span{display:block;font-size:14px;color:var(--dim)}
+#topresults a.sel,#topresults a:hover{background:#1a1a1a}
+#topresults a.sel{box-shadow:inset 3px 0 0 var(--acc)}
+#topresults a em{display:block;font-style:normal;font-size:14.5px;line-height:1.4;color:#b9b5aa;margin-top:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+#topresults mark{background:color-mix(in srgb,var(--acc) 45%,transparent);color:var(--chalk);border-radius:2px;padding:0 1px}
+#topresults .none{padding:10px 12px;color:var(--dim);font:16px var(--body)}
+html.railmode main{padding-top:84px}
+@media (max-width:760px){#zoomctl .zv{display:none}#topsearch{position:static;transform:none;flex:1;width:auto;min-width:0}#topbar{padding-right:68px}}
+#zoomctl button{width:34px;height:34px;border:0;border-radius:50%;background:none;color:var(--dim);font:22px/1 var(--body);cursor:pointer;padding:0}
+#zoomctl button:hover,#zoomctl button:focus-visible{color:var(--chalk);background:#161616;outline:none}
+#zoomctl button:disabled{opacity:.3;cursor:default;background:none}
+#zoomctl .zv{min-width:44px;font:14px var(--body);font-variant-numeric:lining-nums tabular-nums;border-radius:12px}
+/* ---------- top bar: one row across the whole width, scaling with the window:
+   [back][zoom]  [search, takes what is left]  [XP, a fixed share of the width] ---------- */
+:root{--xpw:clamp(160px,25vw,440px)}
+#topbar{gap:10px !important;padding:0 calc(28px + var(--xpw)) 0 14px !important}
+#topsearch{position:relative !important;top:auto !important;left:auto !important;transform:none !important;flex:1 1 auto;width:auto !important;min-width:0;max-width:none}
+#tocbtn{width:var(--xpw) !important}
+@media (max-width:760px){:root{--xpw:124px}#topbar{padding-right:calc(22px + var(--xpw))}#tocbtn{width:var(--xpw) !important}}
+/* ---------- study chat: docked on the right, pushes the lesson column left (not an overlay) ---------- */
+:root{--chatpw:380px;--chatw:0px}
+html.chatopen{--chatw:var(--chatpw);--xpw:clamp(140px,calc((100vw - var(--chatpw))*.25),440px)}
+html.chatopen body{margin-right:var(--chatw)}
+html.chatopen #topbar{right:var(--chatw)}
+html.chatopen #tocbtn{right:calc(14px + var(--chatw))}
+html.chatopen .rail{right:calc(6px + var(--chatw))}
+html.chatopen #toc{right:var(--chatw)}
+#chatbtn{position:fixed;top:14px;right:calc(14px + var(--chatw));z-index:1004;width:42px;height:42px;border:0;border-radius:50%;background:#0f0f0f;box-shadow:0 0 0 1px var(--rule);color:var(--dim);display:grid;place-items:center;cursor:pointer;padding:0}
+html.railmode #chatbtn{right:calc(14px + var(--chatw))}
+#topbar #tocbtn{position:relative;top:auto;right:auto !important;flex:0 0 var(--xpw);z-index:auto}
+html.railmode #topbar{padding-right:70px !important}
+#chatbtn[hidden]{display:none}
+#chatbtn svg{width:18px;height:18px}
+#chatbtn:hover,#chatbtn:focus-visible{color:var(--chalk);box-shadow:0 0 0 1px var(--dim);outline:none}
+#chatbtn[aria-expanded="true"]{color:var(--chalk);box-shadow:0 0 0 1px color-mix(in srgb,var(--acc) 70%,var(--dim))}
+#chat{position:fixed;top:0;right:0;bottom:0;width:var(--chatpw);z-index:1006;display:none;flex-direction:column;background:#0f0f0f;border-left:1px solid var(--rule);color:var(--chalk);font-family:var(--body)}
+html.chatopen #chat{display:flex}
+#chat .chead{flex:0 0 64px;display:flex;align-items:center;gap:4px;padding:0 12px 0 20px;border-bottom:1px solid var(--rule)}
+#chat .ct{flex:1;min-width:0;font:500 18px/1 var(--display);letter-spacing:.01em}
+#chat .cib{flex:0 0 auto;width:32px;height:32px;border:0;border-radius:50%;background:none;color:var(--dim);display:grid;place-items:center;cursor:pointer;padding:0}
+#chat .cib svg{width:16px;height:16px}
+#chat .cib:hover,#chat .cib:focus-visible{background:#1a1a1a;color:var(--chalk);outline:none}
+#chat .cib:disabled{opacity:.3;cursor:default;background:none}
+#chat .cmid{flex:1;min-height:0;position:relative}
+#chatlist{position:absolute;inset:0;overflow-y:auto;padding:22px 20px 12px;scrollbar-width:thin;scrollbar-color:#2a2a2a transparent}
+#chatdown{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);width:32px;height:32px;border-radius:50%;border:1px solid #2c2c2c;background:#161616;color:var(--chalk);display:grid;place-items:center;cursor:pointer;box-shadow:0 6px 18px #000a;padding:0}
+#chatdown[hidden]{display:none}
+#chatdown svg{width:15px;height:15px}
+#chat .cmsg{margin:0 0 22px}
+#chat .cmsg.user{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+#chat .cmsg.user .cb{max-width:86%;background:#1a1a1a;border:1px solid #262626;border-radius:16px 16px 4px 16px;padding:8px 14px;font-size:16.5px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+#chat .cq{max-width:86%;border-left:2px solid var(--acc);padding:2px 0 2px 10px;font-size:14.5px;line-height:1.45;color:#b9b5aa;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+#chat .cq p{margin:0;max-width:none}
+#chat .cmsg.bot{font-size:17px;line-height:1.55;overflow-wrap:anywhere}
+#chat .cmd>:first-child{margin-top:0}
+#chat .cmd>:last-child{margin-bottom:0}
+#chat .cmd p,#chat .cmd ul,#chat .cmd ol{margin:0 0 10px;max-width:none}
+#chat .cmd ul,#chat .cmd ol{padding-left:22px}
+#chat .cmd li{margin:3px 0}
+#chat .cmd h1,#chat .cmd h2,#chat .cmd h3,#chat .cmd h4{font:600 17px/1.3 var(--body);margin:16px 0 6px}
+#chat .cmd blockquote{margin:8px 0 10px;padding:2px 0 2px 12px;border-left:2px solid var(--acc);color:#cfcabd}
+#chat .cmd blockquote p{margin:0 0 6px}
+#chat .cmd a{color:color-mix(in srgb,var(--acc) 55%,var(--chalk));text-underline-offset:3px}
+#chat .cmd code{font:13.5px/1.4 ui-monospace,Menlo,monospace;background:#1a1a1a;border-radius:4px;padding:1px 5px}
+#chat .cmd pre{background:#141414;border:1px solid var(--rule);border-radius:8px;padding:10px 12px;margin:8px 0 12px;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#2a2a2a transparent}
+#chat .cmd pre code{background:none;padding:0}
+#chat .cmd .katex{font-size:1.04em}
+#chat .cmd .mathrow{padding:6px 2px;margin:6px 0}
+#chat .cmd .tablewrap{margin:10px 0 12px}
+#chat .cmd .tablewrap th{font-size:12.5px;padding:8px 16px 6px 0}
+#chat .cmd .tablewrap td{padding:7px 16px 7px 0;font-size:15.5px}
+#chat .cmd hr{border:0;border-top:1px solid var(--rule);margin:14px 0}
+#chat .csteps{margin:0 0 8px;font-size:14.5px;line-height:1.4;color:var(--dim)}
+#chat .cs{display:flex;gap:9px;align-items:baseline;padding:2px 0;overflow-wrap:anywhere}
+#chat .cs::before{content:'';flex:0 0 6px;height:6px;border-radius:50%;background:#3b3b3b;transform:translateY(-1px)}
+#chat .cs.live::before{background:var(--acc);animation:cpulse 1.1s ease-in-out infinite}
+#chat .cstog{display:flex;align-items:center;gap:6px;background:none;border:0;padding:2px 0;color:var(--dim);font:14.5px var(--body);cursor:pointer}
+#chat .cstog:hover{color:var(--chalk)}
+#chat .cstog::before{content:'▸';font-size:11px}
+#chat .csteps.open .cstog::before{content:'▾'}
+#chat .csteps.done:not(.open) .cs{display:none}
+#chat .cthink{display:flex;align-items:center;gap:9px;color:var(--dim);font-size:15px}
+#chat .cthink::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--acc);animation:cpulse 1.1s ease-in-out infinite}
+#chat .ccopy{margin-top:6px;width:26px;height:26px}
+#chat .ccopy svg{width:14px;height:14px}
+#chat .cerr{color:#e3b2a2;font-size:15px;margin:0 0 16px}
+@keyframes cpulse{0%,100%{opacity:.35}50%{opacity:1}}
+#chat .cempty{padding:36px 4px 0;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+#chat .cempty .cmark{width:52px;height:52px;border-radius:50%;border:1px solid #2c2c2c;display:grid;place-items:center;color:var(--dim);margin-bottom:10px}
+#chat .cempty .cmark svg{width:22px;height:22px}
+#chat .cempty h2{font:500 20px/1.3 var(--display);margin:0}
+#chat .cempty p{margin:0 0 18px;color:var(--dim);font-size:15px;max-width:none}
+#chat .cchip{display:block;width:100%;text-align:left;background:none;border:0;border-radius:10px;padding:9px 12px;color:#cfcabd;font:16px/1.35 var(--body);cursor:pointer}
+#chat .cchip:hover,#chat .cchip:focus-visible{background:#181818;color:var(--chalk);outline:none}
+#chatform{flex:0 0 auto;margin:4px 12px 14px;background:#141414;border:1px solid #2a2a2a;border-radius:14px;padding:10px 10px 8px 14px}
+#chatform:focus-within{border-color:#3d3d3d}
+#chatsel{display:flex;gap:6px;align-items:flex-start;margin:0 0 8px;padding:5px 4px 5px 10px;border-left:2px solid var(--acc);background:#1a1a1a;border-radius:0 6px 6px 0}
+#chatsel[hidden]{display:none}
+#chatsel .cselt{flex:1;min-width:0;font-size:14px;line-height:1.4;color:#cfcabd;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#chatsel .cib{width:24px;height:24px}
+#chatsel .cselt p{margin:0;max-width:none}#chatsel .cselt .katex{font-size:1em}
+#chatq{display:block;width:100%;resize:none;border:0;outline:0;background:none;color:var(--chalk);font:16.5px/1.45 var(--body);max-height:200px;min-height:24px;padding:2px 0;margin:0}
+#chatq::placeholder{color:var(--dim)}
+#chat .cbar{display:flex;align-items:center;gap:8px;margin-top:8px}
+#chat .cctx{flex:1;min-width:0;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--dim);white-space:nowrap}
+#chat .cctx svg{flex:0 0 13px;width:13px;height:13px}
+#chat .cctx span{overflow:hidden;text-overflow:ellipsis}
+#chatsend{flex:0 0 32px;width:32px;height:32px;border:0;border-radius:50%;background:var(--chalk);color:#0c0c0c;display:grid;place-items:center;cursor:pointer;padding:0}
+#chatsend svg{width:15px;height:15px}
+#chatsend:disabled{opacity:.25;cursor:default}
+#chatgrip{position:absolute;top:0;bottom:0;left:-5px;width:10px;cursor:col-resize;z-index:2;touch-action:none}
+#chatgrip::after{content:"";position:absolute;top:0;bottom:0;left:4px;width:2px;background:transparent;transition:background .15s}
+#chatgrip:hover::after,html.chatdrag #chatgrip::after{background:var(--rule)}
+html.chatdrag,html.chatdrag *{user-select:none !important;cursor:col-resize !important}
+@media (max-width:760px){html.chatopen{--chatw:0px}#chat{width:100vw}#chatgrip{display:none}}
+@media (prefers-reduced-motion:reduce){#chat .cs.live::before,#chat .cthink::before{animation:none;opacity:1}}
 </style>
 </head>
 <body>
-<div class="reading-progress" id="reading-progress" role="progressbar" aria-label="Lesson scroll progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><span></span></div>
+<div class="rail" id="reading-progress" role="progressbar" aria-label="Lesson reading position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><span class="fill"></span><div id="toc-ticks"></div></div>
 <svg width="0" height="0" style="position:absolute"><filter id="chalk"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.2"/></filter></svg>
 <main id="main"></main>
-<span class="pill" id="pill"><span data-k="line">Explain</span><span data-k="deep">In depth</span></span>
+<span class="pill" id="pill"><span data-k="line">Explain</span><span data-k="define" id="pilldef">Definition</span><span data-k="ask">Ask</span></span>
+<div class="defpop" id="defpop" role="dialog" aria-live="polite"></div>
 <div class="toast" id="toast"></div>
 <div id="nub"></div>
+<button id="tocbtn" type="button" aria-label="Contents and XP (t)" title="Contents (t)" aria-controls="toc" aria-expanded="false"><svg class="ring" viewBox="0 0 38 38" aria-hidden="true"><circle class="trk" cx="19" cy="19" r="16"/><circle class="arc" cx="19" cy="19" r="16"/></svg><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 4h10M3 8h10M3 12h6"/></svg><span class="hplbl" hidden>XP</span><span class="hp" aria-hidden="true" hidden></span><span class="rl" hidden></span></button>
+<div id="topbar"><a id="toplessons" href="/lessons" title="Back" aria-label="Back"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg></a><div id="zoomctl" role="group" aria-label="Zoom"><button type="button" data-z="-1" aria-label="Zoom out (-)" title="Zoom out (-)">&minus;</button><button type="button" class="zv" data-z="0" aria-label="Reset zoom (0)" title="Reset zoom (0)">100%</button><button type="button" data-z="1" aria-label="Zoom in (+)" title="Zoom in (+)">+</button></div><div id="topsearch" role="search"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="4.8"/><path d="M10.6 10.6 14 14"/></svg><input id="topq" type="search" placeholder="Search every lesson" autocomplete="off" aria-label="Search every lesson" aria-controls="topresults"><kbd>/</kbd><div id="topresults" role="listbox"></div></div></div>
+<button id="chatbtn" type="button" hidden aria-label="Chat about this lesson" aria-controls="chat" aria-expanded="false"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 3.5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H7l-3 2.5V11h-.5a1 1 0 0 1-1-1z"/></svg></button>
+<aside id="chat" aria-label="Study chat"><div id="chatgrip" role="separator" aria-orientation="vertical" aria-label="Drag to resize the chat. Double-click to reset." title="Drag to resize · double-click to reset"></div><div class="chead"><span class="ct">Chat</span><button type="button" class="cib" id="chatnew" title="New chat" aria-label="New chat"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></button><button type="button" class="cib" id="chatclose" aria-label="Close chat"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div><div class="cmid"><div id="chatlist" role="log" aria-live="polite"></div><button type="button" id="chatdown" hidden aria-label="Jump to the latest message" title="Jump to the latest message"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v10M3.5 8.5 8 13l4.5-4.5"/></svg></button></div><form id="chatform"><div id="chatsel" hidden><span class="cselt"></span><button type="button" class="cib" id="chatselx" aria-label="Remove the quoted selection" title="Remove the quoted selection"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg></button></div><textarea id="chatq" rows="1" placeholder="Ask about this lesson" aria-label="Message"></textarea><div class="cbar"><span class="cctx"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M4 1.8h5.5L12.5 5v9.2H4z"/><path d="M9.5 1.8V5h3"/></svg><span id="chatctx"></span></span><button type="submit" id="chatsend" aria-label="Send" disabled><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg></button></div></form></aside>
+<div id="tocshade"></div>
+<nav id="toc" aria-label="Lesson contents" aria-hidden="true" inert><div class="tochead"><b>Contents</b><kbd>t</kbd><span class="xpsum"></span></div><ol></ol></nav>
 <script>
 const MODE="__MODE__", LESSON_ARG="__LESSON__", WS="__WS__";
 const WSB=WS?"/w/"+WS:"", WSQ=WS?"&ws="+WS:"";  // pages under /w/<slug>/ stay pinned to that workspace
@@ -325,15 +663,17 @@ let lessonId=LESSON_ARG, offset=0, hash='', blocks=0, srcLines=[], streaming=fal
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // Reading position only; never records lesson completion or mastery.
+// The reading line runs from the top of the screen (page top) to its bottom (page end), so ticks can sit at each
+// heading's true place in the document without piling up at the end, and the fill passes a tick as you reach it.
+function readPos(){ const H=document.documentElement.scrollHeight, extent=H-window.innerHeight; if(extent<=0)return 1; const f=Math.max(0,Math.min(1,window.scrollY/extent)); return Math.min(1,(window.scrollY+window.innerHeight*f)/H); }
 const readingProgress=$('#reading-progress');
 let progressFrame=0;
 function updateReadingProgress(){
   progressFrame=0;
   readingProgress.hidden=MODE==='grid'||!main.querySelector('#title');
   if(readingProgress.hidden)return;
-  const extent=document.documentElement.scrollHeight-window.innerHeight;
-  const ratio=extent>0?Math.max(0,Math.min(1,window.scrollY/extent)):1;
-  readingProgress.firstElementChild.style.width=`${ratio*100}%`;
+  const ratio=readPos();
+  readingProgress.style.setProperty('--pos',ratio.toFixed(4));
   readingProgress.setAttribute('aria-valuenow',String(Math.round(ratio*100)));
 }
 function scheduleReadingProgress(){
@@ -345,10 +685,10 @@ new ResizeObserver(scheduleReadingProgress).observe(main);
 scheduleReadingProgress();
 
 // ---------- markdown -> html ----------
-const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 function mathify(src){
   const slots=[];
-  src=src.replace(/\$\$([\s\S]+?)\$\$/g,(m,t)=>{slots.push('<div class="mathrow">'+katex.renderToString(t,{displayMode:true,throwOnError:false})+'</div>');return '\n@@M'+(slots.length-1)+'@@\n';});
+  src=src.replace(/\$\$([\s\S]+?)\$\$/g,(m,t)=>{slots.push('<div class="mathrow">'+katex.renderToString(marginNotes(t),{displayMode:true,throwOnError:false,trust:c=>c.command==='\\htmlClass'})+'</div>');return '\n@@M'+(slots.length-1)+'@@\n';});
   // inline math: $…$ on one line, no space just inside either $. "$100 and $80" is money: its would-be body "100 and " ends in a space.
   // A digit may open math ($4$, $0.5$): the closing $ must follow on the same line, which money never has.
   src=src.replace(/(^|[^\\$])\$(?!\s)([^\n$]+?)(?<!\s)\$(?!\d)/g,(m,pre,t)=>{slots.push(katex.renderToString(t,{displayMode:false,throwOnError:false}));return pre+'@@M'+(slots.length-1)+'@@';});
@@ -357,7 +697,7 @@ function mathify(src){
 }
 function unslot(html,slots){return html.replace(/<p>\s*@@M(\d+)@@\s*<\/p>/g,(m,i)=>slots[+i]).replace(/@@M(\d+)@@/g,(m,i)=>slots[+i]);}
 function md(src){
-  src=src.replace(/==([^=\n]+)==/g,'<span class="asked">$1</span>');
+  src=src.replace(/==(?=[^\s=`])([^=\n`]+?)(?<=[^\s=`])==/g,'$1'); // legacy Explain anchors (==words==) are plain text; `a == 0 || b == 0` and code spans are left alone
   const {src:s2,slots}=mathify(src);
   const html=unslot(marked.parse(s2,{mangle:false,headerIds:false}),slots);
   return html.replace(/<table>/g,'<div class="tablewrap"><table>').replace(/<\/table>/g,'</table></div>');
@@ -373,7 +713,11 @@ function segments(text,baseLine){
     if(/^::: /.test(lines[i])){let depth=1;i++;while(i<lines.length&&depth>0){if(/^::: /.test(lines[i]))depth++;else if(/^:::\s*$/.test(lines[i]))depth--;i++;}}
     else if(/^\$\$/.test(lines[i].trim())){ if(!/\$\$.*\$\$/.test(lines[i])){i++;while(i<lines.length&&!/\$\$/.test(lines[i]))i++;} i++; if(i<lines.length&&/^units:/.test(lines[i]))i++; }
     else if(/^```/.test(lines[i])){i++;while(i<lines.length&&!/^```/.test(lines[i]))i++;i++;}
-    else { i++; while(i<lines.length&&lines[i].trim()&&!/^(#{1,6} |::: |\$\$|```)/.test(lines[i]))i++; }
+    else {
+      // a paragraph or list; a fence indented under a list item may hold blank lines, so it does not end the block
+      let f=/^\s+(```|~~~)/.test(lines[i]); i++;
+      while(i<lines.length&&(f||(lines[i].trim()&&!/^(#{1,6} |::: |\$\$|```)/.test(lines[i])))){ if(/^\s+(```|~~~)/.test(lines[i]))f=!f; i++; }
+    }
     out.push({line:baseLine+start+1,raw:lines.slice(start,i).join('\n')});
   }
   return out;
@@ -383,10 +727,25 @@ function container(raw){
   const m=raw.match(/^::: (\w+)\s*(.*)$/m); const kind=m[1], arg=(m[2]||'').trim();
   const inner=raw.split('\n').slice(1,-1).join('\n');
   switch(kind){
+    case 'interactive': return renderInteractive(arg,inner);
     case 'checkin':{
-      const items=inner.split('\n').filter(l=>l.trim().startsWith('-')).map(l=>l.replace(/^\s*-\s*/,'').split('||'));
-      return '<div class="check">'+items.map(([q,a])=>`<details><summary>${mdInline(q.trim())}</summary><div>${md((a||'').trim())}</div></details>`).join('')+'</div>';
+      // "- question || answer", one per item. An item may continue on indented lines and hold fenced code;
+      // the first || outside code splits question from answer (Java's || inside code stays put)
+      const items=[]; let cur=null, fence=false;
+      for(const l of inner.split('\n')){
+        const fl=/^\s*(```|~~~)/.test(l);
+        if(!fence&&/^\s?-(\s|$)/.test(l)){ cur=[l.replace(/^\s?-\s*/,'')]; items.push(cur); }
+        else if(cur&&(fence||fl||/^\s+\S/.test(l)||!l.trim())) cur.push(l.replace(/^ {1,2}/,''));
+        if(fl)fence=!fence;
+      }
+      const qa=t=>{ const L=t.split('\n'); let f=false;
+        for(let k=0;k<L.length;k++){ const l=L[k]; if(/^\s*(```|~~~)/.test(l)){f=!f;continue;} if(f)continue;
+          let tick=false; for(let i=0;i<l.length-1;i++){ if(l[i]==='`')tick=!tick; else if(!tick&&l[i]==='|'&&l[i+1]==='|') return [L.slice(0,k).concat(l.slice(0,i)).join('\n'),[l.slice(i+2)].concat(L.slice(k+1)).join('\n')]; } }
+        return [t,'']; };
+      const blockOrInline=t=>/^\s*(```|~~~)/m.test(t)?`<div class="qblock">${md(t)}</div>`:mdInline(t);
+      return '<div class="check">'+items.map(it=>{ const [q,a]=qa(it.join('\n').trim()); return `<details><summary>${blockOrInline(q.trim())}</summary><div>${md(a.trim())}</div></details>`; }).join('')+'</div>';
     }
+    case 'prerequisites': return `<details class="prerequisites"><summary>Prerequisites</summary><div>${md(inner)}</div></details>`;
     case 'numeric': return `<details><summary>numeric detail</summary><div>${md(inner)}</div></details>`;
     case 'predict':{
       const ls=inner.split('\n').filter(l=>l.trim()); const reveal=ls.find(l=>/^reveal:/.test(l));
@@ -396,11 +755,11 @@ function container(raw){
       return `<div class="predict" data-key="${key}"><div class="btns">${opts.map((o,i)=>`<button class="btn" data-choice="${i}">${mdInline(o)}</button>`).join('')}</div><details class="reveal"><summary>reveal</summary><div>${md((reveal||'').replace(/^reveal:\s*/,''))}</div></details></div>`;
     }
     case 'exp':{
-      const f=arg.split(/\s+/); const id=f[0]; const deep=f.includes('deep'); const folded=f.includes('folded'); expCount++;
+      const f=arg.split(/\s+/); const id=f[0]; const folded=f.includes('folded'); expCount++;
       // first line is "**label** — body"; the label becomes a chip, the body renders like any lesson block
       let label='', body=inner; const lm=inner.match(/^\*\*([^*]+)\*\*\s*(?:—|-|:)\s*/); if(lm){label=lm[1].trim(); body=inner.slice(lm[0].length);}
       const parts=segments(body,0).map(s=>/^::: /.test(s.raw)?container(s.raw):md(s.raw)).join('');
-      return `<div class="fold${folded?' closed':''}" data-for="${id}" data-label="${esc(label).toLowerCase()}"><div class="in"><div class="exp${deep?' deep':''}" data-id="${id}">${label?`<div class="explabel">${esc(label)}</div>`:''}${parts}</div></div></div>`;
+      return `<div class="fold${folded?' closed':''}" data-for="${id}" data-label="${esc(label).toLowerCase()}"><div class="in"><div class="exp" data-id="${id}"><div class="exphead"><button type="button" class="exptoggle" aria-expanded="${!folded}" aria-controls="body-${id}"><span aria-hidden="true">💡</span><span class="explabel">${label?mdInline(label):'Explanation'}</span></button><button type="button" class="expremove" aria-label="Remove explanation">×</button></div><div class="expbody" id="body-${id}">${parts}</div></div></div></div>`;
     }
     case 'photo':{
       // ::: photo [side|wide]   lines: query: <what to fetch> | src: <assets/… or https://…> | credit: … | caption: …
@@ -441,14 +800,24 @@ function container(raw){
       });
       if(deckAt>=0)parts[deckAt]=deckHtml(cards,scores);
       const chips=[`<button class="btn topic on" data-all="1">All topics</button>`].concat(topics.map(x=>`<button class="btn topic">${esc(x)}</button>`)).join('');
-      return `<div class="quiz" data-topics="${esc(topics.join('|'))}"><div class="items">${parts.join('')}</div><div class="more"><p class="morelbl">More practice</p><div class="tiles"><button class="tile on" data-mode="cards"><b>Flashcards</b><span>Say it or type it. Graded 1 to 5, then the card turns.</span></button><button class="tile" data-mode="mcq"><b>Multiple choice</b><span>Three options, one right. Checked as you click.</span></button></div><div class="chips"><span class="lbl">Topic</span>${chips}</div><div class="go"><span class="sp"></span><button class="btn primary gen">Generate 4 →</button></div><div class="genbox"></div></div></div>`;
+      return `<div class="quiz" data-topics="${esc(topics.join('|'))}"><div class="items">${parts.join('')}</div><div class="more"><p class="morelbl">More practice</p><div class="tiles"><button class="tile on" data-mode="cards"><b>Flashcards</b><span>Say it or type it. Graded 1 to 5, then the card turns.</span></button><button class="tile" data-mode="mcq"><b>Multiple choice</b><span>Choose an answer. Checked as you click.</span></button></div><div class="chips"><span class="lbl">Topic</span>${chips}</div><div class="go"><span class="sp"></span><button class="btn primary gen">Generate 4 →</button></div><div class="genbox"></div></div></div>`;
     }
     case 'mcq':{
-      const [item,key]=arg.split(/\s+/); const ls=inner.split('\n').filter(l=>l.trim());
-      const why=(ls.find(l=>/^why:/.test(l))||'').replace(/^why:\s*/,'');
-      const stem=ls.filter(l=>!/^\s*-/.test(l)&&!/^why:/.test(l)).join('\n'); const opts=ls.filter(l=>/^\s*-/.test(l)).map(l=>l.replace(/^\s*-\s*/,''));
+      // stem lines, "- option" lines and a "why:" line; fenced code in the stem keeps its lines and indentation
+      const [item,key]=arg.split(/\s+/); const stemL=[], opts=[]; let why='', fence=false;
+      for(const l of inner.split('\n')){
+        if(/^\s*(```|~~~)/.test(l)){ fence=!fence; stemL.push(l); continue; }
+        if(fence){ stemL.push(l); continue; }
+        if(!l.trim())continue;
+        if(/^why:/.test(l)) why=l.replace(/^why:\s*/,'');
+        else if(/^\s*-/.test(l)) opts.push(l.replace(/^\s*-\s*/,''));
+        else stemL.push(l);
+      }
+      const stem=stemL.join('\n'), stemBlock=/^\s*(```|~~~)/m.test(stem);
+      // an option that is a whole statement of code (; or {) shows as a small preformatted box
+      const optHtml=o=>{ const c=o.match(/^`([^`]+)`$/); return c&&/[;{]/.test(c[1])&&c[1].length>24?`<pre class="optcode"><code>${esc(c[1])}</code></pre>`:mdInline(o); };
       const order=opts.map((o,i)=>i).sort(()=>Math.random()-.5);
-      return `<div class="mcqi" data-item="${item}" data-key="${key||''}" data-why="${esc(why)}"><p class="q">${mdInline(stem)}</p>${order.map(i=>`<label><input type="radio" name="${item}" value="${'abcd'[i]}">${mdInline(opts[i])}</label>`).join('')}<div class="fb"></div></div>`;
+      return `<div class="mcqi" data-item="${item}" data-key="${key||''}" data-why="${esc(why)}">${stemBlock?`<div class="q qblock">${md(stem)}</div>`:`<p class="q">${mdInline(stem)}</p>`}<div class="answers${opts.some(o=>o.length>100)?' long':''}" role="radiogroup" aria-label="Answer choices">${order.map((i,pos)=>`<label style="--answer-color:${['#de807c','#7aadd4','#d9bd65','#89b58a'][pos%4]}"><input type="radio" name="${item}" value="${'abcdefgh'[i]}"><span class="answer-icon" aria-hidden="true">${['▲','◆','●','■'][pos%4]}</span><span class="answer-copy">${optHtml(opts[i])}</span></label>`).join('')}</div><div class="fb"></div><button type="button" class="mreset" hidden aria-label="Reset this question" title="Clear the answer">↺ Reset</button></div>`;
     }
     case 'score':{
       const [it,nn]=String(arg||'').split(/\s+/); const n=+nn||+it||0;
@@ -486,6 +855,10 @@ function deckHtml(cards,scores){
   }).join('');
   return `<div class="deck" data-n="${n}"><div class="deckbar"><span class="pos"><b>1</b> / ${n}</span><span class="avg"></span></div><div class="stage">${faces}<div class="fc summary"><div class="face"><h3>Deck done</h3><p class="sum"></p><div class="row"><button class="btn again">Start over</button><button class="btn primary moreq">Generate more</button></div></div></div></div><div class="deckctl"><button class="btn nav prev" title="previous (←)">←</button><span class="hint"></span><span class="sp"></span><button class="btn skip">Show answer</button><button class="btn primary val">Validate</button><button class="btn nav next" title="next (→)">→</button></div></div>`;
 }
+// Margin notes: in an aligned derivation, whatever follows `&&` on a row is the reason, not a step. Tag it so CSS can
+// set it apart (dashed chalk rule, accent colour, smaller); the first note of a block gets the "why" label.
+function marginNotes(t){ if(!/\\begin\{(aligned|align\*?|alignedat)\}/.test(t)) return t; let first=true;
+  return t.replace(/&&((?:(?!\\\\|\\end\{).)+)/g,(m,note)=>{ if(!note.trim()) return m; const c=first?'mnote first':'mnote'; first=false; return `&&\\htmlClass{${c}}{${note}}`; }); }
 function renderSegment(seg){
   let raw=seg.raw, units=null;
   const um=raw.match(/\nunits:\s*(.+)$/); if(um){units=um[1];raw=raw.replace(/\nunits:.*$/,'');}
@@ -496,24 +869,118 @@ function renderSegment(seg){
   if(units) html+=`<details><summary>symbols &amp; units</summary><div>${md(units)}</div></details>`;
   const el=document.createElement('section'); el.className='blk'; el.id='b'+(++blocks); el.dataset.line=seg.line; el.innerHTML=html;
   // check-in tag: 'Heading · from lesson NNNN: Title' -> tag link
+  // "**Step 2 · …**" lead-ins at the start of a paragraph get the chalk box, so steps stand out like subtitles
+  el.querySelectorAll('p > strong:first-child').forEach(b=>{ const prev=b.previousSibling; if((!prev||(prev.nodeType===3&&!prev.textContent.trim()))&&/^(step|part|case)\s*[0-9a-z]{1,3}\b/i.test(b.textContent.trim())) b.classList.add('step'); });
   el.querySelectorAll('h3').forEach(h=>{h.innerHTML=h.innerHTML.replace(/\s*·\s*from lesson (\d{4}):\s*(.+)$/,(m,n,t)=>` <a class="tag" href="${WSB}/lessons/${n}">from lesson ${n}: ${t}</a>`)});
   // course tag
   el.querySelectorAll('p').forEach(p=>{p.innerHTML=p.innerHTML.replace(/\s*→ (Exam: [^<]+|background)\s*$/,(m,t)=>`<span class="tag">→ ${t}</span>`)});
   return el;
 }
 
+// Interactive lessons use authored, verified states; no eval or arbitrary code execution.
+function renderInteractive(kind,raw){
+  try{
+    const spec=JSON.parse(raw);
+    if(!['trace','function'].includes(kind))throw Error('Unknown interactive type');
+    if(kind==='trace'&&(!Array.isArray(spec.code)||!spec.code.every(x=>typeof x==='string')||!Array.isArray(spec.steps)||!spec.steps.length||!spec.steps.every(x=>x&&Number.isInteger(x.line)&&x.line>=0&&x.line<=spec.code.length&&(!x.variables||(typeof x.variables==='object'&&!Array.isArray(x.variables))))))throw Error('Trace requires source lines and valid execution steps');
+    if(kind==='function'&&(!Array.isArray(spec.coefficients)||!spec.coefficients.length))throw Error('Function requires polynomial coefficients');
+    return `<div class="interactive" data-kind="${kind}" data-spec="${esc(JSON.stringify(spec))}"><h4>${esc(spec.title||'Explore')}</h4><div class="interactive-stage"></div></div>`;
+  }catch(e){return `<p class="fail">Interactive block: ${esc(e.message)}</p>`;}
+}
+function wireInteractive(el){
+  if(el.dataset.ready)return;el.dataset.ready='1';
+  const spec=JSON.parse(el.dataset.spec),stage=el.querySelector('.interactive-stage');
+  if(el.dataset.kind==='trace'){
+    let index=0,timer=null;
+    stage.innerHTML=`<pre class="trace-code"></pre><div class="trace-state"><div>Variables<pre class="trace-vars"></pre></div><div>Output<pre class="trace-output"></pre></div></div><p class="trace-note" aria-live="polite"></p><div class="trace-controls"><button class="btn" data-action="back">Previous</button><button class="btn" data-action="next">Next</button><button class="btn" data-action="play">Play</button><button class="btn" data-action="reset">Reset</button><span class="trace-count"></span></div>`;
+    const stop=()=>{clearInterval(timer);timer=null;stage.querySelector('[data-action=play]').textContent='Play';};
+    const draw=()=>{const step=spec.steps[index];stage.querySelector('.trace-code').innerHTML=spec.code.map((line,i)=>`<span class="trace-line${i+1===step.line?' active':''}">${esc(line)}</span>`).join('');stage.querySelector('.trace-vars').textContent=Object.entries(step.variables||{}).map(([k,v])=>k+' = '+(typeof v==='string'?v:JSON.stringify(v))).join('\n')||'—';stage.querySelector('.trace-output').textContent=String(step.output??'');stage.querySelector('.trace-note').textContent=step.note||'';stage.querySelector('.trace-count').textContent=(index+1)+' / '+spec.steps.length;stage.querySelector('[data-action=back]').disabled=index===0;stage.querySelector('[data-action=next]').disabled=index===spec.steps.length-1;};
+    stage.querySelector('[data-action=next]').onclick=()=>{stop();index=Math.min(index+1,spec.steps.length-1);draw();};
+    stage.querySelector('[data-action=back]').onclick=()=>{stop();index=Math.max(0,index-1);draw();};
+    stage.querySelector('[data-action=reset]').onclick=()=>{stop();index=0;draw();};
+    stage.querySelector('[data-action=play]').onclick=()=>{if(timer){stop();return;}if(index===spec.steps.length-1)index=0;draw();stage.querySelector('[data-action=play]').textContent='Pause';timer=setInterval(()=>{if(!el.isConnected||document.hidden){stop();return;}index=Math.min(index+1,spec.steps.length-1);draw();if(index===spec.steps.length-1)stop();},1100);};
+    draw();
+  }else{
+    const p=spec.parameter||{},coeff=spec.coefficients.map(Number),at=Number.isInteger(p.index)?p.index:0;
+    if(at<0||at>=coeff.length||!coeff.every(Number.isFinite)){stage.textContent='Invalid polynomial parameters.';return;}
+    const min=Number(p.min??-3),max=Number(p.max??3),step=Number(p.step??0.1);
+    if(!Number.isFinite(min)||!Number.isFinite(max)||min>=max||!Number.isFinite(step)||step<=0){stage.textContent='Invalid slider range.';return;}
+    stage.innerHTML=`<label>${esc(p.label||'Parameter')} <output></output><br><input type="range" min="${min}" max="${max}" step="${step}" value="${Math.max(min,Math.min(max,coeff[at]))}"></label><svg viewBox="0 0 640 340" role="img" aria-label="${esc(spec.title||'Function graph')}"><path class="axis" d="M20 170H620 M320 20V320"/><text x="603" y="190" fill="currentColor">x</text><text x="330" y="30" fill="currentColor">y</text><path class="curve"/></svg><p class="function-note"></p>`;
+    const input=stage.querySelector('input'),draw=()=>{coeff[at]=Number(input.value);stage.querySelector('output').textContent=input.value;let d='';for(let i=0;i<=600;i++){const x=(i-300)/60,y=coeff.reduceRight((sum,c)=>sum*x+c,0),py=Math.max(-10000,Math.min(10000,170-y*30));d+=(i?'L':'M')+(i+20)+','+py.toFixed(2);}stage.querySelector('.curve').setAttribute('d',d);stage.querySelector('.function-note').textContent=(spec.prompt||'Move the slider and observe the curve.')+' Graph window: x −5 to 5, y −5 to 5.';};input.oninput=draw;draw();
+  }
+}
+
 // ---------- animation ----------
+// ---------- one pen ----------
+// A single clock for the whole page: each new block starts where the previous one stopped, so the board fills top to
+// bottom like a person writing. If the pen falls far behind (a big rebuild), it writes faster instead of lagging.
+const pen={free:0};
+function penReserve(ms){ const now=performance.now(), start=Math.max(now,pen.free); pen.free=start+ms; return start-now; }
+function penSpeed(){ const backlog=Math.max(0,pen.free-performance.now()); return backlog>5000?Math.max(.2,5000/backlog):1; }
+function seeded(str){ let h=2166136261; for(const c of str) h=Math.imul(h^c.charCodeAt(0),16777619); return ()=>{ h=Math.imul(h^(h>>>15),2246822507); h=Math.imul(h^(h>>>13),3266489909); return ((h^=h>>>16)>>>0)/4294967296; }; }
+// chalk shapes: a real path per shape, sized to its text, redrawn when the text reflows
+const decoRO=('ResizeObserver' in window)?new ResizeObserver(es=>es.forEach(e=>shapeDeco(e.target))):null;
+function shapeDeco(svg){
+  const w=Math.max(4,svg.clientWidth), h=Math.max(4,svg.clientHeight), r=seeded(svg.parentElement.textContent||'x'), j=a=>(r()-.5)*a;
+  svg.setAttribute('viewBox',`0 0 ${w} ${h}`);
+  const ps=svg.querySelectorAll('path');
+  if(svg.classList.contains('box')){
+    const x0=2.5+j(1.5), y0=3+j(1.5);
+    ps[0].setAttribute('d',`M${x0} ${y0} C ${w*.3} ${1.5+j(2)}, ${w*.7} ${3+j(2)}, ${w-2+j(1)} ${2.5+j(1)} C ${w-1+j(1.5)} ${h*.35}, ${w-1.5+j(1.5)} ${h*.7}, ${w-2.5+j(1)} ${h-2.5+j(1)} C ${w*.7} ${h-1+j(2)}, ${w*.3} ${h-2+j(2)}, ${2.5+j(1)} ${h-3+j(1)} C ${1+j(1)} ${h*.65}, ${1.5+j(1)} ${h*.3}, ${x0+Math.min(10,w*.08)} ${y0-1.5}`);
+  } else {
+    ps[0].setAttribute('d',`M1 ${h*.62} C ${w*.25} ${h*.3+j(2)}, ${w*.6} ${h*.9+j(2)}, ${w-1} ${h*.45+j(2)}`);
+    if(ps[1]) ps[1].setAttribute('d',`M${w*.06} ${h*.85} C ${w*.35} ${h*.7+j(2)}, ${w*.7} ${h*.95+j(2)}, ${w*.9} ${h*.78}`);
+  }
+}
+function decorate(root){
+  (root||main).querySelectorAll('h3,p>strong.step').forEach(el=>{
+    if(el.querySelector(':scope>.chalkdeco')||el.closest('.fold,.deck,#toc'))return;
+    const box=el.matches('strong'); const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'); svg.setAttribute('class','chalkdeco '+(box?'box':'ul')); svg.setAttribute('aria-hidden','true');
+    svg.innerHTML=box?'<path pathLength="100" stroke-width="2.4"/>':'<path pathLength="100" stroke-width="3.2"/><path pathLength="100" stroke-width="1.4" opacity=".55"/>';
+    el.appendChild(svg); shapeDeco(svg); decoRO&&decoRO.observe(svg);
+  });
+}
 function animate(el){
-  if(reduced) return;
-  el.classList.add('new');
-  el.querySelectorAll('h1,h2,h3').forEach(h=>{h.classList.add('new');h.style.setProperty('--d',Math.min(2000,h.textContent.length*40)+'ms');h.addEventListener('animationend',()=>{h.classList.remove('new');h.style.mask='';h.style.webkitMask=''},{once:true});});
-  el.querySelectorAll('.mathrow').forEach(k=>{k.classList.add('new');k.style.setProperty('--d',Math.min(2500,(k.getBoundingClientRect().width||400)*3)+'ms');k.addEventListener('animationend',()=>k.classList.remove('new'),{once:true});});
-  const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement.closest('.katex,code,pre,summary,button,h1,h2,h3')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
-  const nodes=[];let i=0;while(walker.nextNode())nodes.push(walker.currentNode);
-  for(const n of nodes){if(!n.data.trim())continue;const frag=document.createDocumentFragment();
-    for(const part of n.data.split(/(\s+)/)){if(!part)continue;if(/^\s+$/.test(part)){frag.append(part);continue;}const s=document.createElement('span');s.className='w';s.style.setProperty('--i',i++);s.textContent=part;frag.append(s);}
-    n.replaceWith(frag);}
-  setTimeout(()=>{el.querySelectorAll('.w').forEach(s=>s.replaceWith(s.textContent));el.classList.remove('new')},Math.min(6000,i*22+700));
+  if(!el||el.dataset.writing==='1')return;
+  el.dataset.writing='1'; decorate(el);
+  const k=penSpeed(), CH=16*k, units=[];
+  const visit=n=>{
+    if(n.nodeType===3){
+      if(!n.data.trim()||n.parentElement.closest('svg,script,style,button,select,textarea,.interactive-stage,.pending,.w,.katex'))return;
+      const frag=document.createDocumentFragment();
+      for(const part of n.data.split(/(\s+)/)){ if(!part)continue; if(/^\s+$/.test(part)){frag.append(part);continue;}
+        const sp=document.createElement('span'); sp.className='w'; sp.textContent=part; sp.style.setProperty('--letters',String([...part].length));
+        units.push({el:sp,dur:Math.max(40,[...part].length*CH),kind:'w'}); frag.append(sp); }
+      n.replaceWith(frag); return;
+    }
+    if(n.nodeType!==1||n.matches('script,style,button,select,textarea,input,img,.interactive-stage,.pending'))return;
+    if(n.classList.contains('mathrow')){ units.push({el:n,dur:Math.min(3200,Math.max(500,n.textContent.length*CH*.55)),kind:'ink'}); return; }
+    if(n.classList.contains('katex')){ units.push({el:n,dur:Math.min(1500,Math.max(180,n.textContent.length*CH*.6)),kind:'ink'}); return; }
+    if(n instanceof SVGSVGElement){
+      if(n.classList.contains('chalkdeco'))return;
+      n.querySelectorAll('path,line,polyline,polygon,rect,circle,ellipse').forEach(p=>{ let L=60; try{L=p.getTotalLength()}catch(_){} units.push({el:p,dur:Math.min(900,Math.max(120,L*2.2*k)),kind:'draw'}); });
+      n.querySelectorAll('text').forEach(t=>units.push({el:t,dur:160,kind:'fade'})); return;
+    }
+    [...n.childNodes].forEach(visit);
+    n.querySelectorAll(':scope>.chalkdeco path').forEach(p=>units.push({el:p,dur:(n.matches('strong')?650:420)*Math.max(.5,k),kind:'draw'}));
+  };
+  visit(el);
+  if(!units.length){ delete el.dataset.writing; return; }
+  const gap=120*k, total=units.reduce((a,u)=>a+u.dur,0)+gap;
+  let t=penReserve(total);
+  const t0=t;
+  for(const u of units){
+    u.el.style.setProperty('--delay',t+'ms'); u.el.style.setProperty('--duration',u.dur+'ms');
+    if(u.kind==='ink')u.el.classList.add('ink'); else if(u.kind==='draw'){u.el.setAttribute('pathLength','100');u.el.classList.add('drawn');} else if(u.kind==='fade')u.el.classList.add('ink-fade');
+    u.at=t; t+=u.dur;
+  }
+  // the chalk stick hops along with the pen (a few stops per line is enough)
+  let last=-1e9; for(const u of units){ if(u.at-last<140)continue; last=u.at; setTimeout(()=>{ if(!u.el.isConnected)return; const r=u.el.getBoundingClientRect(); if(r.bottom<0||r.top>innerHeight)return; nub.style.left=(r.right-3)+'px'; nub.style.top=(r.bottom-18)+'px'; nub.classList.add('on'); clearTimeout(nubTimer); nubTimer=setTimeout(()=>nub.classList.remove('on'),700); },u.at); }
+  setTimeout(()=>{
+    el.querySelectorAll('.w').forEach(x=>x.replaceWith(...x.childNodes));
+    el.querySelectorAll('.ink,.drawn,.ink-fade').forEach(x=>{ x.classList.remove('ink','drawn','ink-fade'); x.style.removeProperty('--delay'); x.style.removeProperty('--duration'); });
+    el.normalize(); delete el.dataset.writing;
+  },t+250);
 }
 function inlineSvgs(){
   // a figure file can land after the page rendered (the writer draws it last): retry a missing one every 4s for a minute
@@ -523,22 +990,66 @@ function inlineSvgs(){
       .then(t=>{ if(!/<svg[\s>]/.test(t)) throw new Error('not svg'); sl.outerHTML=t.replace(/<\?xml[^>]*>/,'').replace(/<svg /,'<svg class="fig" '); })
       .catch(()=>{ if(tries<15){ sl.dataset.tries=tries+1; sl.innerHTML='<p class="fail">drawing…</p>'; setTimeout(()=>{ delete sl.dataset.done; inlineSvgs(); },4000); } else sl.innerHTML='<p class="fail">could not load '+esc(sl.dataset.src)+'</p>'; });});
 }
+// ---------- brainstorm ----------
+// While a lesson is being researched (it has a title but no body yet), the agent posts notes with bin/brainstorm.sh:
+// the page writes new lines by hand, wipes removed or moved lines with a felt eraser, and when the first real block
+// lands it wipes the whole board and starts the lesson. Same pen clock, so writing and erasing never overlap.
+function bsBox(){ let b=document.getElementById('brainstorm'); if(!b){ b=document.createElement('div'); b.id='brainstorm'; b.setAttribute('aria-label','Planning the lesson'); } return b; }
+function bodyStarted(){ return !!main.querySelector(':scope > .blk:not(.hdr)'); }
+function bsLine(t){ const d=document.createElement('div'); d.className='bl'+(/^[A-Z][^:]{0,24}:/.test(t)?' head':'')+(/^\s*[-•·]/.test(t)?' sub':''); d.dataset.t=t; d.textContent=t.replace(/^\s*[-•·]\s*/,'– '); d.style.setProperty('--tilt',((seeded(t)()-.5)*1.2).toFixed(2)+'deg'); return d; }
+function eraseLine(el,box){
+  const dur=Math.min(1200,Math.max(450,el.offsetWidth*1.2)), wait=penReserve(dur+90);
+  el.dataset.gone='1';
+  setTimeout(()=>{
+    if(!el.isConnected)return;
+    const x0=el.offsetLeft-44, x1=el.offsetLeft+el.offsetWidth-34, y=el.offsetTop+el.offsetHeight/2-18;
+    const sm=el.cloneNode(true); sm.classList.add('smudge'); sm.style.left=el.offsetLeft+'px'; sm.style.top=el.offsetTop+'px'; box.appendChild(sm);
+    const er=document.createElement('div'); er.className='eraser'; box.appendChild(er);
+    const path=[0,.2,.4,.6,.8,1].map((f,i)=>({transform:`translate(${x0+(x1-x0)*f}px,${y+(i%2?-7:6)}px) rotate(${i%2?5:-5}deg)`}));
+    er.animate(path,{duration:dur,easing:'ease-in-out',fill:'forwards'});
+    el.animate([{clipPath:'inset(-12px 0 -12px 0)'},{clipPath:'inset(-12px 0 -12px 100%)'}],{duration:dur,easing:'ease-in-out',fill:'forwards'});
+    setTimeout(()=>{ er.animate([{opacity:1},{opacity:0}],{duration:220,fill:'forwards'}).onfinish=()=>er.remove(); el.remove(); requestAnimationFrame(()=>sm.style.opacity='0'); setTimeout(()=>sm.remove(),1800); },dur);
+  },wait);
+}
+function applyBrainstorm(b){
+  if(MODE!=='lesson'||!b||String(b.lesson)!==String(lessonId)||bodyStarted())return;
+  const box=bsBox();
+  if(!box.isConnected){ const hdr=main.querySelector('.top'); (hdr&&hdr.parentElement===main)?main.appendChild(box):main.appendChild(box); setWriting(false); }
+  if((b.rev||0)<=(+box.dataset.rev||0))return; box.dataset.rev=b.rev||0;
+  const want=(b.lines||[]).map(x=>String(x)).filter(x=>x.trim());
+  if(!want.length&&fmCache&&fmCache.title) want.push('Explain: '+fmCache.title); // the board is never blank before the lesson starts
+  const cur=[...box.querySelectorAll(':scope>.bl:not(.smudge)')].filter(x=>!x.dataset.gone);
+  const old=cur.map(x=>x.dataset.t);
+  // longest common subsequence: lines that stay in the same relative order are kept, the rest are erased/rewritten
+  const L=Array.from({length:old.length+1},()=>new Array(want.length+1).fill(0));
+  for(let i=old.length-1;i>=0;i--)for(let j=want.length-1;j>=0;j--)L[i][j]=old[i]===want[j]?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
+  const keepOld=new Set(), pair={}; for(let i=0,j=0;i<old.length&&j<want.length;){ if(old[i]===want[j]){keepOld.add(i);pair[j]=cur[i];i++;j++;} else if(L[i+1][j]>=L[i][j+1])i++; else j++; }
+  cur.forEach((el,i)=>{ if(!keepOld.has(i)) eraseLine(el,box); });
+  let prev=null;
+  want.forEach((t,j)=>{ if(pair[j]){prev=pair[j];return;} const el=bsLine(t); if(prev)prev.after(el); else box.prepend(el); prev=el; animate(el); });
+  if(!want.length&&!cur.length) box.remove();
+}
+function bsWipeAll(){
+  const box=document.getElementById('brainstorm'); if(!box||!box.isConnected)return;
+  box.dataset.rev=1e15; // ignore further notes for this lesson
+  box.querySelectorAll(':scope>.bl:not(.smudge)').forEach(el=>{ if(!el.dataset.gone) eraseLine(el,box); });
+  setTimeout(()=>box.remove(),Math.max(0,pen.free-performance.now())+400);
+}
 function setWriting(on){
-  let sk=document.getElementById('writing');
-  if(on){ if(!sk){sk=document.createElement('div');sk.id='writing';sk.innerHTML='<div class="sk"><span></span><span></span><span></span></div><p class="wl">Writing the lesson</p>';} main.appendChild(sk); }
-  else if(sk) sk.remove();
+  document.getElementById('writing')?.remove();
+  if(!on||MODE!=='lesson'){ nub.classList.remove('idle'); return; }
+  if(!bodyStarted()){
+    // nothing written yet: never an empty board or a loading bar; write the title as the first brainstorm note
+    if(!document.getElementById('brainstorm')?.isConnected&&fmCache&&fmCache.title) applyBrainstorm({lesson:lessonId,lines:['Explain: '+fmCache.title],rev:1});
+    return;
+  }
+  // between blocks: the chalk stick rests where the writing stopped, until the next block starts
+  if(pen.free<=performance.now()){ const last=[...main.querySelectorAll(':scope>.blk')].pop(); if(last){ const r=last.getBoundingClientRect(); if(r.bottom>0&&r.bottom<innerHeight+40){ nub.style.left=(r.left+8)+'px'; nub.style.top=(r.bottom+6)+'px'; nub.classList.add('on','idle'); } } }
 }
 function followIfAtBottom(el){
   const gap=document.documentElement.scrollHeight-window.innerHeight-window.scrollY;
   if(gap<420) el.scrollIntoView({behavior:'smooth',block:'end'});
 }
-function moveNub(el){
-  if(reduced) return;
-  const r=el.getBoundingClientRect(); nub.style.left=(Math.min(r.right,window.innerWidth-40)+6)+'px'; nub.style.top=(r.bottom-22)+'px';
-  nub.classList.add('on'); nub.classList.remove('idle'); clearTimeout(nubTimer);
-  nubTimer=setTimeout(()=>{nub.classList.add('idle'); setTimeout(()=>nub.classList.remove('on'),3000)},1500);
-}
-
 // ---------- lesson page ----------
 function frontMatter(text){
   const m=text.match(/^---\n([\s\S]*?)\n---\n/); const fm={}; let body=text, fmLines=0;
@@ -565,11 +1076,15 @@ function applyAccent(fm){
   const root=document.documentElement.style;
   root.setProperty('--acc',acc);
   root.setProperty('--acc2',resolveAccent(fm.accent2,acc));
+  // `board: slate` in the front matter: a real-blackboard surface for this lesson (trial; may become the default)
+  document.documentElement.classList.toggle('slate',String(fm.board||'').toLowerCase()==='slate');
 }
 function header(fm,meta){
+  // plain: true is a temporary board: no eyebrow, lesson number, photo or byline, just the content (and a title if given)
+  if(String(fm.plain||'').toLowerCase()==='true') return fm.title?`<h1 id="title">${esc(fm.title)}</h1>`:'';
   const num=lessonId||(meta&&meta.id)||'';
   const parts=[]; if(fm.course)parts.push(esc(fm.course)); if(num)parts.push(`Lesson <b>${num}</b>`); if(fm.exam)parts.push(`<b>→ Exam:</b> ${esc(fm.exam)}`);
-  let h=`<div class="top"><a class="back" href="${WSB}/lessons" title="all lessons">←</a><div class="eyebrow">${parts.map(p=>`<span>${p}</span>`).join('')}</div></div>`;
+  let h=`<div class="top"><div class="eyebrow">${parts.map(p=>`<span>${p}</span>`).join('')}</div></div>`;
   // banner first: the photo is the first thing on the page, title and byline under it
   if(fm.photo){const src=fm.photo.startsWith('http')?fm.photo:WSB+'/assets/'+fm.photo.replace(/^assets\//,'');h+=`<img class="hero" src="${src}" alt="">`;if(fm.credit)h+=`<p class="credit">${esc(fm.credit)}</p>`;}
   if(fm.title) h+=`<h1 id="title">${esc(fm.title)}</h1>`;
@@ -589,7 +1104,7 @@ async function loadLesson(){
   const segs=segments(b,bodyStart);
   const fresh=segs.slice(renderedUpto);
   fresh.forEach((s,k)=>{ if(fmCache.title&&/^# /.test(s.raw)&&renderedUpto+k===0)return; // title already in header
-    const el=renderSegment(s); main.appendChild(el); if(r.reset&&!streaming)return; animate(el); moveNub(el);});
+    const el=renderSegment(s); main.appendChild(el); if(r.reset&&!streaming)return; animate(el);});
   renderedUpto=segs.length;
   wire();
 }
@@ -604,7 +1119,7 @@ async function md5(s){ // cheap stand-in: server sends hash on reset; between ap
 function card(l,w,big){
   const base='/w/'+w.slug; const src=l.photo?(l.photo.startsWith('http')?l.photo:base+'/assets/'+l.photo.replace(/^assets\//,'')):'';
   const dots=l.scores.slice(-6).map(s=>`<span class="dot${s>=3?' p':''}"></span>`).join('');
-  return `<a class="card${big?'':' mini'}" href="${base}/lessons/${l.id}" data-q="${esc((l.title+' '+l.course+' '+l.exam+' '+l.id).toLowerCase())}" data-ws="${w.slug}">${src?`<img class="strip" src="${src}" alt="">`:'<div class="strip"></div>'}<div class="body"><p class="t">${esc(l.title)}</p><div class="m"><span>${l.id}${big?'':' · '+esc(w.name)} · ${l.date}</span><span class="dots">${dots}</span></div></div></a>`;
+  return `<a class="card${big?'':' mini'}" href="${base}/lessons/${l.id}" data-q="${esc((l.title+' '+l.course+' '+l.exam+' '+l.id).toLowerCase())}" data-ws="${w.slug}"><span class="nt" role="button" tabindex="0" title="Open in a new tab" aria-label="Open in a new tab"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2.5h4.5V7"/><path d="M13.5 2.5 7.5 8.5"/><path d="M12 9.5v3a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3"/></svg></span>${src?`<img class="strip" src="${src}" alt="">`:'<div class="strip"></div>'}<div class="body"><p class="t">${esc(l.title)}</p><div class="m"><span>${l.id}${big?'':' · '+esc(w.name)} · ${l.date}</span><span class="dots">${dots}</span></div></div></a>`;
 }
 function grid(st){
   document.title='Lessons · Blackboard';
@@ -612,17 +1127,17 @@ function grid(st){
   const total=wss.reduce((n,w)=>n+w.count,0);
   let h=`<div class="top"><div class="eyebrow"><span>${wss.length} folder${wss.length===1?'':'s'}</span><span>${total} lesson${total===1?'':'s'}</span></div></div><h1>Lessons</h1>`;
   if(!total){h+='<p class="empty">Nothing yet. Ask for a lesson in the chat.</p>';main.innerHTML=h;return}
-  h+=`<div class="hubbar"><input class="hubq" type="search" placeholder="Search every lesson" autocomplete="off"><div class="chips">${wss.map(w=>`<button class="chip" data-ws="${w.slug}">${esc(w.name)}</button>`).join('')}</div></div>`;
+  h+=`<div class="hubbar"><input class="hubq" type="search" placeholder="Search everything in every lesson" autocomplete="off"><div class="chips">${wss.map(w=>`<button class="chip" data-ws="${w.slug}">${esc(w.name)}</button>`).join('')}</div></div>`;
   const all=wss.flatMap(w=>w.lessons.map(l=>({l,w}))).sort((a,b)=>b.l.mtime-a.l.mtime);
   h+=`<section class="hubsec" data-sec="recent"><h2>Recent</h2><div class="row">${all.slice(0,5).map(x=>card(x.l,x.w,false)).join('')}</div></section>`;
-  if(mine) h+=`<section class="hubsec" data-sec="mine" data-ws="${mine.slug}"><h2>${esc(mine.name)}<span class="sub">this folder · ${mine.count}</span></h2><div class="grid">${mine.lessons.slice().reverse().map(l=>card(l,mine,true)).join('')}</div></section>`;
+  if(mine) h+=`<section class="hubsec" data-sec="mine" data-ws="${mine.slug}"><h2>${esc(mine.name)}<span class="sub">this folder · ${mine.count}</span><button class="openall" data-ws="${mine.slug}" title="Open every lesson in this folder as tabs, in number order">Open all ↗</button></h2><div class="grid">${mine.lessons.slice().reverse().map(l=>card(l,mine,true)).join('')}</div></section>`;
   const others=wss.filter(w=>w!==mine);
-  if(others.length) h+=`<section class="hubsec" data-sec="others"><h2>Other folders on this computer</h2>${others.map(w=>`<div class="course" data-ws="${w.slug}"><h3><a href="/w/${w.slug}/lessons">${esc(w.name)}</a><span class="sub">${w.count} lesson${w.count===1?'':'s'} · last ${w.last}</span></h3><div class="row">${w.lessons.slice().reverse().map(l=>card(l,w,false)).join('')}</div></div>`).join('')}</section>`;
+  if(others.length) h+=`<section class="hubsec" data-sec="others"><h2>Other folders on this computer</h2>${others.map(w=>`<div class="course" data-ws="${w.slug}"><h3><a href="/w/${w.slug}/lessons">${esc(w.name)}</a><span class="sub">${w.count} lesson${w.count===1?'':'s'} · last ${w.last}</span><button class="openall" data-ws="${w.slug}" title="Open every lesson in this folder as tabs, in number order">Open all ↗</button></h3><div class="row">${w.lessons.slice().reverse().map(l=>card(l,w,false)).join('')}</div></div>`).join('')}</section>`;
   main.innerHTML=h;
   // search + course chips filter every card; empty sections hide themselves
   const q=main.querySelector('.hubq'); let chip='';
-  const apply=()=>{ const t=q.value.trim().toLowerCase(); main.querySelectorAll('.card').forEach(c=>{ c.hidden=!(c.dataset.q.includes(t)&&(!chip||c.dataset.ws===chip)); }); main.querySelectorAll('.course').forEach(c=>{ c.hidden=![...c.querySelectorAll('.card')].some(x=>!x.hidden); }); main.querySelectorAll('.hubsec').forEach(sc=>{ sc.hidden=![...sc.querySelectorAll('.card')].some(x=>!x.hidden); }); };
-  q.oninput=apply; main.querySelectorAll('.chip').forEach(b=>{ b.onclick=()=>{ chip=chip===b.dataset.ws?'':b.dataset.ws; main.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.ws===chip)); apply(); }; });
+  let found=null, seq=0; const apply=()=>{ const t=q.value.trim().toLowerCase(); main.querySelectorAll('.card').forEach(c=>{ const hit=c.dataset.q.includes(t)||(found&&found.has(c.getAttribute('href'))); c.hidden=!(hit&&(!chip||c.dataset.ws===chip)); }); main.querySelectorAll('.course').forEach(c=>{ c.hidden=![...c.querySelectorAll('.card')].some(x=>!x.hidden); }); main.querySelectorAll('.hubsec').forEach(sc=>{ sc.hidden=![...sc.querySelectorAll('.card')].some(x=>!x.hidden); }); };
+  q.oninput=()=>{ apply(); const t=q.value.trim(); const my=++seq; if(!t){found=null;return;} fetch('/api/search?q='+encodeURIComponent(t)+'&limit=200').then(r=>r.json()).then(r=>{ if(my!==seq)return; found=new Set(r.map(h=>h.href.split('#')[0])); apply(); }).catch(()=>{}); }; main.querySelectorAll('.chip').forEach(b=>{ b.onclick=()=>{ chip=chip===b.dataset.ws?'':b.dataset.ws; main.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.ws===chip)); apply(); }; });
   q.focus();
 }
 
@@ -634,60 +1149,257 @@ async function ask(req){
   else if(r.error){toast.textContent='Bridge not running. Run render.sh again.';toast.style.display='block';setTimeout(()=>toast.style.display='none',5000);}
   return r;
 }
+// ---------- math selection: whole visual lines, not glyph fragments ----------
+// KaTeX lays an aligned block out column by column, so the native highlight is a patchwork and the
+// selected text is mangled. A drag that touches a display equation selects the rows it crosses
+// (drawn as bands), and Explain receives those rows as TeX.
+const selBands=document.createElement('div'); selBands.id='selbands'; document.body.appendChild(selBands);
+let selDrag=null;
+// Cells of an aligned block, each tagged with its row. KaTeX leaves empty cells out of a column (the && margin-note
+// column usually has one cell), so a cell's index in its column is not its row: the fullest column fixes the rows and
+// every other cell joins the row it overlaps most.
+function mathCells(mr){
+  const t=mr.querySelector('.katex-display .mtable'); if(!t)return null;
+  const cols=[...t.querySelectorAll(':scope > [class*="col-align"]')].map(c=>[...c.querySelectorAll(':scope > .vlist-t > .vlist-r > .vlist > span')].map(sp=>{
+    const ks=[...sp.children].filter(k=>!k.classList.contains('pstrut')&&(()=>{const r=k.getBoundingClientRect();return r.width>=1&&r.height>=1})());
+    if(!ks.length)return null; const rs=ks.map(k=>k.getBoundingClientRect());
+    return {hosts:ks,note:!!sp.querySelector('.mnote'),top:Math.min(...rs.map(r=>r.top)),bottom:Math.max(...rs.map(r=>r.bottom)),left:Math.min(...rs.map(r=>r.left)),right:Math.max(...rs.map(r=>r.right))};
+  }));
+  const ref=cols.reduce((a,b)=>b.filter(Boolean).length>a.filter(Boolean).length?b:a,[]);
+  const bands=[]; ref.forEach((c,i)=>{ if(c)bands.push({i,top:c.top,bottom:c.bottom}); });
+  const cells=[];
+  cols.forEach(col=>col.forEach((c,idx)=>{ if(!c)return; let row;
+    if(col===ref)row=idx;
+    else { let best=-Infinity; bands.forEach(b=>{ const ov=Math.min(b.bottom,c.bottom)-Math.max(b.top,c.top)-Math.abs((b.top+b.bottom)/2-(c.top+c.bottom)/2)*0.01; if(ov>best){best=ov;row=b.i;} }); }
+    cells.push({...c,row}); }));
+  return cells;
+}
+function mathRows(mr){
+  const html=mr.querySelector('.katex-html')||mr, cells=mathCells(mr);
+  if(!cells){ const r=html.getBoundingClientRect(); return [{i:0,top:r.top,bottom:r.bottom,left:r.left,right:r.right}]; }
+  const rows=[];
+  // the band covers a margin note too, but "did the drag take the whole equation" is measured without it (eqRight)
+  cells.forEach(c=>{ const o=rows[c.row]||(rows[c.row]={i:c.row,top:1e9,bottom:-1e9,left:1e9,right:-1e9,eqRight:-1e9}); o.top=Math.min(o.top,c.top); o.bottom=Math.max(o.bottom,c.bottom); o.left=Math.min(o.left,c.left); o.right=Math.max(o.right,c.right); if(!c.note)o.eqRight=Math.max(o.eqRight,c.right); });
+  rows.forEach(o=>{ if(o&&o.eqRight<0)o.eqRight=o.right; });
+  return rows.filter(Boolean);
+}
+function mathTexRows(mr){
+  const tex=(mr.querySelector('annotation[encoding="application/x-tex"]')?.textContent||'').trim();
+  const m=tex.match(/\\begin\{(aligned|align\*?|gathered|array)\}(?:\{[^}]*\})?([\s\S]*)\\end\{\1\}/);
+  if(!m)return [tex];
+  const rows=m[2].split(/\\\\/).map(x=>x.replace(/\\htmlClass\{mnote[^}]*\}\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\}/g,'').replace(/&/g,' ').replace(/\s+/g,' ').trim());
+  if(rows.length&&!rows[rows.length-1])rows.pop();
+  return rows;
+}
+// Inside one row a drag selects the math atoms it covers, descending into a fraction or power when the
+// drag sits inside it, so "x^2" alone can be picked out of "x^2 - x = 0".
+const ATOM='.mord,.mbin,.mrel,.mopen,.mclose,.mpunct,.minner,.mop';
+function rowAtoms(mr,i){
+  const cells=mathCells(mr); let hosts=[];
+  if(cells) cells.filter(c=>c.row===i&&!c.note).forEach(c=>hosts.push(...c.hosts));
+  else hosts=[...mr.querySelectorAll('.katex-html > .base')];
+  const out=[]; hosts.forEach(h=>[...h.children].forEach(a=>{ if(!a.matches(ATOM))return; const r=a.getBoundingClientRect(); if(r.width>.5&&r.height>.5)out.push(a); }));
+  return out;
+}
+function childAtoms(a){ return [...a.querySelectorAll(ATOM)].filter(d=>d.parentElement.closest(ATOM)===a).filter(d=>{const r=d.getBoundingClientRect();return r.width>.5&&r.height>.5}); }
+function hits(el,x0,y0,x1,y1){ const r=el.getBoundingClientRect(); return r.right>=x0&&r.left<=x1&&r.bottom>=y0&&r.top<=y1; }
+function pickAtoms(atoms,x0,y0,x1,y1,wide){
+  let picked=atoms.filter(a=>hits(a,x0,y0,x1,y1));
+  if(!picked.length&&atoms.length){ const cx=(x0+x1)/2; picked=[atoms.reduce((a,b)=>{const ra=a.getBoundingClientRect(),rb=b.getBoundingClientRect();return Math.abs((ra.left+ra.right)/2-cx)<=Math.abs((rb.left+rb.right)/2-cx)?a:b})]; }
+  if(wide&&picked.length===1){ const r=picked[0].getBoundingClientRect(); const cover=Math.min(x1,r.right)-Math.max(x0,r.left); const kids=childAtoms(picked[0]);
+    if(kids.length>1&&cover<r.width*0.8){ const deeper=pickAtoms(kids,x0,y0,x1,y1,wide); if(deeper.length)return deeper; } }
+  return picked;
+}
+function mathText(el){
+  if(el.nodeType===3)return el.data.replace(/​/g,'');
+  if(el.nodeType!==1||el.matches('.katex-mathml,.pstrut,.vlist-s,.strut,.frac-line'))return '';
+  if(el.classList.contains('mfrac')){ const parts=[...el.querySelectorAll(':scope > .vlist-t > .vlist-r > .vlist > span')].map(sp=>mathText(sp).trim()).filter(Boolean); return parts.length===2?`(${parts[1]})/(${parts[0]})`:parts.join('/'); }
+  if(el.classList.contains('msupsub')){ const t=[...el.childNodes].map(mathText).join('').trim(); return t.length>1?`^(${t})`:`^${t}`; }
+  if(el.classList.contains('sqrt')){ const body=el.querySelector('.vlist > span:last-child')||el; return `sqrt(${[...body.childNodes].map(mathText).join('').trim()})`; }
+  return [...el.childNodes].map(mathText).join('');
+}
+function selBand(l,t,r,b){ const d=document.createElement('div'); d.className='selband'; Object.assign(d.style,{left:(l+window.scrollX-1)+'px',top:(t+window.scrollY-1)+'px',width:(r-l+2)+'px',height:(b-t+2)+'px'}); selBands.appendChild(d); }
+function paintMathSel(){
+  selBands.innerHTML=''; window.__mathSel=null;
+  const sel=window.getSelection(); if(MODE==='grid'||!sel||sel.isCollapsed||!sel.rangeCount)return;
+  const range=sel.getRangeAt(0), picks=[];
+  main.querySelectorAll('.mathrow').forEach(mr=>{
+    if(!range.intersectsNode(mr))return;
+    const ir=document.createRange(); ir.selectNodeContents(mr);
+    if(range.compareBoundaryPoints(Range.START_TO_START,ir)>0)ir.setStart(range.startContainer,range.startOffset);
+    if(range.compareBoundaryPoints(Range.END_TO_END,ir)<0)ir.setEnd(range.endContainer,range.endOffset);
+    if(ir.collapsed||!ir.toString().trim())return;
+    const rows=mathRows(mr); if(!rows.length)return;
+    let lo=-Infinity, hi=Infinity;
+    if(selDrag){ lo=Math.min(selDrag.y0,selDrag.y1)-window.scrollY; hi=Math.max(selDrag.y0,selDrag.y1)-window.scrollY; }
+    else { const rs=[...ir.getClientRects()].filter(r=>r.height>0); if(rs.length){lo=Math.min(...rs.map(r=>r.top));hi=Math.max(...rs.map(r=>r.bottom));} }
+    // keyboard selections have no drag heights: fall back to whether the range runs past this block
+    if(!selDrag){ if(!mr.contains(range.startContainer))lo=-Infinity; if(!mr.contains(range.endContainer))hi=Infinity; }
+    let chosen=rows.filter(r=>r.bottom>=lo-2&&r.top<=hi+2);
+    if(!chosen.length){ const y=Number.isFinite(lo)?(Number.isFinite(hi)?(lo+hi)/2:lo):hi; chosen=[rows.reduce((a,b)=>Math.abs((a.top+a.bottom)/2-y)<=Math.abs((b.top+b.bottom)/2-y)?a:b)]; }
+    // a drag that starts and ends on the same row selects part of it
+    if(selDrag&&chosen.length===1){ const row=chosen[0]; const ya=selDrag.y0-window.scrollY, yb=selDrag.y1-window.scrollY;
+      if(ya>=row.top-6&&ya<=row.bottom+6&&yb>=row.top-6&&yb<=row.bottom+6){
+        const x0=Math.min(selDrag.x0,selDrag.x1)-window.scrollX, x1=Math.max(selDrag.x0,selDrag.x1)-window.scrollX;
+        const atoms=pickAtoms(rowAtoms(mr,row.i),x0,Math.min(ya,yb)-2,x1,Math.max(ya,yb)+2,x1-x0>=4);
+        const whole=atoms.length&&(()=>{const rs=atoms.map(a=>a.getBoundingClientRect());return Math.min(...rs.map(r=>r.left))<=row.left+2&&Math.max(...rs.map(r=>r.right))>=(row.eqRight??row.right)-2})();
+        if(atoms.length&&!whole){ const rs=atoms.map(a=>a.getBoundingClientRect()); selBand(Math.min(...rs.map(r=>r.left)),Math.min(...rs.map(r=>r.top)),Math.max(...rs.map(r=>r.right)),Math.max(...rs.map(r=>r.bottom))); picks.push({mr,rows:chosen,atoms}); return; }
+      } }
+    chosen.forEach(r=>selBand(r.left,r.top,r.right,r.bottom));
+    picks.push({mr,rows:chosen});
+  });
+  // a diagram lights up whole (its labels are loose SVG text; a partial highlight across them means nothing)
+  main.querySelectorAll('figure svg').forEach(sv=>{ if(!range.intersectsNode(sv))return; const r=sv.getBoundingClientRect(); if(r.width>0)selBand(r.left,r.top,r.right,r.bottom); });
+  // inline math inside a sentence: the whole formula lights up
+  main.querySelectorAll('.katex').forEach(k=>{ if(k.closest('.mathrow')||!range.intersectsNode(k))return; [...(k.querySelector('.katex-html')||k).getClientRects()].forEach(r=>{ if(r.width>0&&r.height>0)selBand(r.left,r.top,r.right,r.bottom); }); });
+  if(picks.length)window.__mathSel=picks;
+}
+function selectionText(range,max=300){
+  const div=document.createElement('div');
+  // a selection that lives entirely inside one formula has no prose part: its text is only glyph fragments
+  const ca=range.commonAncestorContainer, cae=ca.nodeType===1?ca:ca.parentElement;
+  if(!cae.closest('.katex,.mathrow'))div.appendChild(range.cloneContents());
+  div.querySelectorAll('.mathrow').forEach(x=>x.remove());
+  div.querySelectorAll('svg').forEach(x=>x.remove());
+  main.querySelectorAll('figure svg').forEach(sv=>{ if(!range.intersectsNode(sv))return; const labels=[...new Set([...sv.querySelectorAll('text')].map(t=>t.textContent.trim()).filter(Boolean))].slice(0,24).join(', ');
+    div.appendChild(document.createTextNode(` [diagram: ${sv.getAttribute('aria-label')||'figure'}${labels?`; labels: ${labels}`:''}] `)); });
+  div.querySelectorAll('.katex').forEach(k=>{ const a=k.querySelector('annotation'); k.replaceWith(a?` $${a.textContent.trim()}$ `:' '); });
+  let t=div.textContent;
+  (window.__mathSel||[]).forEach(p=>{ const tex=mathTexRows(p.mr); if(p.atoms){ const part=p.atoms.map(mathText).join(' ').replace(/\s+/g,' ').replace(/([(\[^])\s+/g,'$1').replace(/\s+([)\]^])/g,'$1').trim(); t+=` ${part} (in $${tex[p.rows[0].i]||''}$)`; } else t+=' '+p.rows.map(r=>tex[r.i]).filter(Boolean).map(x=>`$${x}$`).join(' '); });
+  return t.replace(/\s+/g,' ').trim().slice(0,max);
+}
+document.addEventListener('mousedown',e=>{ if(e.button!==0||e.target.closest('#pill,#tocbtn,#toc,.rail,#topbar,#chat,#chatbtn'))return; const y=e.clientY+window.scrollY, x=e.clientX+window.scrollX; selDrag={y0:y,y1:y,x0:x,x1:x}; selBands.innerHTML=''; });
+document.addEventListener('mousemove',e=>{ if(selDrag&&(e.buttons&1)){selDrag.y1=e.clientY+window.scrollY;selDrag.x1=e.clientX+window.scrollX;} });
+document.addEventListener('mouseup',e=>{ if(!selDrag)return; selDrag.y1=e.clientY+window.scrollY;selDrag.x1=e.clientX+window.scrollX;
+  // the browser only selects text under the pointer: a drag begun in the blank margin of a display equation (left of
+  // right-aligned rows, below the last row) can leave the formula out. Stretch the selection over every equation the
+  // drag crossed, so the rows it covered light up and go to Explain.
+  const sel=window.getSelection(); if(MODE==='grid'||!sel||e.target.closest('#pill,#tocbtn,#toc,.rail,#topbar,input,textarea,button'))return;
+  const lo=Math.min(selDrag.y0,selDrag.y1)-window.scrollY, hi=Math.max(selDrag.y0,selDrag.y1)-window.scrollY; if(hi-lo<4&&Math.abs(selDrag.x1-selDrag.x0)<4)return;
+  const onFig=document.elementFromPoint(selDrag.x0-window.scrollX,selDrag.y0-window.scrollY)?.closest?.('figure');
+  if(onFig&&main.contains(onFig)&&(sel.isCollapsed||!sel.toString().trim()||onFig.contains(sel.anchorNode))){ const svg=onFig.querySelector('svg')||onFig; const r=document.createRange(); r.selectNode(svg); sel.removeAllRanges(); sel.addRange(r); return; }
+  const crossed=[...main.querySelectorAll('.mathrow')].filter(mr=>{ const r=mr.getBoundingClientRect(); return r.bottom>lo&&r.top<hi; }); if(!crossed.length)return;
+  const cur=sel.rangeCount?sel.getRangeAt(0):null;
+  if(cur&&!cur.collapsed&&crossed.every(mr=>cur.intersectsNode(mr)&&(()=>{const ir=document.createRange();ir.selectNodeContents(mr);if(cur.compareBoundaryPoints(Range.START_TO_START,ir)>0)ir.setStart(cur.startContainer,cur.startOffset);if(cur.compareBoundaryPoints(Range.END_TO_END,ir)<0)ir.setEnd(cur.endContainer,cur.endOffset);return ir.toString().trim();})()))return;
+  const r=document.createRange(), first=crossed[0], last=crossed[crossed.length-1];
+  if(cur&&!cur.collapsed&&cur.compareBoundaryPoints(Range.START_TO_START,(()=>{const q=document.createRange();q.selectNodeContents(first);return q;})())<0)r.setStart(cur.startContainer,cur.startOffset); else r.setStartBefore(first.querySelector('.katex')||first);
+  if(cur&&!cur.collapsed&&cur.compareBoundaryPoints(Range.END_TO_END,(()=>{const q=document.createRange();q.selectNodeContents(last);return q;})())>0)r.setEnd(cur.endContainer,cur.endOffset); else r.setEndAfter(last.querySelector('.katex')||last);
+  sel.removeAllRanges(); sel.addRange(r);
+});
+document.addEventListener('keydown',e=>{ if(e.shiftKey)selDrag=null; });
+document.addEventListener('selectionchange',()=>requestAnimationFrame(paintMathSel));
+window.addEventListener('resize',paintMathSel);
+document.addEventListener('scroll',e=>{ if(e.target!==document&&selBands.childElementCount)paintMathSel(); },true);
+
 let range=null;
-document.addEventListener('mouseup',e=>{if(pill.contains(e.target))return;setTimeout(()=>{const sel=window.getSelection();if(!sel||sel.isCollapsed||!sel.toString().trim()||MODE==='grid'){pill.style.display='none';return}
-  range=sel.getRangeAt(0);const r=range.getBoundingClientRect();pill.style.display='block';pill.style.left=(r.left+window.scrollX)+'px';pill.style.top=(r.top+window.scrollY-36)+'px';},0)});
+document.addEventListener('mouseup',e=>{if(pill.contains(e.target))return;if(e.target.closest&&e.target.closest('#chat')){pill.style.display='none';return}setTimeout(()=>{const sel=window.getSelection();if(!sel||sel.isCollapsed||!sel.toString().trim()||MODE==='grid'){pill.style.display='none';return}
+  range=sel.getRangeAt(0);paintMathSel();const fb=selBands.firstElementChild;const r=fb?{left:fb.offsetLeft-window.scrollX,top:fb.offsetTop-window.scrollY}:range.getBoundingClientRect();const w=sel.toString().trim().split(/\s+/).filter(Boolean);$('#pilldef').style.display=(w.length>=1&&w.length<=5&&sel.toString().trim().length<=80)?'inline-block':'none';pill.style.display='block';pill.style.left=(r.left+window.scrollX)+'px';pill.style.top=(r.top+window.scrollY-36)+'px';},0)});
 pill.addEventListener('mousedown',e=>{e.preventDefault();const k=e.target.dataset.k;if(!k||!range)return;
   let node=range.commonAncestorContainer;node=node.nodeType===1?node:node.parentElement;
   const exp=node.closest('.exp'), blk=node.closest('.blk');
-  const text=range.toString().trim().replace(/\s+/g,' ').slice(0,200);
+  if(k==='ask'){ const t=selectionText(range,1500); window.getSelection().removeAllRanges(); pill.style.display='none'; chatAsk(t); return; }
+  const text=selectionText(range).slice(0,200);
+  if(k==='define'){ const r=range.getBoundingClientRect(); rememberDefinition(text,blk,range); showDefine(text,blk,r); window.getSelection().removeAllRanges(); pill.style.display='none'; return; }
   // same words already explained under this block: open that note, do not write a second one
   if(!exp&&blk){ const lab=text.split(/\s+/).slice(0,6).join(' ').toLowerCase(); const hit=notesAfter(blk).find(f=>f.dataset.label===lab); if(hit){ hit.classList.remove('closed'); hit.querySelector('.exp').scrollIntoView({behavior:'smooth',block:'center'}); ask({kind:'fold',id:hit.dataset.for,folded:false}); window.getSelection().removeAllRanges(); pill.style.display='none'; return; } }
   const pending='p'+Date.now();
   const req={kind:'explain',depth:k,text,block:blk?blk.id:'',line:blk?+blk.dataset.line:0,pending};
-  if(exp){ const wholeLine=text.length>40&&exp.textContent.trim().startsWith(text.slice(0,30)); if(k==='deep'&&wholeLine)req.grow=exp.dataset.id; else req.parent=exp.dataset.id; }
+  if(exp)req.parent=exp.dataset.id;
   // placeholder unfolds immediately
-  const label=text.split(/\s+/).slice(0,6).join(' ');
-  const ph=document.createElement('div'); ph.className='fold closed'; ph.dataset.pending=pending;
-  ph.innerHTML=`<div class="in"><div class="exp pending${k==='deep'?' deep':''}"><div class="explabel">${esc(label)}</div>writing<span class="nubi"></span></div></div>`;
-  const host=exp?exp:(blk||main); if(exp)exp.appendChild(ph); else host.insertAdjacentElement('afterend',ph);
+  const label=noteLabel(text);
+  const ph=document.createElement('div'); ph.className='fold'; ph.dataset.pending=pending; ph.dataset.label=label.toLowerCase(); ph.dataset.context=blk?definitionContext(blk):''; ph.dataset.parent=exp?exp.dataset.id:'';
+  ph.innerHTML=`<div class="in"><div class="exp pending"><div class="exphead"><button type="button" class="exptoggle" aria-expanded="true"><span aria-hidden="true">💡</span><span class="explabel">${mdInline(label)}</span></button></div><div class="expbody" role="status">Preparing explanation…</div></div></div>`;
+  ph.querySelector('.exptoggle').onclick=()=>{const closed=ph.classList.toggle('closed');ph.querySelector('.exptoggle').setAttribute('aria-expanded',String(!closed));};
+  const host=exp?exp:(blk||main); if(exp)exp.querySelector('.expbody').appendChild(ph); else host.insertAdjacentElement('afterend',ph);
   setTimeout(()=>ph.classList.remove('closed'),30);
-  try{ if(!exp&&blk){ const m=document.createElement('span'); m.className='asked'; range.surroundContents(m);} }catch(_){}
-  ask(req).then(r=>{ if(r&&r.error){ph.querySelector('.exp').classList.add('error');ph.querySelector('.exp').innerHTML='<div class="explabel">'+esc(label)+'</div>'+esc(r.error)} });
+  ask(req).then(r=>{ if(r&&r.error){ph.querySelector('.exp').classList.add('error');ph.querySelector('.expbody').textContent=r.error} });
   window.getSelection().removeAllRanges(); pill.style.display='none';
 });
+// First six words of a selection, extended so a $formula$ is never cut in half (bin/explain.py uses the same rule).
+function noteLabel(text){ const dg=text.match(/^\s*\[diagram: ([^;\]]+)/); if(dg)text='Diagram: '+dg[1]; text=text.replace(/\s*\(in \$[\s\S]*$/,''); const out=[]; for(const w of text.split(/\s+/).filter(Boolean)){ out.push(w); const j=out.join(' '); if(out.length>=6&&(j.split('$').length-1)%2===0)break; if(out.length>=40)break; } let j=out.join(' '); if((j.split('$').length-1)%2)j=j.replace(/\$/g,''); return j; }
+// ---------- Definition: a small popup, never written into the lesson ----------
+let defSeq=0, defPre='';
+function defineReq(text,blk){ const r={text:text.replace(/\s+/g,' ').trim(),line:blk?+blk.dataset.line:0,block:blk?blk.id:'',lesson:lessonId}; if(WS)r.ws=WS; return r; }
+function postDefine(req){ return fetch('/define',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)}).then(x=>x.json()); }
+function blkOfRange(){ if(!range)return null; let n=range.commonAncestorContainer; n=n.nodeType===1?n:n.parentElement; return n.closest('.blk'); }
+// hovering the button starts the work: the bridge caches it, so the click usually lands on a ready answer
+$('#pilldef').addEventListener('mouseenter',()=>{ if(!range)return;
+  const req=defineReq(selectionText(range).slice(0,200),blkOfRange()); if(!req.text||req.text.split(/\s+/).length>5)return;
+  const k=req.text+'|'+req.line; if(k===defPre)return; defPre=k; postDefine(req).catch(()=>{}); });
+function hideDefine(){ defpop.style.display='none'; defSeq++; }
+function showDefine(text,blk,r){
+  const seq=++defSeq, term=text.replace(/\s+/g,' ').trim();
+  defpop.className='defpop';
+  defpop.innerHTML=`<span class="term">${esc(term.slice(0,60))}</span><div class="body">looking it up<span class="nubi"></span></div>`;
+  defpop.style.display='block';
+  const w=defpop.offsetWidth, h=defpop.offsetHeight;
+  let left=r.left+window.scrollX, top=r.bottom+window.scrollY+8;
+  left=Math.max(8+window.scrollX,Math.min(left,window.scrollX+innerWidth-w-8));
+  if(r.bottom+h+14>innerHeight)top=r.top+window.scrollY-h-8;   // no room below: sit above the words
+  defpop.style.left=left+'px'; defpop.style.top=top+'px';
+  postDefine(defineReq(term,blk)).catch(()=>({error:'bridge down'}))
+    .then(d=>{
+      if(seq!==defSeq)return;                                   // a newer selection won
+      const body=defpop.querySelector('.body');
+      if(d&&d.error){ defpop.classList.add('err'); body.textContent=d.error; return; }
+      body.innerHTML=mdInline(d.text||'');animate(body);
+      const hh=defpop.offsetHeight;
+      if(r.bottom+hh+14>innerHeight)defpop.style.top=(r.top+window.scrollY-hh-8)+'px';
+    });
+}
+document.addEventListener('mousedown',e=>{ if(!defpop.contains(e.target)&&!pill.contains(e.target))hideDefine(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape')hideDefine(); });
+window.addEventListener('scroll',()=>{ if(defpop.style.display==='block')hideDefine(); },{passive:true});
 const foldOf=el=>el&&(el.classList.contains('fold')?el:(el.classList.contains('blk')&&el.firstElementChild&&el.firstElementChild.classList.contains('fold')?el.firstElementChild:null));
 function notesAfter(blk){ const out=[]; let n=blk.nextElementSibling; while(n){ const f=foldOf(n); if(!f)break; out.push(f); n=n.nextElementSibling; } return out; }
 function blockBefore(fold){ let n=fold.classList.contains('fold')&&fold.parentElement.classList.contains('blk')?fold.parentElement:fold; n=n.previousElementSibling; while(n&&foldOf(n))n=n.previousElementSibling; return n&&n.classList.contains('blk')&&!foldOf(n)?n:null; }
-function markAsked(root,label){
-  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement.closest('.katex-mathml,.asked,.fold,script,style')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
-  label=label.toLowerCase().replace(/\u00a0/g,' '); let n; while((n=walker.nextNode())){ const i=n.data.toLowerCase().replace(/\u00a0/g,' ').indexOf(label); if(i<0)continue; const r=document.createRange(); r.setStart(n,i); r.setEnd(n,i+label.length); const m=document.createElement('span'); m.className='asked'; try{r.surroundContents(m);}catch(_){} return true; }
-  return false;
+// Definition anchors are scoped to this lesson and browser, separate from Explain source.
+function definitionKey(){return 'blackboard:definitions:'+WS+':'+lessonId;}
+function definitionRecords(){try{return JSON.parse(localStorage.getItem(definitionKey())||'[]');}catch(_){return [];}}
+function definitionContext(blk){return blk.textContent.replace(/\s+/g,' ').trim();}
+function wireDefinition(mark,term,blk){
+  mark.className='defined';mark.tabIndex=0;mark.setAttribute('role','button');mark.setAttribute('aria-label','Definition: '+term);
+  const open=ev=>{if(window.getSelection().toString().trim())return;ev.preventDefault();ev.stopPropagation();showDefine(term,blk,mark.getBoundingClientRect());};
+  mark.onclick=open;mark.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' ')open(ev);};
 }
-const pendingIds=new Set(); let knownExp=new Set(); let lastRaws=[];
+function markDefinition(blk,term,start){
+  const walker=document.createTreeWalker(blk,NodeFilter.SHOW_TEXT);const nodes=[];let n,pos=0;
+  while((n=walker.nextNode())){nodes.push({n,start:pos,end:pos+n.length});pos+=n.length;}
+  const a=nodes.find(x=>x.end>start),b=nodes.find(x=>x.end>=start+term.length);
+  if(!a||!b||a.n.parentElement.closest('.defined')||b.n.parentElement.closest('.defined'))return;
+  const r=document.createRange();r.setStart(a.n,start-a.start);r.setEnd(b.n,start+term.length-b.start);
+  if(r.toString()!==term)return;
+  const mark=document.createElement('span');
+  try{r.surroundContents(mark);}catch(_){mark.appendChild(r.extractContents());r.insertNode(mark);}
+  wireDefinition(mark,term,blk);
+}
+function rememberDefinition(term,blk,selection){
+  if(!blk)return;
+  const prefix=document.createRange();prefix.selectNodeContents(blk);prefix.setEnd(selection.startContainer,selection.startOffset);
+  const actual=selection.toString(),start=prefix.toString().length,context=definitionContext(blk);
+  const records=definitionRecords();
+  if(!records.some(x=>x.term===actual&&x.start===start&&x.context===context)){
+    records.push({term:actual,start,context});try{localStorage.setItem(definitionKey(),JSON.stringify(records));}catch(_){}
+  }
+  markDefinition(blk,actual,start);
+}
+function restoreDefinitions(){
+  const records=definitionRecords();
+  main.querySelectorAll('.blk').forEach(blk=>{const context=definitionContext(blk);records.filter(x=>x.context===context).forEach(x=>markDefinition(blk,x.term,x.start));});
+}
+let lastRaws=[];
 // Which top-level segments changed between two renders: [first, lastExclusive) in the new list.
+function writingContent(raw){return raw.replace(/^(::: exp[^\n]*)/gm,line=>line.replace(/\s+folded\b/g,'')).trim();}
 function changedRange(prev,next){
   if(!prev.length)return null;
   let p=0; while(p<prev.length&&p<next.length&&prev[p]===next[p])p++;
   let q=0; while(q<prev.length-p&&q<next.length-p&&prev[prev.length-1-q]===next[next.length-1-q])q++;
   return p<next.length-q?[p,next.length-q]:null;
 }
-// cmux-style attention: scroll to what was just written and pulse a frame around it.
-function spotlight(els){
-  if(!els.length)return;
-  const first=els[0]; const tall=first.offsetHeight>window.innerHeight*0.75;
-  first.scrollIntoView({behavior:reduced?'auto':'smooth',block:tall?'start':'center'});
-  els.forEach(el=>{ if(!streaming)animate(el); });
-  const rs=els.map(e=>e.getBoundingClientRect()); const top=Math.min(...rs.map(r=>r.top))+window.scrollY, bot=Math.max(...rs.map(r=>r.bottom))+window.scrollY;
-  const left=Math.min(...rs.map(r=>r.left)), right=Math.max(...rs.map(r=>r.right));
-  document.getElementById('spot')?.remove();
-  const f=document.createElement('div'); f.id='spot'; Object.assign(f.style,{top:(top-14)+'px',left:(left-18)+'px',width:(right-left+36)+'px',height:(bot-top+28)+'px'});
-  document.body.appendChild(f); setTimeout(()=>f.remove(),5000);
-}
 async function checkPending(){
   const phs=[...main.querySelectorAll('.fold[data-pending]')]; if(!phs.length)return;
   const st=await fetch('/api/pending').then(r=>r.json()).catch(()=>({}));
-  phs.forEach(ph=>{const p=st[ph.dataset.pending]; if(!p)return; if(p.status==='error'){const e=ph.querySelector('.exp');e.classList.remove('pending');e.classList.add('error');e.innerHTML=e.innerHTML.replace(/writing<span[^>]*><\/span>$/,esc(p.error||'failed'))} else if(p.status==='done'){pendingIds.add(p.id); const have=main.querySelector(`.fold[data-for="${p.id}"]`); if(have){ ph.remove(); have.classList.remove('closed'); have.querySelector('.exp').scrollIntoView({behavior:'smooth',block:'center'}); }} });
+  phs.forEach(ph=>{const p=st[ph.dataset.pending]; if(!p)return; if(p.status==='error'){const e=ph.querySelector('.exp');e.classList.remove('pending');e.classList.add('error');e.querySelector('.expbody').textContent=p.error||'failed'} else if(p.status==='done'){const have=main.querySelector(`.fold[data-for="${p.id}"]`); if(have){ sfx('explain'); ph.remove(); have.classList.remove('closed'); have.querySelector('.exptoggle')?.setAttribute('aria-expanded','true'); }} });
 }
 setInterval(checkPending,900);
 // resolve one pending id, for the quiz panel and the flashcards
@@ -757,7 +1469,7 @@ function wireDeck(d){
         c.classList.remove('busy'); val.disabled=false;
         if(p.status==='error'){hint.textContent=p.error||'failed';return;}
         // paint the verdict from the pending payload now; the file write that follows persists it
-        c.dataset.n=p.score; c.classList.add('graded'); ta.disabled=true; const mic=c.querySelector('.mic'); if(mic)mic.disabled=true;
+        c.dataset.n=p.score; sfx(+p.score>=4?'cardgood':'cardlow'); c.classList.add('graded'); xpUpdate(); scheduleToc(); ta.disabled=true; const mic=c.querySelector('.mic'); if(mic)mic.disabled=true;
         c.querySelector('.verdict').innerHTML=verdictHtml(+p.score,`*"${answer}"*\n${p.rationale||''}\n${p.missing?'Missing: '+p.missing:''}`);
         st.flipped[c.dataset.item]=true; c.classList.add('flip'); fitBack(c); paintBar(); paintCtl(); next.focus();
       });
@@ -806,12 +1518,16 @@ function wirePanel(q){
   };
 }
 function wire(){
-  main.querySelectorAll('.exp').forEach(e=>{e.onclick=ev=>{if(ev.target.closest('a')||window.getSelection().toString().trim())return; if(e.classList.contains('pending'))return; const w=e.closest('.fold'); if(!w)return; ev.stopPropagation(); const closed=!w.classList.contains('closed'); w.classList.toggle('closed',closed); ask({kind:'fold',id:e.dataset.id,folded:closed}); }});
+  main.querySelectorAll('.interactive').forEach(wireInteractive);
+  main.querySelectorAll('.exp[data-id]').forEach(e=>{
+    const w=e.closest('.fold'),toggle=e.querySelector('.exptoggle');
+    toggle.setAttribute('aria-expanded',String(!w.classList.contains('closed')));
+    toggle.onclick=ev=>{ev.stopPropagation();const closed=w.classList.toggle('closed');toggle.setAttribute('aria-expanded',String(!closed));ask({kind:'fold',id:e.dataset.id,folded:closed});};
+    e.querySelector('.expremove').onclick=async ev=>{ev.stopPropagation();const result=await ask({kind:'remove',id:e.dataset.id});if(result?.error){e.querySelector('.expbody').textContent=result.error;w.classList.remove('closed');toggle.setAttribute('aria-expanded','true');}else w.remove();};
+  });
   // a side photo and the block that follows it share a two-column row, so the text never jumps width mid-paragraph
   main.querySelectorAll('.blk > .photo.side').forEach(ph=>{ const b=ph.parentElement; if(b.parentElement.classList.contains('sidepair'))return; const nxt=b.nextElementSibling; if(!nxt||!nxt.classList.contains('blk')||nxt.querySelector('h2,h3,.photo,.figure,.quiz,.deck'))return; const pair=document.createElement('div'); pair.className='sidepair'; b.parentElement.insertBefore(pair,b); pair.appendChild(nxt); pair.appendChild(b); });
-  // every note underlines its words in the block above it, even when the words sit inside rendered math
-  main.querySelectorAll('.fold[data-label]').forEach(f=>{ const lab=f.dataset.label; if(!lab||f.closest('.exp'))return; const b=blockBefore(f); if(!b)return; if([...b.querySelectorAll('.asked')].some(a=>a.textContent.trim().toLowerCase()===lab))return; markAsked(b,lab); });
-  main.querySelectorAll('.asked').forEach(a=>{a.onclick=ev=>{const words=a.textContent.trim().toLowerCase(); const blk=a.closest('.blk'); let w=blk?notesAfter(blk).find(f=>f.dataset.label===words):null; if(!w)w=[...main.querySelectorAll('.fold')].find(f=>f.dataset.label===words); if(!w)return; ev.preventDefault(); ev.stopPropagation(); const open=w.classList.contains('closed'); w.classList.toggle('closed',!open); if(open){w.querySelector('.exp').scrollIntoView({behavior:'smooth',block:'center'})} ask({kind:'fold',id:w.dataset.for,folded:!open}); }});
+  restoreDefinitions();
   main.querySelectorAll('.predict .btn').forEach(b=>{b.onclick=()=>{const pr=b.closest('.predict');if(pr.dataset.done)return;pr.dataset.done=1;
     const key=+(pr.dataset.key??-1), choice=+b.dataset.choice, graded=key>=0, ok=graded&&choice===key;
     if(graded){ b.classList.add(ok?'ok':'no'); if(!ok){const kb=pr.querySelector(`.btn[data-choice="${key}"]`); if(kb)kb.classList.add('key');} }
@@ -821,8 +1537,307 @@ function wire(){
     ask({kind:'predict',block:b.closest('.blk').id,choice,correct:graded?ok:null});}});
   main.querySelectorAll('.quiz').forEach(wirePanel);
   main.querySelectorAll('.deck').forEach(wireDeck);
-  main.querySelectorAll('.mcqi input').forEach(inp=>{inp.onchange=()=>{const it=inp.closest('.mcqi');if(it.classList.contains('done'))return;it.classList.add('done');const ok=inp.value===it.dataset.key;const lab=inp.closest('label');lab.classList.add(ok?'right':'wrong');it.querySelectorAll('input').forEach(x=>{x.disabled=true;if(x.value===it.dataset.key)x.closest('label').classList.add('right')});it.querySelector('.fb').innerHTML=(ok?'<span class="ok">Correct.</span>':'<span class="bad">Not quite.</span>')+(it.dataset.why?' '+mdInline(it.dataset.why):'');ask({kind:'mcq',item:it.dataset.item,choice:inp.value,correct:ok});}});
+  main.querySelectorAll('.mcqi input').forEach(inp=>{inp.onchange=()=>markMcq(inp.closest('.mcqi'),inp.value,true);});
+  main.querySelectorAll('.mcqi .mreset').forEach(b=>{b.onclick=()=>resetMcq(b.closest('.mcqi'));});
 }
+
+// XP fills the top bar with verified answers only: a multiple-choice item answered right, or a flashcard graded 4 or 5. Scrolling adds nothing.
+const xpArc=document.querySelector('#tocbtn .arc'), xpText=document.querySelector('#tocbtn .rl'), xpIco=document.querySelector('#tocbtn .ico'), xpSum=document.querySelector('#toc .xpsum');
+function xpUpdate(){
+  const ms=[...main.querySelectorAll('.mcqi')], cs=[...main.querySelectorAll('.fc[data-item]')], total=ms.length+cs.length;
+  const got=ms.filter(m=>{const c=m.querySelector('input:checked');return m.classList.contains('done')&&c&&c.value===m.dataset.key}).length+cs.filter(c=>c.dataset.n!==''&&+c.dataset.n>=4).length;
+  const full=total>0&&got===total;
+  xpArc.style.strokeDashoffset=String(100.53*(1-(total?got/total:0)));
+  document.getElementById('tocbtn').classList.toggle('full',full);
+  xpText.hidden=!total; xpText.textContent=total?`${got}/${total}`:'';
+  const hp=document.querySelector('#tocbtn .hp'), hpl=document.querySelector('#tocbtn .hplbl'); hp.hidden=hpl.hidden=!total;
+  if(hp.children.length!==total)hp.innerHTML='<i></i>'.repeat(total);
+  [...hp.children].forEach((c,i)=>c.classList.toggle('on',i<got));
+  xpSum.innerHTML=total?`XP <b>${got}</b> / ${total}`:'';
+  document.getElementById('tocbtn').title=total?`Contents (t) · XP ${got}/${total}: questions answered right`:'Contents (t)';
+}
+// a multiple-choice answer is marked the same way live and when restored from the log
+function stemSig(it){ const t=(it.querySelector('.q')?.textContent||'').replace(/\s+/g,' ').trim(); let h=5381; for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0; return (h>>>0).toString(36); }
+function markMcq(it,choice,live){
+  // answers stay changeable: a new pick replaces the old verdict; the key is shown only once it is picked
+  const inp=it.querySelector(`input[value="${choice}"]`); if(!inp)return; inp.checked=true;
+  if(it.classList.contains('done')&&it.dataset.choice===choice)return;
+  it.dataset.choice=choice; it.classList.add('done'); const ok=choice===it.dataset.key;
+  it.querySelectorAll('label').forEach(l=>l.classList.remove('right','wrong'));
+  inp.closest('label').classList.add(ok?'right':'wrong');
+  it.querySelector('.fb').innerHTML=ok?`<div class="fbc ok"><div class="fbh">✓ Correct</div>${it.dataset.why?`<div class="fbb">${md(it.dataset.why)}</div>`:''}</div>`:'<div class="fbc bad"><div class="fbh">✕ Not quite</div><div class="fbb"><p>Pick another option to try again.</p></div></div>';
+  const rb=it.querySelector('.mreset'); if(rb)rb.hidden=false;
+  if(live)ask({kind:'mcq',item:it.dataset.item,choice,correct:ok,sig:stemSig(it)});
+  tocSig=''; xpUpdate(); scheduleToc();
+  if(live){ if(ok)celebrate(inp.closest('label'),document.getElementById('tocbtn').classList.contains('full')); else { FX.streak=0; sfx('wrong'); } }
+}
+// Reset clears an answered item back to unanswered (no verdict, no key, no XP) and logs a reset event,
+// so a reload keeps it cleared; the earlier picks stay in the log as evidence. Quiet: no sound, no sparks.
+function resetMcq(it){
+  if(!it||!it.classList.contains('done'))return;
+  it.classList.remove('done'); delete it.dataset.choice;
+  it.querySelectorAll('input').forEach(i=>{i.checked=false;});
+  it.querySelectorAll('label').forEach(l=>l.classList.remove('right','wrong','win'));
+  it.querySelector('.fb').innerHTML=''; it.querySelector('.mreset').hidden=true;
+  FX.streak=0;
+  ask({kind:'mcq',event:'reset',item:it.dataset.item,sig:stemSig(it)});
+  tocSig=''; xpUpdate(); scheduleToc();
+  it.querySelector('input')?.focus({preventScroll:true});
+}
+// Right-answer celebration. Pixel sparks in the lesson's gold and green, a floating +1 XP, a short
+// square-wave chime (press m to mute; remembered in this browser). Clearing every item gets a fanfare.
+const FX={canvas:null,ctx:null,parts:[],raf:0,streak:0,audio:null,muted:false};
+try{ FX.muted=localStorage.getItem('bb-sfx')==='off'; }catch(_){}
+function fxCanvas(){
+  if(FX.canvas)return; const c=document.createElement('canvas'); c.id='fx'; document.body.appendChild(c);
+  FX.canvas=c; FX.ctx=c.getContext('2d');
+  const fit=()=>{ c.width=Math.ceil(innerWidth/3); c.height=Math.ceil(innerHeight/3); FX.ctx.imageSmoothingEnabled=false; };
+  fit(); addEventListener('resize',fit);
+}
+function fxBurst(x,y,n,spread){
+  fxCanvas(); const cols=['#d9b44a','#c8bc83','#4ea672','#e9e6df','#9b3a4a'];
+  for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, v=(1.2+Math.random()*2.4)*spread;
+    FX.parts.push({x:x/3,y:y/3,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1.6*spread,life:34+Math.random()*26,c:cols[i%cols.length],s:Math.random()<.3?2:1}); }
+  if(!FX.raf)FX.raf=requestAnimationFrame(fxTick);
+}
+function fxTick(){
+  const g=FX.ctx; g.clearRect(0,0,FX.canvas.width,FX.canvas.height);
+  FX.parts=FX.parts.filter(p=>p.life>0);
+  for(const p of FX.parts){ p.x+=p.vx; p.y+=p.vy; p.vy+=.12; p.vx*=.97; p.life--;
+    if(p.life%6<4||p.life>12){ g.fillStyle=p.c; g.fillRect(Math.round(p.x),Math.round(p.y),p.s+1,p.s+1); } }
+  FX.raf=FX.parts.length?requestAnimationFrame(fxTick):0;
+  if(!FX.raf)g.clearRect(0,0,FX.canvas.width,FX.canvas.height);
+}
+function fxChime(notes,step){
+  if(FX.muted)return;
+  try{ FX.audio=FX.audio||new (window.AudioContext||window.webkitAudioContext)(); const ac=FX.audio, t0=ac.currentTime+.01;
+    notes.forEach((f,i)=>{ const o=ac.createOscillator(), g=ac.createGain(); o.type='square'; o.frequency.value=f;
+      const t=t0+i*step; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.045,t+.005); g.gain.exponentialRampToValueAtTime(.0008,t+step*1.8);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t+step*2); });
+  }catch(_){}
+}
+function fxFloat(text,x,y,cls){ const d=document.createElement('div'); d.className='xpfloat'+(cls?' '+cls:''); d.textContent=text; d.style.left=x+'px'; d.style.top=y+'px'; document.body.appendChild(d); setTimeout(()=>d.remove(),1100); }
+function celebrate(label,cleared){
+  FX.streak++;
+  const r=(label.querySelector('input')||label).getBoundingClientRect(), x=r.left+r.width/2, y=r.top+r.height/2;
+  label.classList.remove('win'); void label.offsetWidth; label.classList.add('win');
+  const tb=document.getElementById('tocbtn'); tb.classList.remove('bump'); void tb.offsetWidth; tb.classList.add('bump');
+  fxChime(FX.streak>=3?[659,784,988,1319]:[784,988,1319],.07);
+  fxBurst(x,y,FX.streak>=3?40:26,1);
+  fxFloat('+1 XP',x+40,y-18);
+  if(FX.streak>=2)fxFloat('COMBO x'+FX.streak,x+40,y+6,'combo');
+  if(cleared)setTimeout(()=>{
+    fxChime([523,659,784,1047,784,1047,1319],.11);
+    const b=document.createElement('div'); b.id='cleared'; b.innerHTML='QUIZ CLEARED<small>every answer verified</small>'; document.body.appendChild(b); setTimeout(()=>b.remove(),2500);
+    for(let k=0;k<4;k++)setTimeout(()=>fxBurst(innerWidth*(.2+.2*k),innerHeight*.4,34,1.4),k*160);
+  },350);
+}
+// 8-bit cues for board events, same square-wave voice and the same m mute as the quiz chime.
+const SFX={
+  start:[[392,.08],[523,.08],[659,.08],[784,.14]],          // lesson starts being written: power-on
+  section:[[988,.05],[1319,.07]],                              // a new ## section lands while writing
+  done:[[523,.09],[659,.09],[784,.09],[1047,.12],[0,.06],[784,.08],[1047,.22]], // lesson finished: stage clear
+  explain:[[1175,.06],[1568,.06],[2093,.12]],                   // an Explain note arrived: item get
+  wrong:[[196,.09],[147,.16]],                                  // wrong pick: soft low thud
+  cardgood:[[784,.06],[988,.06],[1319,.12]],
+  cardlow:[[330,.08],[262,.14]]
+};
+let sfxLast={};
+function sfx(name){
+  const seq=SFX[name]; if(!seq||FX.muted)return;
+  const now=performance.now(); if(now-(sfxLast[name]||0)<600)return; sfxLast[name]=now;
+  try{ FX.audio=FX.audio||new (window.AudioContext||window.webkitAudioContext)(); const ac=FX.audio; if(ac.state==='suspended')ac.resume();
+    let t=ac.currentTime+.01;
+    for(const [f,d] of seq){ if(f){ const o=ac.createOscillator(), g=ac.createGain(); o.type='square'; o.frequency.value=f;
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(name==='wrong'||name==='cardlow'?.03:.04,t+.005); g.gain.exponentialRampToValueAtTime(.0008,t+d*1.6);
+        o.connect(g).connect(ac.destination); o.start(t); o.stop(t+d*1.8); }
+      t+=d; }
+  }catch(_){}
+}
+document.addEventListener('keydown',e=>{
+  if(e.key!=='m'||e.metaKey||e.ctrlKey||e.altKey||MODE==='grid')return;
+  if(e.target.closest&&e.target.closest('input,textarea,select,[contenteditable]'))return;
+  FX.muted=!FX.muted; try{ localStorage.setItem('bb-sfx',FX.muted?'off':'on'); }catch(_){}
+  toast.textContent=FX.muted?'Sound off (m)':'Sound on (m)'; toast.style.display='block'; setTimeout(()=>{toast.style.display='none'},1400);
+});
+async function restoreAnswers(){
+  if(!lessonId)return;
+  const got=await fetch(`/api/answers?id=${lessonId}${WSQ}`).then(r=>r.json()).catch(()=>({}));
+  main.querySelectorAll('.mcqi:not(.done)').forEach(it=>{ const a=got[it.dataset.item]; if(a&&(!a.sig||a.sig===stemSig(it)))markMcq(it,a.choice,false); });
+}
+
+// ---------- contents: drawer + ticks on the progress bar ----------
+// Lists the lesson's ## and ### headings. Reading position only (✓ = scrolled past), never mastery.
+const tocBtn=$('#tocbtn'), tocNav=$('#toc'), tocList=$('#toc ol'), tocShade=$('#tocshade'), tocTicks=$('#toc-ticks');
+let tocItems=[], tocNew=new Set(), tocMax=-1, tocFrame=0, tocOpen=false, tocSig='';
+function tocEligible(h){ return !!h.closest('.blk')&&!h.closest('.fold,.deck,.quiz,.mcqi,.fc,.predict,.checkin,details'); }
+function tocSlug(t,used){ const base='s-'+(t.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60)||'section'); let k=base,i=2; while(used.has(k))k=base+'-'+(i++); used.add(k); return k; }
+function buildToc(hot){
+  if(MODE==='grid')return;
+  const used=new Set(), kids=[...main.children];
+  tocItems=[...main.querySelectorAll('.blk h2, .blk h3')].filter(tocEligible).map(h=>{
+    const c=h.cloneNode(true); c.querySelectorAll('.tag,.katex-mathml,.chalkdeco').forEach(x=>x.remove());
+    const text=c.textContent.replace(/\s+/g,' ').trim();
+    if(h.id&&h.id.startsWith('s-')&&!used.has(h.id))used.add(h.id); else h.id=tocSlug(text,used);
+    return {h,lvl:h.tagName==='H2'?2:3,id:h.id,html:c.innerHTML,text};
+  });
+  tocItems.forEach((it,i)=>{ const nx=tocItems.slice(i+1).find(x=>x.lvl<=it.lvl); const a=kids.indexOf(it.h.closest('.blk')); const b=nx?kids.indexOf(nx.h.closest('.blk')):kids.length; it.blocks=kids.slice(a,Math.max(a+1,b)); });
+  // what was just written gets a dot on its nearest heading until it is opened from the list
+  (hot||[]).forEach(b=>{ let hit=[...b.querySelectorAll('h2,h3')].filter(tocEligible)[0]; let p=b.previousElementSibling; while(!hit&&p){ const hh=[...p.querySelectorAll('h2,h3')].filter(tocEligible); if(hh.length)hit=hh[hh.length-1]; p=p.previousElementSibling; } if(hit)tocNew.add(hit.id); });
+  tocTicks.innerHTML=tocItems.filter(x=>x.lvl===2).map(x=>`<button class="tick h${x.lvl}" type="button" data-id="${x.id}" data-t="${esc(x.text)}" title="${esc(x.text)}" aria-label="${esc(x.text)}"></button>`).join('');
+  tocTicks.querySelectorAll('.tick').forEach(t=>t.onclick=()=>tocGo(t.dataset.id));
+  tocSig=''; scheduleToc();
+}
+function tocScore(it){
+  const ms=it.blocks.flatMap(b=>[...b.querySelectorAll('.mcqi')]); if(!ms.length)return '';
+  const done=ms.filter(m=>m.classList.contains('done')); if(!done.length)return '';
+  const right=done.filter(m=>{const c=m.querySelector('input:checked');return c&&c.value===m.dataset.key}).length;
+  return `${right}/${ms.length}`;
+}
+function tocCurrent(){
+  let cur=-1,cur2=-1;
+  tocItems.forEach((it,i)=>{ if(it.h.getBoundingClientRect().top<=120){cur=i; if(it.lvl===2)cur2=i;} });
+  if(tocItems.length&&document.documentElement.scrollHeight-window.innerHeight-window.scrollY<4){ cur=tocItems.length-1; for(let k=cur;k>=0;k--)if(tocItems[k].lvl===2){cur2=k;break} }
+  return {cur,cur2};
+}
+function tocUpdate(){
+  const lesson=MODE!=='grid'&&!!main.querySelector('#title')&&tocItems.length>0;
+  const title=main.querySelector('#title');
+  tocBtn.classList.toggle('show',lesson||(MODE!=='grid'&&!!title));
+  document.documentElement.classList.toggle('railmode',MODE!=='grid'&&!!title);
+  const bar=$('#topbar'), zoom=$('#zoomctl');
+  if(document.documentElement.classList.contains('railmode')){ if(tocBtn.parentNode!==bar)zoom.after(tocBtn); }
+  else if(tocBtn.parentNode!==document.body)bar.before(tocBtn);
+  if(!lesson){ xpUpdate(); return; }
+  const {cur,cur2}=tocCurrent(); if(cur2>tocMax)tocMax=cur2;
+  const H=document.documentElement.scrollHeight, pos=readPos();
+  tocTicks.querySelectorAll('.tick').forEach(t=>{ const it=tocItems.find(x=>x.id===t.dataset.id); if(!it)return; const r=Math.max(0,Math.min(1,(it.h.getBoundingClientRect().top+window.scrollY)/Math.max(1,H))); t.style.top=(r*100)+'%'; t.classList.toggle('past',r<=pos+0.002); t.classList.toggle('cur',it.lvl===2?it===tocItems[cur2]:it===tocItems[cur]); });
+  xpUpdate();
+  const scores=tocItems.map(it=>it.lvl===2?tocScore(it):'');
+  const sig=[cur,cur2,tocMax,scores.join(','),[...tocNew].join(','),tocItems.map(x=>x.id).join(',')].join('|');
+  tocBtn.querySelector('.dot')?.remove(); if(tocNew.size)tocBtn.insertAdjacentHTML('beforeend','<span class="dot"></span>');
+  if(sig===tocSig)return; tocSig=sig;
+  const parentOf=i=>{for(let k=i;k>=0;k--)if(tocItems[k].lvl===2)return k;return -1};
+  tocList.innerHTML=tocItems.map((it,i)=>{
+    if(it.lvl===3&&(cur2<0||parentOf(i)!==cur2))return '';
+    const passed=it.lvl===2&&i<tocMax&&i!==cur2;
+    const cls=`h${it.lvl}${i===cur?' cur':''}${it.lvl===2&&i===cur2?' in':''}`;
+    return `<li class="${cls}"><a href="#${it.id}" data-id="${it.id}"><span class="mk">${passed?'✓':''}</span><span class="lbl">${it.html}</span>${scores[i]?`<span class="sc">${scores[i]}</span>`:''}${tocNew.has(it.id)?'<span class="new" title="new"></span>':''}</a></li>`;
+  }).join('');
+}
+function scheduleToc(){ if(!tocFrame)tocFrame=requestAnimationFrame(()=>{tocFrame=0;tocUpdate();}); }
+function tocToggle(open){
+  tocOpen=open===undefined?!tocOpen:!!open;
+  tocNav.classList.toggle('open',tocOpen); tocShade.classList.toggle('open',tocOpen);
+  tocBtn.setAttribute('aria-expanded',String(tocOpen)); tocNav.inert=!tocOpen; tocNav.setAttribute('aria-hidden',String(!tocOpen));
+  if(tocOpen){ tocSig=''; tocUpdate(); tocList.querySelector('li.cur,li.in')?.scrollIntoView({block:'center'}); } else scheduleToc();
+}
+function tocGo(id,smooth=true){
+  const it=tocItems.find(x=>x.id===id); if(!it)return;
+  if(tocOpen)tocToggle(false);
+  tocNew.delete(id); tocSig='';
+  const goal=Math.max(0,it.h.getBoundingClientRect().top+window.scrollY-70);
+  window.scrollTo({top:goal,behavior:reduced||!smooth?'auto':'smooth'});
+  // smooth scrolling stalls in a backgrounded webview: land there anyway
+  if(smooth)setTimeout(()=>{ if(Math.abs(window.scrollY-Math.min(goal,document.documentElement.scrollHeight-window.innerHeight))>40)window.scrollTo(0,goal); },900);
+  history.replaceState(null,'',location.pathname+location.search+'#'+id);
+  scheduleToc();
+}
+tocBtn.onclick=()=>tocToggle();
+// drag or click the rail to scroll (ticks keep their own click = jump to that section)
+(()=>{ let drag=false;
+  const to=e=>{ const r=readingProgress.getBoundingClientRect(); const f=Math.max(0,Math.min(1,(e.clientY-r.top)/r.height)); window.scrollTo(0,f*(document.documentElement.scrollHeight-window.innerHeight)); };
+  readingProgress.addEventListener('pointerdown',e=>{ if(e.target.closest('.tick'))return; drag=true; readingProgress.classList.add('drag'); readingProgress.setPointerCapture(e.pointerId); to(e); e.preventDefault(); });
+  readingProgress.addEventListener('pointermove',e=>{ if(drag)to(e); });
+  const end=e=>{ if(!drag)return; drag=false; readingProgress.classList.remove('drag'); try{readingProgress.releasePointerCapture(e.pointerId)}catch(_){} };
+  readingProgress.addEventListener('pointerup',end); readingProgress.addEventListener('pointercancel',end);
+})();
+tocShade.onclick=()=>tocToggle(false);
+// New tabs: a normal browser opens them itself; an in-app pane (Claude desktop, UA "Claude/") would replace this tab,
+// so there the bridge opens them in the default browser. Returns how many the pop-up blocker stopped.
+const IN_APP=/\bClaude\//.test(navigator.userAgent);
+function openTabs(hrefs){ if(IN_APP){ fetch('/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({urls:hrefs})}); return 0; }
+  let blocked=0; hrefs.forEach(h=>{ const w=window.open(h,'_blank'); if(w) w.opener=null; else blocked++; }); return blocked; }
+// hub: "Open all" opens every lesson of that folder as tabs, lowest number first
+document.addEventListener('click',e=>{ const b=e.target.closest('.openall'); if(!b)return; e.preventDefault();
+  const sec=b.closest('.course,.hubsec'); const hrefs=[...new Set([...sec.querySelectorAll('.card')].map(c=>c.href))].sort((x,y)=>x.localeCompare(y));
+  const blocked=openTabs(hrefs);
+  b.querySelector('.note')?.remove(); if(blocked) b.insertAdjacentHTML('beforeend',`<span class="note">allow pop-ups for this site to open all ${hrefs.length}</span>`); });
+// hub cards: the corner button opens that lesson in a new tab (the card itself opens it here)
+document.addEventListener('click',e=>{ const b=e.target.closest('.card .nt'); if(!b)return; e.preventDefault(); e.stopPropagation(); openTabs([b.closest('.card').href]); },true);
+document.addEventListener('keydown',e=>{ const b=e.target.closest&&e.target.closest('.card .nt'); if(!b||(e.key!=='Enter'&&e.key!==' '))return; e.preventDefault(); e.stopPropagation(); openTabs([b.closest('.card').href]); },true);
+tocList.addEventListener('click',e=>{ const a=e.target.closest('a[data-id]'); if(!a)return; e.preventDefault(); tocGo(a.dataset.id); });
+document.addEventListener('keydown',e=>{
+  if(MODE==='grid'||e.metaKey||e.ctrlKey||e.altKey)return;
+  if(e.target.closest&&e.target.closest('input,textarea,select,[contenteditable]'))return;
+  if(e.key==='t'&&tocItems.length){e.preventDefault();tocToggle();}
+  else if((e.key==='+'||e.key==='=')&&document.documentElement.classList.contains('railmode')){e.preventDefault();zoomStep(1);}
+  else if((e.key==='-'||e.key==='_')&&document.documentElement.classList.contains('railmode')){e.preventDefault();zoomStep(-1);}
+  else if(e.key==='0'&&document.documentElement.classList.contains('railmode')){e.preventDefault();zoomStep(0);}
+  else if(e.key==='Escape'&&tocOpen)tocToggle(false);
+});
+// Back button: the page you came from on this board (lesson -> lesson, hub -> lesson), else the all-lessons hub.
+document.getElementById('toplessons').addEventListener('click',e=>{ if(e.metaKey||e.ctrlKey||e.shiftKey||e.button)return; let r=null; try{ r=document.referrer&&new URL(document.referrer); }catch(_){} if(r&&r.origin===location.origin&&r.href!==location.href&&history.length>1){ e.preventDefault(); history.back(); } });
+// Top bar search: every lesson in every folder, loaded on first focus. Enter opens the highlighted result; "/" focuses.
+const topQ=$('#topq'), topRes=$('#topresults'); let topAll=null, topSel=0, topHits=[];
+async function topLoad(){ if(topAll)return; try{ const st=await fetch('/api/state?x=1&all=1').then(r=>r.json());
+  topAll=(st.workspaces||[]).flatMap(w=>w.lessons.map(l=>({href:`/w/${w.slug}/lessons/${l.id}`,title:l.title||('Lesson '+l.id),sub:`${w.name}${l.course&&l.course.toLowerCase()!==String(w.name).toLowerCase()?' · '+l.course:''} · Lesson ${l.id}`,q:[l.title,l.course,l.exam,l.id,w.name].join(' ').toLowerCase(),t:l.mtime||0}))).sort((a,b)=>b.t-a.t);
+}catch(_){ topAll=[]; } }
+// empty box: the most recent lessons. Typing: full-text search over everything written in every lesson (bridge /api/search).
+let topSeq=0, topTimer=0;
+function topMark(t,words){ let h=esc(t); for(const w of words){ if(!w)continue; h=h.replace(new RegExp('('+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),'<mark>$1</mark>'); } return h; }
+function topShow(items,words){
+  topHits=items; topSel=0;
+  topRes.innerHTML=items.length?items.map((x,i)=>`<a href="${x.href}" role="option"${i===0?' class="sel"':''}>${esc(x.title)}<span>${esc(x.sub)}</span>${x.snippet?`<em>${topMark(x.snippet,words)}</em>`:''}</a>`).join(''):'<div class="none">Nothing in any lesson matches.</div>';
+  topRes.classList.add('open'); }
+function topRender(){
+  const t=topQ.value.trim(); clearTimeout(topTimer);
+  if(!t){ topShow((topAll||[]).slice(0,8),[]); return; }
+  const words=t.toLowerCase().split(/\s+/).filter(Boolean);
+  topTimer=setTimeout(async()=>{ const my=++topSeq;
+    const r=await fetch('/api/search?q='+encodeURIComponent(t)).then(x=>x.json()).catch(()=>[]);
+    if(my!==topSeq)return;
+    topShow(r.map(h=>({href:h.href,title:h.title,sub:[h.course||h.ws,'Lesson '+h.id,h.section].filter(Boolean).join(' · '),snippet:h.snippet})),words);
+  },120);
+}
+topQ.addEventListener('focus',async()=>{ await topLoad(); topRender(); });
+topQ.addEventListener('input',topRender);
+topQ.addEventListener('keydown',e=>{
+  const links=[...topRes.querySelectorAll('a')];
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); if(!links.length)return; topSel=(topSel+(e.key==='ArrowDown'?1:-1)+links.length)%links.length; links.forEach((a,i)=>a.classList.toggle('sel',i===topSel)); links[topSel].scrollIntoView({block:'nearest'}); }
+  else if(e.key==='Enter'){ if(links[topSel]){ e.preventDefault(); location.href=links[topSel].href; } }
+  else if(e.key==='Escape'){ topRes.classList.remove('open'); topQ.blur(); }
+});
+document.addEventListener('pointerdown',e=>{ if(!e.target.closest('#topsearch'))topRes.classList.remove('open'); });
+document.addEventListener('keydown',e=>{ if(e.key!=='/'||MODE==='grid'||e.metaKey||e.ctrlKey||e.altKey)return; if(e.target.closest&&e.target.closest('input,textarea,select,[contenteditable]'))return; if(!document.documentElement.classList.contains('railmode'))return; e.preventDefault(); topQ.focus(); });
+// Zoom: 70%..200% on the lesson column, kept in this browser across lessons.
+const ZOOMS=[.7,.8,.9,1,1.1,1.25,1.4,1.6,1.8,2];
+let zoomAt=ZOOMS.indexOf(1);
+try{ const z=parseFloat(localStorage.getItem('bb-zoom')); if(ZOOMS.includes(z))zoomAt=ZOOMS.indexOf(z); }catch(_){}
+const zoomCtl=$('#zoomctl');
+function zoomApply(){
+  const z=ZOOMS[zoomAt];
+  document.documentElement.style.setProperty('--z',String(z));
+  zoomCtl.querySelector('.zv').textContent=Math.round(z*100)+'%';
+  zoomCtl.querySelector('[data-z="-1"]').disabled=zoomAt===0;
+  zoomCtl.querySelector('[data-z="1"]').disabled=zoomAt===ZOOMS.length-1;
+  pill.style.display='none';
+}
+function zoomStep(d){
+  // keep the line at the top of the screen in place while the column rescales
+  const extent=document.documentElement.scrollHeight-window.innerHeight, ratio=extent>0?window.scrollY/extent:0;
+  zoomAt=d===0?ZOOMS.indexOf(1):Math.max(0,Math.min(ZOOMS.length-1,zoomAt+d));
+  zoomApply();
+  try{ localStorage.setItem('bb-zoom',String(ZOOMS[zoomAt])); }catch(_){}
+  window.scrollTo(0,ratio*(document.documentElement.scrollHeight-window.innerHeight));
+}
+zoomCtl.addEventListener('click',e=>{ const b=e.target.closest('button[data-z]'); if(b)zoomStep(+b.dataset.z); });
+zoomApply();
+main.addEventListener('change',()=>{tocSig='';scheduleToc();});
+window.addEventListener('scroll',scheduleToc,{passive:true});
+window.addEventListener('resize',scheduleToc);
+document.addEventListener('visibilitychange',()=>{tocSig='';scheduleToc();});
+new ResizeObserver(scheduleToc).observe(main);
 
 // ---------- boot ----------
 async function boot(){
@@ -834,37 +1849,212 @@ async function boot(){
   else await loadLesson();
   let busy=false;
   async function sync(d){ if(busy)return; busy=true; try{
+    const was=streaming, h2s=main.querySelectorAll('h2').length;
     if(d){streaming=d.streaming; if(MODE==='lesson'&&!LESSON_ARG&&d.current&&d.current!==lessonId){location.href=WSB+'/';return}}
     const r=await fetch(`/api/lesson?id=${lessonId}&from=${offset}&hash=${hash}${WSQ}`).then(r=>r.json());
     if(r.reset){offset=0;hash='';await loadLessonWith(r);} else if(r.text){await loadLessonWith(r);}
+    if(d&&d.brainstorm)applyBrainstorm(d.brainstorm);
+    if(!was&&streaming)sfx('start'); else if(was&&!streaming)sfx('done'); else if(streaming&&main.querySelectorAll('h2').length>h2s)sfx('section');
     setWriting(streaming);
   } finally{busy=false} }
+  // A new board version (the skill was edited) never reloads under the reader: it offers a reload chip that keeps the place.
+  window.boardUpdated=()=>{ if(document.getElementById('bbupd'))return; const b=document.createElement('button'); b.id='bbupd'; b.type='button'; b.textContent='Board updated · reload'; b.title='Reload to get the new board version. You stay where you are.';
+    b.style.cssText='position:fixed;left:16px;bottom:16px;z-index:3000;font:500 13px var(--body);color:var(--chalk);background:#111;border:1px solid var(--acc);border-radius:999px;padding:7px 14px;cursor:pointer;opacity:.9';
+    b.onclick=()=>{ try{sessionStorage.setItem('bb-scroll:'+location.pathname,String(window.scrollY))}catch(_){} location.reload(); }; document.body.appendChild(b); };
+  try{ const k='bb-scroll:'+location.pathname, y=sessionStorage.getItem(k); if(y!==null){ sessionStorage.removeItem(k); let n=0; const go=()=>{ window.scrollTo(0,+y); if(Math.abs(window.scrollY-(+y))>4&&n++<20) setTimeout(go,150); }; setTimeout(go,300); } }catch(_){}
   try{ window.es=new EventSource('/events?id='+lessonId+WSQ); window.es.addEventListener('change',e=>sync(JSON.parse(e.data))); }catch(_){}
   // polling fallback (covers webviews where EventSource is flaky)
-  setInterval(async()=>{ try{const st=await fetch('/api/state?x=1'+WSQ).then(r=>r.json()); if(state.page_version&&st.page_version!==state.page_version){location.reload();return} if(!(window.es&&window.es.readyState===1)) await sync({current:st.current,streaming:st.streaming});}catch(_){} },1500);
+  setInterval(async()=>{ try{const st=await fetch('/api/state?x=1'+WSQ).then(r=>r.json()); if(state.page_version&&st.page_version!==state.page_version){boardUpdated();}  if(!(window.es&&window.es.readyState===1)) await sync({current:st.current,brainstorm:st.brainstorm,streaming:st.streaming});}catch(_){} },1500);
 }
 async function loadLessonWith(r){
-  if(r.reset){const keep=[...main.querySelectorAll('.fold[data-pending]')]; main.innerHTML='';blocks=0;headerDone=false;body='';renderedUpto=0; window.__ph=keep;}
+  // A reset rebuilds the page (a callout was written or folded, the file changed mid-way). Keep the reader where they
+  // are: remember the first visible block by its text and put it back at the same screen position afterwards.
+  let place=null;
+  if(r.reset&&main.children.length){ const bl=[...main.querySelectorAll(':scope > .blk')]; const a=bl.find(b=>b.getBoundingClientRect().bottom>80);
+    if(a) place={sig:a.textContent.slice(0,160),i:bl.indexOf(a),top:a.getBoundingClientRect().top}; main.style.minHeight=main.offsetHeight+'px'; }
+  const isFirst=!!window.__firstLoad;
+  if(r.reset){const keep=[...main.querySelectorAll('.fold[data-pending]')]; window.__bsKeep=document.getElementById('brainstorm'); main.innerHTML='';blocks=0;headerDone=false;body='';renderedUpto=0; window.__ph=keep;}
   body+=r.text; offset=r.offset; if(r.hash)hash=r.hash;
-  if(!headerDone){const {fm,fmLines}=frontMatter(body); if(/^---\n[\s\S]*?\n---\n/.test(body)||!body.startsWith('---')){main.insertAdjacentHTML('afterbegin',header(fm,null));headerDone=true;document.title=(fm.title?fm.title+' · ':'')+'Blackboard';bodyStart=fmLines;fmCache=fm;applyAccent(fm);setWriting(streaming);} else {setWriting(streaming);return;}}
+  if(!headerDone){const {fm,fmLines}=frontMatter(body); if(/^---\n[\s\S]*?\n---\n/.test(body)||!body.startsWith('---')){main.insertAdjacentHTML('afterbegin',header(fm,null));headerDone=true;document.title=(fm.title?fm.title+' · ':'')+'Blackboard';bodyStart=fmLines;fmCache=fm;applyAccent(fm);setWriting(streaming);if(streaming)animate(main.querySelector('#title'));} else {setWriting(streaming);return;}}
+  if(window.__bsKeep){ main.appendChild(window.__bsKeep); window.__bsKeep=null; } // a rebuild keeps the brainstorm notes
   const {body:b}=frontMatter(body); const segs=segments(b,bodyStart); const fresh=segs.slice(renderedUpto);
   const raws=segs.map(s=>s.raw); const chg=r.reset?changedRange(lastRaws,raws):null; const hot=[];
-  fresh.forEach((s,k)=>{ const idx=renderedUpto+k; if(fmCache.title&&/^# /.test(s.raw)&&idx===0)return; const el=renderSegment(s); main.appendChild(el); if(chg&&idx>=chg[0]&&idx<chg[1])hot.push(el); if(!r.reset||streaming){animate(el);moveNub(el);} if(streaming)followIfAtBottom(el); });
+  if(document.getElementById('brainstorm')?.isConnected&&fresh.some(sg=>sg.raw.trim()&&!/^# /.test(sg.raw)))bsWipeAll();
+  fresh.forEach((s,k)=>{ const idx=renderedUpto+k; if(fmCache.title&&/^# /.test(s.raw)&&idx===0)return; const el=renderSegment(s); main.appendChild(el); if(chg&&idx>=chg[0]&&idx<chg[1])hot.push(el); if(!isFirst&&(!r.reset||streaming||(chg&&idx>=chg[0]&&idx<chg[1]&&!lastRaws.some(raw=>writingContent(raw)===writingContent(s.raw))))){animate(el);} if(streaming)followIfAtBottom(el); });
   lastRaws=raws;
-  if(hot.length&&!streaming)setTimeout(()=>spotlight(hot),60);
   setWriting(streaming);
-  // newly written explanations: unfold with the chalk animation; keep everything else still
-  const now=new Set([...main.querySelectorAll('.exp[data-id]')].map(e=>e.dataset.id));
-  if(r.reset&&knownExp.size){ now.forEach(id=>{ if(!knownExp.has(id)){ const w=main.querySelector(`.fold[data-for="${id}"]`); if(w){ w.classList.add('closed'); const e=w.querySelector('.exp'); setTimeout(()=>{w.classList.remove('closed');animate(e);},30); } } }); }
-  knownExp=now;
-  renderedUpto=segs.length; wire(); inlineSvgs();
+  // Keep in-flight callouts across unrelated SSE updates; replace them in place on completion.
+  if(r.reset){
+    for(const ph of window.__ph||[]){
+      const parent=ph.dataset.parent?main.querySelector(`.exp[data-id="${ph.dataset.parent}"] > .expbody`):null;
+      const anchor=parent||[...main.querySelectorAll('.blk')].find(b=>definitionContext(b)===ph.dataset.context);
+      if(!anchor)continue;
+      const candidates=parent?[...parent.querySelectorAll(':scope > .fold')]:notesAfter(anchor);
+      const complete=candidates.find(f=>f.dataset.label===ph.dataset.label);
+      if(complete){if(ph.classList.contains('closed')){complete.classList.add('closed');ask({kind:'fold',id:complete.dataset.for,folded:true});}}
+      else if(parent)parent.appendChild(ph);else anchor.insertAdjacentElement('afterend',ph);
+    }
+    window.__ph=[];
+  }
+  renderedUpto=segs.length; decorate(main); wire(); inlineSvgs(); buildToc(hot);
+  if(r.reset)restoreAnswers();
+  if(place){ const bl=[...main.querySelectorAll(':scope > .blk')]; let best=null,bd=1e9; bl.forEach((x,i)=>{ if(x.textContent.slice(0,160)===place.sig&&Math.abs(i-place.i)<bd){bd=Math.abs(i-place.i);best=x;} });
+    if(best) window.scrollTo(0,window.scrollY+best.getBoundingClientRect().top-place.top); main.style.minHeight=''; }
+  else if(r.reset) main.style.minHeight='';
+  const first=!!window.__firstLoad; window.__firstLoad=false;
   // deep link: /lessons/NNNN#e3 opens that note, #b12 scrolls to that block
-  if(r.reset&&location.hash){ const h=location.hash.slice(1); const t=main.querySelector(`.exp[data-id="${h}"]`)||document.getElementById(h); if(t){ const f=t.closest('.fold'); if(f)f.classList.remove('closed'); setTimeout(()=>t.scrollIntoView({block:'center'}),80); } }
+  if(first&&r.reset&&location.hash&&location.hash.startsWith('#s-')&&tocItems.some(x=>x.id===location.hash.slice(1))){ const h=location.hash.slice(1); setTimeout(()=>tocGo(h,false),80); }
+  else if(first&&r.reset&&location.hash){ const h=location.hash.slice(1); const t=main.querySelector(`.exp[data-id="${h}"]`)||document.getElementById(h); if(t){ const f=t.closest('.fold'); if(f){f.classList.remove('closed');f.querySelector('.exptoggle')?.setAttribute('aria-expanded','true');} setTimeout(()=>t.scrollIntoView({block:'center'}),80); } }
 }
 // hash: the server hashes the first N bytes with md5; the client cannot md5 cheaply, so we ask the server for it on every reset
 // and keep offset/hash pairs consistent by only ever appending. loadLesson (initial) delegates to loadLessonWith.
-loadLesson=async function(){const r=await fetch(`/api/lesson?id=${lessonId}&from=0&hash=${WSQ}`).then(r=>r.json());if(r.missing){main.innerHTML='<p class="empty">No lesson yet. Ask for one in the chat.</p>';return}await loadLessonWith(r);};
-boot().catch(e=>{window.bootError=String(e&&e.stack||e);console.error('boot',e)});
+loadLesson=async function(){window.__firstLoad=true;const r=await fetch(`/api/lesson?id=${lessonId}&from=0&hash=${WSQ}`).then(r=>r.json());if(r.missing){main.innerHTML='<p class="empty">No lesson yet. Ask for one in the chat.</p>';return}await loadLessonWith(r);};
+// ---------- study chat: one Claude Code session per lesson, docked on the right ----------
+// The thread lives on the bridge ($WS/reference/chat/<lesson>.json). This panel shows it and streams new turns.
+const IS_MAC=/Mac|iPhone|iPad/.test(navigator.platform), CHAT_KEY=IS_MAC?'⌘⇧.':'Ctrl+Shift+.';
+const chatList=$('#chatlist'), chatQ=$('#chatq'), chatSend=$('#chatsend'), chatBtn=$('#chatbtn'), chatDown=$('#chatdown'), chatSel=$('#chatsel');
+// a reply's raw HTML shows as text and a javascript: link as plain words: the reply may quote a web page
+const CHAT_MD=new marked.Marked({renderer:{html:h=>esc(typeof h==='string'?h:(h.text||'')),link:href=>/^\s*javascript:/i.test(href||'')?esc(href):false}});
+const chat={open:false, loaded:false, thread:{messages:[]}, pend:null, ctrl:null, sel:'', note:'', attached:true, lastTop:0, poll:0, frame:0};
+const ICON={send:chatSend.innerHTML, mark:chatBtn.innerHTML,
+  stop:'<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4.5" y="4.5" width="7" height="7" rx="1.2" fill="currentColor"/></svg>',
+  copy:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M3.5 10.5H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h6.5a1 1 0 0 1 1 1v.5"/></svg>',
+  ok:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg>'};
+function chatMd(src){ const {src:s,slots}=mathify(src); return unslot(CHAT_MD.parse(s),slots).replace(/<table>/g,'<div class="tablewrap"><table>').replace(/<\/table>/g,'</table></div>'); }
+function chatOk(){ return MODE!=='grid'&&!!lessonId; }
+function chatTitle(){ return (main.querySelector('#title')?.textContent||'').trim(); }
+function chatPost(path,body){ if(WS)body.ws=WS; return fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); }
+// steps: 'live' while the model works (last one pulses), 'shown' once the reply text streams, 'done' folded under a toggle
+function stepsHtml(steps,mode){
+  if(!steps.length)return '';
+  const rows=steps.map((s,i)=>`<div class="cs${mode==='live'&&i===steps.length-1?' live':''}">${esc(s.label)}</div>`).join('');
+  return mode==='done'?`<div class="csteps done"><button type="button" class="cstog" aria-expanded="false">${steps.length} step${steps.length>1?'s':''}</button>${rows}</div>`:`<div class="csteps">${rows}</div>`;
+}
+function userHtml(t){
+  const m=t.match(/^((?:>.*(?:\n|$))+)\s*([\s\S]*)$/), q=m?m[1].replace(/^> ?/gm,'').trim():'', rest=m?m[2]:t;
+  return `<div class="cmsg user">${q?`<div class="cq">${chatMd(q)}</div>`:''}${rest?`<div class="cb">${esc(rest)}</div>`:''}</div>`;
+}
+function botHtml(m,i){
+  const live=i<0, steps=stepsHtml(m.steps||[],live?(m.text?'shown':'live'):'done');
+  const body=m.text?`<div class="cmd">${chatMd(m.text)}</div>`:(live&&!(m.steps||[]).length?'<div class="cthink">Thinking…</div>':'');
+  const copy=live||!m.text?'':`<button type="button" class="cib ccopy" title="Copy" aria-label="Copy reply">${ICON.copy}</button>`;
+  return `<div class="cmsg bot"${live?'':` data-i="${i}"`}>${steps}${body}${copy}</div>`;
+}
+function chatRender(){
+  const ms=chat.thread.messages||[];
+  if(!ms.length&&!chat.pend){
+    const t=chatTitle();
+    chatList.innerHTML=`<div class="cempty"><div class="cmark">${ICON.mark}</div><h2>Ask about this lesson</h2><p>${esc(t||'Lesson '+lessonId)}</p>${[`Explain the hardest step of ${t||'this lesson'}`,'Quiz me on this lesson','What do I need to know before this?'].map(s=>`<button type="button" class="cchip">${esc(s)}</button>`).join('')}</div>${chat.note?`<p class="cerr">${esc(chat.note)}</p>`:''}`;
+  } else {
+    chatList.innerHTML=ms.map((m,i)=>m.role==='user'?userHtml(m.text):botHtml(m,i)).join('')+(chat.pend?`<div id="chatpend">${botHtml(chat.pend,-1)}</div>`:'')+(chat.note?`<p class="cerr">${esc(chat.note)}</p>`:'');
+  }
+  chatSync(); chatFollow();
+}
+function chatPaint(){ if(chat.frame)return; chat.frame=requestAnimationFrame(()=>{ chat.frame=0; const el=document.getElementById('chatpend'); if(!el||!chat.pend)return chatRender(); el.innerHTML=botHtml(chat.pend,-1); chatFollow(); }); }
+function chatSync(){
+  const busy=!!chat.pend;
+  chatSend.innerHTML=busy?ICON.stop:ICON.send; chatSend.setAttribute('aria-label',busy?'Stop':'Send'); chatSend.title=busy?'Stop':'Send (Enter)';
+  chatSend.disabled=!busy&&!chatQ.value.trim()&&!chat.sel;
+  $('#chatnew').disabled=busy||!(chat.thread.messages||[]).length;
+}
+// follow the reply only while the reader is at the bottom; scrolling up detaches, the arrow (or scrolling down) re-attaches
+function chatAttach(on){ chat.attached=on; chatDown.hidden=on||chatList.scrollHeight<=chatList.clientHeight+4; }
+function chatFollow(force){ if(force)chat.attached=true; if(chat.attached){ chatList.scrollTop=chatList.scrollHeight; chat.lastTop=chatList.scrollTop; } chatAttach(chat.attached); }
+chatList.addEventListener('wheel',e=>{ if(e.deltaY<0&&chatList.scrollTop>0)chatAttach(false); },{passive:true});
+chatList.addEventListener('touchmove',()=>{ if(chatList.scrollTop>0)chatAttach(false); },{passive:true});
+chatList.addEventListener('scroll',()=>{ const gap=chatList.scrollHeight-chatList.scrollTop-chatList.clientHeight; if(gap<48)chatAttach(true); else if(chatList.scrollTop<chat.lastTop-1)chatAttach(false); chat.lastTop=chatList.scrollTop; },{passive:true});
+chatDown.onclick=()=>{ chatList.scrollTo({top:chatList.scrollHeight,behavior:reduced?'auto':'smooth'}); chatAttach(true); };
+async function chatLoad(first){
+  chat.loaded=true;
+  let t; try{ t=await fetch(`/api/chat?lesson=${lessonId}${WSQ}`).then(r=>r.json()); }catch(_){ t={error:'The board bridge is not running.'}; }
+  if(t.error){ chat.note=t.error; return chatRender(); }
+  chat.thread=t;
+  // a reply started on another page (or before a reload) keeps running on the bridge: show it and poll until it is saved
+  if(!chat.ctrl)chat.pend=t.running?{text:t.pending?.text||'',steps:t.pending?.steps||[]}:null;
+  chatRender(); if(first)chatFollow(true);
+  if(t.running&&!chat.ctrl&&!chat.poll)chat.poll=setTimeout(()=>{ chat.poll=0; chatLoad(); },1000);
+}
+async function chatSendMsg(text){
+  text=(text||'').trim(); const selection=chat.sel;
+  if(chat.pend||(!text&&!selection))return;
+  chat.note=''; chat.sel=''; chatSel.hidden=true; chatQ.value=''; chatGrow();
+  chat.thread.messages=(chat.thread.messages||[]).concat({role:'user',text:(selection?'> '+selection.replace(/\n/g,'\n> ')+'\n\n':'')+text,steps:[]});
+  chat.pend={text:'',steps:[]}; chatRender(); chatFollow(true);
+  chat.ctrl=new AbortController();
+  try{
+    const r=await fetch('/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({lesson:lessonId,text,selection},WS?{ws:WS}:{})),signal:chat.ctrl.signal});
+    if(!r.ok){ chat.note=(await r.json().catch(()=>({}))).error||`The bridge answered ${r.status}.`; }
+    else { const rd=r.body.getReader(), dec=new TextDecoder(); let buf='';
+      for(;;){ const {value,done}=await rd.read(); if(done)break; buf+=dec.decode(value,{stream:true}); let k;
+        while((k=buf.indexOf('\n\n'))>=0){ const frame=buf.slice(0,k); buf=buf.slice(k+2);
+          const ev=(frame.match(/^event: (.*)$/m)||[])[1], data=JSON.parse((frame.match(/^data: (.*)$/m)||[0,'{}'])[1]);
+          if(ev==='delta')chat.pend.text+=data.text; else if(ev==='step')chat.pend.steps.push(data); else continue;
+          chatPaint(); } } }
+  }catch(e){ if(e.name!=='AbortError')chat.note='Lost the connection to the board bridge. The reply keeps going there and shows here once it is saved.'; }
+  chat.ctrl=null;
+  await chatLoad();
+}
+function chatStop(){ chatPost('/chat/stop',{lesson:lessonId}).catch(()=>{}).then(()=>{ if(!chat.ctrl)chatLoad(); }); }
+async function chatNew(){
+  if(chat.pend)return;
+  const r=await chatPost('/chat/new',{lesson:lessonId}).then(r=>r.json()).catch(()=>({error:'The board bridge is not running.'}));
+  chat.note=r.error||''; if(!r.error)chat.thread={session_id:null,messages:[]};
+  chatRender(); chatQ.focus();
+}
+function chatSetOpen(on,focus=true,remember=true){
+  chat.open=on&&chatOk();
+  document.documentElement.classList.toggle('chatopen',chat.open);
+  chatBtn.setAttribute('aria-expanded',String(chat.open));
+  if(remember)try{ localStorage.setItem('bb-chat-open',chat.open?'1':'0'); }catch(_){}
+  if(chat.open){ if(!chat.loaded)chatLoad(true); else chatFollow(); if(focus)setTimeout(()=>chatQ.focus(),0); }
+  else if($('#chat').contains(document.activeElement))document.activeElement.blur();
+  window.dispatchEvent(new Event('resize'));
+}
+function chatAsk(text){ if(!chatOk()||!text)return; chat.sel=text; chatSel.querySelector('.cselt').innerHTML=chatMd(text); chatSel.hidden=false; chatSetOpen(true); chatSync(); }
+function chatGrow(){ chatQ.style.height='auto'; chatQ.style.height=Math.min(chatQ.scrollHeight,200)+'px'; chatSync(); }
+chatQ.addEventListener('input',chatGrow);
+chatQ.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){ e.preventDefault(); chatSendMsg(chatQ.value); } });
+$('#chatform').addEventListener('submit',e=>{ e.preventDefault(); chat.pend?chatStop():chatSendMsg(chatQ.value); });
+$('#chatselx').onclick=()=>{ chat.sel=''; chatSel.hidden=true; chatSync(); chatQ.focus(); };
+$('#chatnew').onclick=chatNew;
+$('#chatclose').onclick=()=>chatSetOpen(false);
+chatBtn.onclick=()=>chatSetOpen(!chat.open);
+chatList.addEventListener('click',e=>{
+  const chip=e.target.closest('.cchip'); if(chip)return chatSendMsg(chip.textContent);
+  const tog=e.target.closest('.cstog'); if(tog){ const box=tog.parentElement; tog.setAttribute('aria-expanded',String(box.classList.toggle('open'))); return; }
+  const cp=e.target.closest('.ccopy'); if(cp){ const m=chat.thread.messages[+cp.closest('[data-i]').dataset.i]; navigator.clipboard?.writeText(m.text).then(()=>{ cp.innerHTML=ICON.ok; setTimeout(()=>{cp.innerHTML=ICON.copy},1500); }).catch(()=>{}); return; }
+  const a=e.target.closest('.cmd a[href]'); if(a){ e.preventDefault(); window.open(a.href,'_blank','noopener'); }
+});
+document.addEventListener('keydown',e=>{ if(e.code!=='Period'||!e.shiftKey||e.altKey||!(IS_MAC?e.metaKey:e.ctrlKey)||!chatOk())return; e.preventDefault(); chatSetOpen(!chat.open); },true);
+try{ if(MODE!=='grid'&&localStorage.getItem('bb-chat-open')==='1')document.documentElement.classList.add('chatopen'); }catch(_){}
+(function chatResize(){
+  const root=document.documentElement, grip=document.getElementById('chatgrip');
+  const fit=w=>Math.round(Math.max(320,Math.min(w,innerWidth*.75,innerWidth-360)));
+  const apply=w=>root.style.setProperty('--chatpw',fit(w)+'px');
+  let saved=0; try{ saved=parseFloat(localStorage.getItem('bb-chat-w'))||0; }catch(_){}
+  if(saved)apply(saved);
+  addEventListener('resize',()=>{ if(saved)apply(saved); });
+  if(!grip)return;
+  grip.addEventListener('pointerdown',e=>{
+    if(e.button!==0)return;
+    e.preventDefault(); grip.setPointerCapture(e.pointerId); root.classList.add('chatdrag');
+    const move=ev=>{ saved=innerWidth-ev.clientX; apply(saved); };
+    const up=()=>{
+      root.classList.remove('chatdrag'); grip.removeEventListener('pointermove',move);
+      saved=fit(saved); try{ localStorage.setItem('bb-chat-w',String(saved)); }catch(_){}
+    };
+    grip.addEventListener('pointermove',move); grip.addEventListener('pointerup',up,{once:true}); grip.addEventListener('pointercancel',up,{once:true});
+  });
+  grip.addEventListener('dblclick',()=>{ saved=0; root.style.removeProperty('--chatpw'); try{ localStorage.removeItem('bb-chat-w'); }catch(_){} });
+})();
+function chatInit(){
+  chatBtn.hidden=!chatOk(); chatBtn.title=`Chat (${CHAT_KEY})`; $('#chatclose').title=`Close (${CHAT_KEY})`;
+  if(!chatOk())return document.documentElement.classList.remove('chatopen');
+  $('#chatctx').textContent=`Lesson ${lessonId}`+(chatTitle()?` · ${chatTitle()}`:'');
+  let on=false; try{ on=localStorage.getItem('bb-chat-open')==='1'; }catch(_){}
+  if(on)chatSetOpen(true,false,false);
+}
+boot().then(chatInit).catch(e=>{window.bootError=String(e&&e.stack||e);console.error('boot',e)});
 </script>
 </body>
 </html>

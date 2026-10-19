@@ -1,0 +1,75 @@
+import importlib.util
+from pathlib import Path
+import tempfile
+import unittest
+
+spec = importlib.util.spec_from_file_location('bridge', Path(__file__).resolve().parents[1] / 'board/bridge.py')
+bridge = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(bridge)
+
+
+def text_start():
+    return {'type': 'stream_event', 'event': {'type': 'content_block_start', 'content_block': {'type': 'text', 'text': ''}}}
+
+
+def text_delta(t):
+    return {'type': 'stream_event', 'event': {'type': 'content_block_delta', 'delta': {'type': 'text_delta', 'text': t}}}
+
+
+class ChatStreamTests(unittest.TestCase):
+    def test_stream_json_becomes_steps_deltas_and_a_saved_end(self):
+        turn = bridge.Turn(proc=None, wsp='/ws/learn')
+        lines = [
+            {'type': 'system', 'subtype': 'init', 'session_id': 's-1'},
+            text_start(), text_delta('Let me read it.'),
+            {'type': 'assistant', 'message': {'content': [
+                {'type': 'tool_use', 'name': 'Read', 'input': {'file_path': '/ws/learn/sources/hw1.txt', 'pages': '2'}}]}},
+            {'type': 'assistant', 'message': {'content': [
+                {'type': 'tool_use', 'name': 'WebSearch', 'input': {'query': 'power rule'}}]}},
+            text_start(), text_delta('The answer'), text_delta(' is $9$.'),
+            {'type': 'result', 'subtype': 'success', 'is_error': False, 'result': 'The answer is $9$.'},
+        ]
+        events = [e for line in lines for e in turn.feed(line)]
+        self.assertEqual(events, [
+            ('delta', {'text': 'Let me read it.'}),
+            ('step', {'tool': 'Read', 'label': 'Reading sources/hw1.txt, pages 2'}),
+            ('step', {'tool': 'WebSearch', 'label': 'Searching the web: power rule'}),
+            ('delta', {'text': '\n\n'}),
+            ('delta', {'text': 'The answer'}),
+            ('delta', {'text': ' is $9$.'}),
+        ])
+        self.assertEqual(turn.text, 'Let me read it.\n\nThe answer is $9$.')
+        self.assertEqual(turn.session_id, 's-1')
+        self.assertEqual(turn.end, ('done', {}))
+
+    def test_error_result_ends_the_turn_with_its_message(self):
+        turn = bridge.Turn(proc=None, wsp='/ws/learn')
+        self.assertEqual(turn.feed({'type': 'result', 'subtype': 'error_during_execution', 'is_error': True, 'result': 'rate limited'}), [])
+        self.assertEqual(turn.end, ('error', {'message': 'rate limited'}))
+
+
+class LessonSourcesTests(unittest.TestCase):
+    def test_sources_section_and_resources_resolve_to_files_and_urls(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            course = Path(tmp) / 'math'
+            ws = course / 'learn'
+            (ws / 'lessons').mkdir(parents=True)
+            (ws / 'sources/hw').mkdir(parents=True)
+            (course / 'reference').mkdir()
+            (ws / 'sources/hw/hw1.txt').write_text('Problem 3. Use the power rule.\n')
+            (course / 'reference/notes.md').write_text('plus C\n')
+            (ws / 'RESOURCES.md').write_text('- [Homework 1](sources/hw/hw1.txt)\n- [Slides](sources/missing.pdf)\n')
+            lesson = ws / 'lessons/0001-power-rule.md'
+            lesson.write_text('---\ntitle: Power Rule\n---\n\n## Rule\n\nUse `javac`.\n\n## Sources\n'
+                              '- Homework 1, problem 3 (`hw1.txt`)\n'
+                              '- Notes (`../reference/notes.md`)\n'
+                              '- https://example.org/power-rule\n')
+            sources, cited = bridge.lesson_sources(str(ws), str(lesson))
+            self.assertEqual(sources, [str(ws / 'sources/hw/hw1.txt'), str(course / 'reference/notes.md'),
+                                       'https://example.org/power-rule'])
+            self.assertEqual(cited, '- Homework 1, problem 3 (`hw1.txt`)\n- Notes (`../reference/notes.md`)\n'
+                                    '- https://example.org/power-rule')
+
+
+if __name__ == '__main__':
+    unittest.main()

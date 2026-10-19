@@ -1,10 +1,28 @@
 # Quiz
 
-Every lesson ships with its own quiz: four to six `::: mcq` items over the whole lesson, written with the lesson. Under them, the **More practice** panel generates four more items on one sub-topic or on **All topics**, as **Flashcards** or **Multiple choice**.
+Every non-plain lesson uses **chapter checkpoints plus a short mixed final quiz**. After each chapter, place 1–2 source-matched MCQs under `### Checkpoint`, directly in the lesson (standalone `::: mcq` blocks). At the end, keep ONE `## Quiz` / `::: quiz` container with 2–3 fresh questions mixing different chapters and the More practice panel. Counts are design defaults, not a scientifically established optimum; keep short lessons proportional. All items count toward the same lesson XP and preserve normal answer logging.
+
+Ask the learner to attempt checkpoint questions without looking back, then read corrective feedback. Final questions use changed inputs and do not name the method/chapter to use. Do not simply duplicate checkpoint questions. At the next study session, briefly retrieve earlier material, prioritizing recorded mistakes; this is an in-session teaching step, not an automatic reminder. Retain actual source difficulty at both placements.
+
+Research basis: [Weinstein et al. 2016](https://pubmed.ncbi.nlm.nih.gov/26950160/) found no delayed-retention superiority for interspersed versus end-only questions; [Szpunar et al. 2013](https://pmc.ncbi.nlm.nih.gov/articles/PMC3631699/) supports interim testing for lecture attention; [Rohrer et al. 2020](https://doi.org/10.1037/edu0000367) supports mixed mathematics practice. This hybrid is a practical design inference, not a proven universally optimal schedule.
+
+Answer design: large clickable cards on the dark board, chalk borders and text, with muted red triangle, blue diamond, gold circle, and green square icons by displayed position. Retain the source's option count; never add a fourth weak distractor just to fill a grid. Use two columns when answers fit, one column for long expressions and narrow screens. Keep native keyboard-accessible radios, visible focus, non-color correctness indicators, changeable answers, XP, and reload persistence.
 
 Generation and grading both run headless in `bin/quiz.py`, called by `bridge.py` in a background thread the same way `bin/explain.py` is. Neither wakes the interactive agent, so a quiz works identically in cmux, the Claude app and the Codex app, and nothing lands in the chat.
 
 The interactive agent runs a quiz by hand only when the user asks for one in chat (`/blackboard quiz <topic> <cards|mcq>`).
+
+## Source fidelity (required; overrides generic item-writing preferences)
+
+Before writing any lesson quiz, More practice set, flashcard, or twist, inspect the user's relevant sources: practice exams, past exams, quizzes, problem sets, homework, and their answer keys. Match what the lesson actually teaches.
+
+- If a supplied question directly applies, reuse its structure with changed numbers, inputs, expressions, or context. Preserve its tested skill, reasoning steps, constraints, and difficulty. Recompute the answer and every alternative; changing numbers alone can make an item trivial or ambiguous.
+- Otherwise build a close analog of a relevant source question. Mirror its question pattern, wording/tone, distractor style, and difficulty. Do not substitute a vocabulary check for a multi-step exam problem.
+- If sources contain only free-response/freewrite questions, adapt those problems into MCQs. Preserve the reasoning required; add plausible alternatives from mistakes in that solution process.
+- Preserve the source's option count and meaningful features (including “except” or “none” when relevant). Generic preferences below apply only where the source gives no pattern. Exactly one defensible key remains mandatory.
+- Record the actual source filename and question/page plus what changed in a Markdown comment immediately before each authored item. For generated items, include that reference in the answer explanation. Never invent a source citation or claim to have read an unavailable question.
+- Independently invent questions only when there are no relevant supplied question sources, such as a non-school lesson without user-provided material. First inspect the available sources; missing extraction/access is not evidence that no relevant source exists. If expected sources cannot be read, report that gap rather than silently inventing exam-style questions.
+- Assigned work uses changed-parameter practice analogs. Test only taught material, but retain the source difficulty. This rule also applies to flashcards when requested: retain the source problem and assess its reasoning without alternatives.
 
 ## Writing flashcard prompts
 
@@ -55,12 +73,27 @@ Three terse replies in a row ("idk", "yes", "no", "sure", a single word) inside 
 ## Multiple choice
 
 - Stem is a complete question answerable before reading the options (cover-the-options test).
-- Exactly 3 options, exactly one defensible key. Evaluate or derive every option before shipping. An equivalent expression is correct even when obtained in fewer or more steps; do not mark it wrong for skipping the preferred teaching sequence. If the stem asks for a specific intermediate step, state that constraint explicitly and ensure only one option meets it.
+- Self-contained: every stem restates the facts it needs (the expression, the inputs, the table row, the circuit) so the student answers without scrolling back. Never "in problem 1", "from the example above" or a bare wire name like n2; write "For $W=\overline{R}S+T$ with $RST=111$…" instead.
+- Code in a question: a stem, check-in question or answer that shows more than one statement of code puts that code in a fenced ```java block, formatted as real code with line breaks and indentation, then the question sentence on its own line after it. Never inline a class or several statements into a sentence. A single short expression stays inline in backticks.
+
+  ````
+  ::: mcq c2a a
+  ```java
+  public class Pet {
+      private int age = 5;
+  }
+  ```
+  What does `new Pet().getAge()` return?
+  - `5`
+  ...
+  ````
+- Match the source option count; default to 3 when there is no source pattern. Exactly one defensible key. Evaluate or derive every option before shipping. An equivalent expression is correct even when obtained in fewer or more steps; do not mark it wrong for skipping the preferred teaching sequence. If the stem asks for a specific intermediate step, state that constraint explicitly and ensure only one option meets it.
 - Every distractor is a real misconception or a common procedural error, taken from the student's own quiz log when available.
 - Options equal in length, grammar, specificity, and structure. No "all/none of the above", no negatives ("except"), no absolutes ("always/never").
 - No word from the stem appearing only in the key. The key is not the longest or the middle option.
 - At least half the items are application ("what would happen if…"), not recall.
 - Randomise option order on render.
+- Answers stay changeable on the board: the student can pick another option at any time and the newest pick is what counts (logged, restored on reload, XP). A wrong pick shows "Not quite" without revealing the key; the `why:` line appears once the right option is picked, in an olive callout like an Explain note. A `why:` with more than one step writes them down, not sideways: one short sentence, then `$$\begin{aligned} … \\ … \end{aligned}$$` on the same line, one operation per row.
 - Wrong pick → one line naming the misconception behind that option. No narration.
 
 ## Twist question

@@ -3,7 +3,8 @@
 # render.sh --ws <dir>                 Point the board at a workspace without a lesson (grid).
 # Writes board/state.json, starts bridge.py if needed, opens the board once per host, pokes the bridge.
 set -e
-DIR=${0:A:h}; HOME_DIR=${BLACKBOARD_HOME:-$HOME/.cache/blackboard}; mkdir -p "$HOME_DIR"; STATE=$HOME_DIR/state.json; PORT=${BLACKBOARD_PORT:-7331}; URL="http://127.0.0.1:$PORT"
+DIR=${0:A:h}; "$DIR/../bin/update.sh" 2>/dev/null || true  # git clones only, once a day; prints one line if it updated
+HOME_DIR=${BLACKBOARD_HOME:-$HOME/.cache/blackboard}; mkdir -p "$HOME_DIR"; STATE=$HOME_DIR/state.json; PORT=${BLACKBOARD_PORT:-7331}; URL="http://127.0.0.1:$PORT"
 LESSON=""; STREAM=0; LIVE=0; WS=""
 while [ $# -gt 0 ]; do case "$1" in
   --stream) STREAM=1;; --live) LIVE=1;; --ws) WS=$2; shift;; *) LESSON=$1;; esac; shift; done
@@ -34,22 +35,38 @@ else
 fi
 [ -d "$WS/lessons" ] || mkdir -p "$WS/lessons"
 
-# photo: every lesson gets a banner. If the front matter has no photo:, fetch one in
-# the background from the image: subject (fallback: "<course> chalkboard") and write
-# photo:/credit: into the front matter; the board reloads the header on its own.
-if [ -n "$LESSON" ] && ! grep -q '^photo:' "$LESSON" 2>/dev/null; then
-  SUBJ=$(sed -n '/^---$/,/^---$/p' "$LESSON" | sed -n 's/^image:[[:space:]]*//p' | head -1)
+# Fail before publishing if an author manually copied another lesson's banner.
+if [ -n "$LESSON" ]; then python3 "$DIR/../bin/banner_guard.py" --lesson "$LESSON"; fi
+
+# photo: every lesson gets a banner that shows the lesson's own subject. If the front matter has
+# no photo:, fetch one in the background from the image: subject and write photo:/credit: into
+# the front matter; the board reloads the header on its own. Never a generic chalkboard: the board
+# itself is already a blackboard, so a chalkboard banner says nothing about the lesson.
+if [ -n "$LESSON" ] && ! grep -q '^photo:' "$LESSON" 2>/dev/null && ! grep -qE '^plain:[[:space:]]*true' "$LESSON" 2>/dev/null; then
+  FM=$(sed -n '/^---$/,/^---$/p' "$LESSON")
+  SUBJ=$(print -r -- "$FM" | sed -n 's/^image:[[:space:]]*//p' | head -1)
+  TITLE=$(print -r -- "$FM" | sed -n 's/^title:[[:space:]]*//p' | head -1)
+  # The lesson's topic from its title: drop "How to", "Ace", course codes and "Test 2"-style labels.
+  TOPIC=$(print -r -- "$TITLE" | sed -E 's/^(How|Why|What) (to |the |a |an )?//; s/ (Actually )?Works?$//; s/^(Ace|Pass|Solve|Learn|Understand|Master) //; s/[A-Z]{2,5} ?[0-9]{3,4}[A-Z]?//g; s/(Test|Exam|Quiz|Midterm|Final|Lesson|Chapter|Problems?|HW|Homework) ?[0-9.]*//g; s/  +/ /g; s/^ +//; s/ +$//')
+  CHALK='(chalk|blackboard|chalkboard|slate|classroom|whiteboard)'
+  if [ -n "$SUBJ" ] && print -r -- "$SUBJ" | grep -qiE "$CHALK" && ! print -r -- "$TITLE" | grep -qiE "$CHALK"; then
+    echo "render.sh: image: \"$SUBJ\" is a generic board photo; the banner must show the lesson's subject. Using \"${TOPIC:-$TITLE}\" instead. Set image: to something from the lesson's topic." >&2
+    SUBJ=""
+  fi
   if [ -z "$SUBJ" ]; then
-    # no image: given. An object lesson ("How the X Actually Works") wants X itself; a course lesson wants the chalkboard.
-    TITLE=$(sed -n '/^---$/,/^---$/p' "$LESSON" | sed -n 's/^title:[[:space:]]*//p' | head -1)
-    COURSE=$(sed -n '/^---$/,/^---$/p' "$LESSON" | sed -n 's/^course:[[:space:]]*//p' | head -1)
-    if [ -z "$COURSE" ] && [ -n "$TITLE" ]; then SUBJ=$(print -r -- "$TITLE" | sed -E 's/^(How|Why|What) (the |a |an )?//; s/ (Actually )?Works?$//; s/^How to //')
-    else SUBJ="${COURSE:+$COURSE }chalkboard"; fi
+    SUBJ=${TOPIC:-$TITLE}
+    echo "render.sh: no usable image: in $LESSON; searching \"$SUBJ\". Set image: to a concrete subject from the lesson's topic and re-roll if the banner is off-topic." >&2
   fi
   LOCK="$LESSON.photo.lock"
+  # a lock left by a killed fetch must not block the banner forever
+  [ -d "$LOCK" ] && [ -n "$(find "$LOCK" -maxdepth 0 -mmin +10 2>/dev/null)" ] && rmdir "$LOCK" 2>/dev/null
   if mkdir "$LOCK" 2>/dev/null; then
     ( trap 'rmdir "$LOCK" 2>/dev/null' EXIT
-      PHOTO_LINES=$("$DIR/../bin/image.sh" "$SUBJ" "$ID" "$WS" 2>>"$HOME_DIR/image.log") || exit 0
+      # Search for an unused photo of the subject, then of the title's topic. Never recycle another
+      # lesson's banner, never fall back to a chalkboard: no banner is better than an unrelated one.
+      PHOTO_LINES=$("$DIR/../bin/image.sh" "$SUBJ" "$ID" "$WS" 2>>"$HOME_DIR/image.log") \
+        || { [ -n "$TOPIC" ] && [ "$TOPIC" != "$SUBJ" ] && PHOTO_LINES=$("$DIR/../bin/image.sh" "$TOPIC" "$ID" "$WS" 2>>"$HOME_DIR/image.log"); } \
+        || { echo "No unique on-topic banner found for $LESSON; set a different image: and retry image.sh" >>"$HOME_DIR/image.log"; exit 1; }
       python3 - "$LESSON" "$PHOTO_LINES" <<'PY'
 import sys,re
 path,lines=sys.argv[1],sys.argv[2]
@@ -94,9 +111,15 @@ if [ -n "$LESSON" ] && grep -q '^::: photo' "$LESSON" 2>/dev/null && grep -q '^q
   fi
 fi
 
-# bridge
+# lint: derivations written sideways are the most common contract violation; warn loudly, never block
+[ -n "$LESSON" ] && python3 "$DIR/../bin/lint.py" "$LESSON" || true
+
+# bridge: launchd keeps it up (bin/install.sh, run once here on macOS); nohup is the fallback elsewhere
+if [ "$(uname)" = Darwin ] && [ ! -f "$HOME/Library/LaunchAgents/com.blackboard.bridge.plist" ]; then
+  zsh "$DIR/../bin/install.sh" || true
+fi
 if ! curl -s -m 1 "$URL/health" >/dev/null 2>&1; then
-  nohup python3 "$DIR/bridge.py" >"$HOME_DIR/bridge.log" 2>&1 &
+  launchctl kickstart "gui/$(id -u)/com.blackboard.bridge" 2>/dev/null || nohup python3 "$DIR/bridge.py" >"$HOME_DIR/bridge.log" 2>&1 &
   for i in {1..20}; do curl -s -m 1 "$URL/health" >/dev/null 2>&1 && break; sleep 0.15; done
 fi
 

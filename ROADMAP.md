@@ -4,7 +4,7 @@ Brainstormed 2026-09-13. Principle: **reward with information, never with decora
 
 Everything below keys off quiz results and dates, never off courses, so it works for any folder and any user.
 
-## 1. The XP bar means something
+## 1. The XP bar means something  ·  shipped 2026-09-15 (fill + gold when full; the hub's gold rule is still to do)
 The bar at the top already exists. Fill it by verified understanding, not by scroll: each quiz item answered right fills a segment; each flashcard scored 4 or 5 fills one; an Explain you asked for adds nothing. A lesson with a full bar gets a thin gold rule under its title in the hub. That is the whole completion system.
 
 ## 2. Boss at the end
