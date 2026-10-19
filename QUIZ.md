@@ -58,18 +58,6 @@ Rules: any explicit false statement caps the score at 2. Score ≥ 3 passes. Rep
 
 What the board shows after an answer: `Score N / 5`, one line of rationale, the missing points in dim text. No "great job", no "almost there".
 
-## Hint ladder (before revealing)
-
-1. Score 1–2 on the first try → **Point**: name the lesson section or concept, no content ("think about what $\overline{B}+B$ equals"). Ask again.
-2. Still < 3 → **Teach**: state the principle in the abstract, never the applied answer. Ask again; this attempt caps at 3.
-3. Still < 3 → **Targeted reveal**: quote the student's wrong claim, show the one counterexample that breaks it, then the answer.
-4. After any reveal → **Say it back**: the student restates it in one sentence. Grade that as its own item and re-queue the concept later in the session.
-5. Never skip a rung in under 10 seconds.
-
-## Stuck detector
-
-Three terse replies in a row ("idk", "yes", "no", "sure", a single word) inside a quiz or Explain dialog → stop pushing that question. Zoom out to a smaller piece of it and switch to a binary-choice question ("is $\overline{A}$ 0 or 1 when $A=1$?"). Return to the original question only after two binary answers in a row are right.
-
 ## Multiple choice
 
 - Stem is a complete question answerable before reading the options (cover-the-options test).
@@ -96,9 +84,13 @@ Three terse replies in a row ("idk", "yes", "no", "sure", a single word) inside 
 - Answers stay changeable on the board: the student can pick another option at any time and the newest pick is what counts (logged, restored on reload, XP). A wrong pick shows "Not quite" without revealing the key; the `why:` line appears once the right option is picked, in an olive callout like an Explain note. A `why:` with more than one step writes them down, not sideways: one short sentence, then `$$\begin{aligned} … \\ … \end{aligned}$$` on the same line, one operation per row.
 - Wrong pick → one line naming the misconception behind that option. No narration.
 
-## Twist question
+## Chat quiz (by hand)
 
-After the quiz, one item with a changed input or a counterexample to the lesson's main claim ("row 0011 is now 1 as well; does $F$ still factor?"). Answer behind a toggle. It exists to catch fluency without understanding; if it fails, write the misconception to the learning record and offer one more ladder rung, then stop.
+Board quizzes run headless in `bin/quiz.py`. When the user asks for a quiz in chat (`/blackboard quiz <topic> <cards|mcq>`), grade with the table above and:
+
+- Below 3 on a first try: point to the concept without giving content, and ask again. Still below 3: state the principle in the abstract (that attempt caps at 3). Still below 3: show the one counterexample that breaks their claim, then the answer, and have them say it back in one sentence.
+- Three terse replies in a row ("idk", "yes", a single word): switch to a smaller binary-choice question, and return to the original after two right answers.
+- The lesson's `## Twist` (a changed input or a counterexample, answer behind a toggle) catches fluency without understanding. If it fails, write the misconception to the learning record.
 
 ## Logging
 

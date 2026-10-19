@@ -11,6 +11,16 @@ Lint warnings (overlapping labels, text outside the canvas, a bar too thin for i
 
 Common keys: `caption` (markdown, shown under the figure), `unit` (`"$"` default, `""` for plain numbers, `"€"`…), `seed` (re-roll the wobble), `hi` (what to draw in the accent colour).
 
+## When to illustrate
+
+Add a diagram whenever it makes an explanation easier to picture or understand than prose alone, in an introduction, a worked example, a comparison or a later explanation. The trigger is teaching value, not the first mention of a term, and one visual somewhere in the lesson is not enough when another step needs one. Typical cases: a balance sheet, a flow of money, a timeline, a K-map, vectors, a waveform, a small graph.
+
+- Place it beside the step it explains, with one short sentence telling the reader what to look at. The caption goes in the spec.
+- Name the same parts in prose and drawing. Distinguish control signals from conducting paths, mark connection points and gaps, label simplified models, and show contrasting states when that explains what changes.
+- Keep it on the causal path: 7 elements or fewer, labels beside the thing they name, one highlight colour on what changed, no legend.
+- Prefer a schematic for relationships and a real photo for physical appearance (TEMPLATES.md **Photos**).
+- Before it lands, run `bin/fig-check.sh <template> <spec.json>` and look at the PNG: fix overlaps and cut anything off the path.
+
 ## taccounts — one or more T-accounts, before → after
 
 ```json
