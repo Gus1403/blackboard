@@ -184,6 +184,40 @@ figure svg ::selection,figure svg::selection{background:transparent;fill:inherit
 .imgcredits{margin:48px 0 0;font-size:12.5px;line-height:1.5;opacity:.8}
 .imgcredits.insrc{margin:10px 0 0;font-size:14px;opacity:1;color:var(--dim)}
 .imgcredits.insrc b{font-weight:500;color:var(--chalk)}
+/* end card: Ultraman Mebius signs off every lesson (photo from the bridge's /end-card.jpg, quote alone without it).
+   It sits outside the lesson's blocks: no rail tick, contents node, search hit, Explain/Definition target or XP. */
+.endcard{margin:72px 0 0;container-type:inline-size;user-select:none;-webkit-user-select:none}
+.endcard[hidden]{display:none}
+.endcard .ec{position:relative;display:grid;grid-template-columns:minmax(0,11fr) minmax(0,13fr);min-height:360px;border-radius:22px 18px 24px 20px/20px 24px 18px 22px;overflow:hidden;color:#fff;
+  background:radial-gradient(90% 70% at 88% 8%,rgba(96,160,255,.28),transparent 62%),radial-gradient(70% 60% at 10% 100%,rgba(10,30,90,.9),transparent 70%),linear-gradient(160deg,#16449a 0%,#0c2a66 42%,#071636 100%);
+  box-shadow:0 0 0 1.5px rgba(233,230,223,.20),0 0 0 6px rgba(233,230,223,.035),0 24px 60px -28px rgba(40,100,230,.55)}
+.endcard .ec::before{content:'';position:absolute;inset:7px;border:1px dashed rgba(233,230,223,.13);border-radius:17px 14px 19px 15px/15px 19px 14px 17px;pointer-events:none;z-index:2}
+.endcard .ecph{position:relative;min-height:360px}
+.endcard .ecph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 32%;display:block}
+.endcard .ecph{-webkit-mask-image:linear-gradient(90deg,#000 52%,transparent 99%);mask-image:linear-gradient(90deg,#000 52%,transparent 99%)}
+.endcard .ecq{display:flex;flex-direction:column;justify-content:center;padding:44px 44px 40px 36px;position:relative;z-index:1}
+.endcard .ecquote{margin:0;font:italic 700 clamp(24px,5cqi,40px)/1.2 var(--display);letter-spacing:.005em;text-wrap:balance;text-shadow:0 2px 18px rgba(0,10,40,.45)}
+.endcard .ecwho{margin:20px 0 0;font:500 17px/1 var(--body);font-variant:small-caps;letter-spacing:.16em;color:rgba(255,255,255,.72)}
+.endcard .ectimer{align-self:flex-start;display:inline-flex;align-items:center;gap:10px;margin-top:30px;padding:5px 15px 5px 5px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:rgba(255,255,255,.86);font:500 15px/1 var(--body);letter-spacing:.02em;cursor:pointer;transition:background .2s,border-color .2s}
+.endcard .ectimer:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.34)}
+.endcard .ectimer:focus-visible{outline:2px solid #8cc8ff;outline-offset:3px}
+.endcard .gem{position:relative;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 36% 30%,#e6f6ff 0 10%,#56b4ff 32%,#0d56c4 72%,#06306f 100%);box-shadow:0 0 12px rgba(80,170,255,.65),inset 0 0 0 2px rgba(255,255,255,.28)}
+.endcard .gem::after{content:'';position:absolute;left:10px;top:8px;border-left:8px solid rgba(255,255,255,.92);border-top:5px solid transparent;border-bottom:5px solid transparent}
+.endcard .ectimer.on .gem{animation:ecblink .38s steps(1) infinite}
+.endcard .ectimer.on .gem::after{display:none}
+@keyframes ecblink{0%{background:radial-gradient(circle at 36% 30%,#ffe6e6 0 10%,#ff5a5a 32%,#c41010 72%,#6f0606 100%);box-shadow:0 0 16px rgba(255,70,70,.8),inset 0 0 0 2px rgba(255,255,255,.28)}50%{background:radial-gradient(circle at 36% 30%,#a85050 0 10%,#7a1a1a 40%,#3a0505 100%);box-shadow:inset 0 0 0 2px rgba(255,255,255,.18)}}
+.endcard.noimg .ec{grid-template-columns:1fr;min-height:0}
+.endcard.noimg .ecph{display:none}
+.endcard.noimg .ecq{align-items:center;text-align:center;padding:64px 48px 56px}
+.endcard.noimg .ectimer{align-self:center}
+@container (max-width:560px){
+  .endcard .ec{grid-template-columns:1fr;min-height:0}
+  .endcard .ecph{min-height:0;aspect-ratio:5/4}
+  .endcard .ecph img{object-position:50% 26%}
+  .endcard .ecph{-webkit-mask-image:linear-gradient(180deg,#000 55%,transparent 99%);mask-image:linear-gradient(180deg,#000 55%,transparent 99%)}
+  .endcard .ecq{padding:8px 28px 34px}
+  .endcard .ecquote{font-size:clamp(22px,7cqi,32px)}
+}
 details.sources>div li{margin:3px 0}
 .photo.side{float:right;width:44%;max-width:380px;margin:6px 0 16px 28px;clear:right}
 .sidepair{display:grid;grid-template-columns:minmax(0,1fr) 40%;gap:28px;align-items:start;margin:6px 0}
@@ -224,10 +258,11 @@ video.video{width:100%;border-radius:3px;background:#000;margin:12px 0;display:b
 .btn:hover{border-color:var(--dim)}
 /* "On the test" callout: amber tint, thin amber border with a left accent, line-art warning icon, small-caps label */
 :root{--amber:#d4a24a}
-.callout{width:fit-content;min-width:min(300px,100%);max-width:min(620px,100%);margin:14px 0 22px;padding:9px 16px 11px 15px;border:1px solid color-mix(in srgb,var(--amber) 30%,transparent);border-left:3px solid var(--amber);border-radius:4px 8px 8px 4px;background:color-mix(in srgb,var(--amber) 7%,#0d0d0c)}
+.callout{width:auto;max-width:none;box-sizing:border-box;margin:14px 0 22px;padding:12px 22px 14px 20px;border:1px solid color-mix(in srgb,var(--amber) 30%,transparent);border-left:3px solid var(--amber);border-radius:4px 8px 8px 4px;background:color-mix(in srgb,var(--amber) 7%,#0d0d0c)}
 .cohead{display:flex;align-items:center;gap:7px;margin:0 0 4px;font:600 12px/1 var(--body);letter-spacing:.13em;text-transform:uppercase;color:var(--amber)}
 .cohead svg{flex:0 0 15px;width:15px;height:15px}
-.corow{display:flex;align-items:center;flex-wrap:wrap;gap:6px 18px;padding:4px 0 2px}
+.corow{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px 24px;padding:8px 0 4px}
+.corow .cowrong{justify-self:center}.corow .coright{justify-self:center}
 .corow .cowrong,.corow .coright{display:inline-flex;align-items:center;gap:9px}
 .corow .comk{font:700 15px/1 var(--body)}
 .cowrong{color:var(--dim)}.cowrong .comk{color:color-mix(in srgb,var(--no) 75%,var(--dim))}
@@ -239,7 +274,7 @@ video.video{width:100%;border-radius:3px;background:#000;margin:12px 0;display:b
 .cotext p{margin:2px 0 0;max-width:none}
 .corow+.cotext{margin-top:2px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-@media (max-width:600px){.corow{flex-direction:column;align-items:flex-start}.coarr{display:none}}
+@media (max-width:600px){.corow{grid-template-columns:1fr}.corow .cowrong,.corow .coright{justify-self:start}.coarr{display:none}}
 .quiz .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
 .quiz .lbl{color:var(--dim);font-size:16px;min-width:64px}
 .mcqi{margin:8px 0 22px 14px}
@@ -1346,7 +1381,7 @@ async function loadLesson(){
     const el=renderSegment(s); main.appendChild(el); if(r.reset&&!streaming)return; animate(el);});
   renderedUpto=segs.length;
   imageCredits(b);
-  wire();
+  wire(); endCard();
 }
 let renderedUpto=0, bodyStart=0, fmCache={};
 async function md5(s){ // cheap stand-in: server sends hash on reset; between appends we recompute via subtle if available
@@ -1532,7 +1567,7 @@ window.addEventListener('resize',paintMathSel);
 document.addEventListener('scroll',e=>{ if(e.target!==document&&selBands.childElementCount)paintMathSel(); },true);
 
 let range=null;
-document.addEventListener('mouseup',e=>{if(pill.contains(e.target))return;if(e.target.closest&&e.target.closest('#chat')){pill.style.display='none';return}setTimeout(()=>{const sel=window.getSelection();if(!sel||sel.isCollapsed||!sel.toString().trim()||MODE==='grid'){pill.style.display='none';return}
+document.addEventListener('mouseup',e=>{if(pill.contains(e.target))return;if(e.target.closest&&e.target.closest('#chat,#endcard')){pill.style.display='none';return}setTimeout(()=>{const sel=window.getSelection();if(!sel||sel.isCollapsed||!sel.toString().trim()||MODE==='grid'){pill.style.display='none';return}
   range=sel.getRangeAt(0);paintMathSel();const fb=selBands.firstElementChild;const r=fb?{left:fb.offsetLeft-window.scrollX,top:fb.offsetTop-window.scrollY}:range.getBoundingClientRect();const w=sel.toString().trim().split(/\s+/).filter(Boolean);$('#pilldef').style.display=(w.length>=1&&w.length<=5&&sel.toString().trim().length<=80)?'inline-block':'none';pill.style.display='block';pill.style.left=(r.left+window.scrollX)+'px';pill.style.top=(r.top+window.scrollY-36)+'px';},0)});
 pill.addEventListener('mousedown',e=>{e.preventDefault();const k=e.target.dataset.k;if(!k||!range)return;
   let node=range.commonAncestorContainer;node=node.nodeType===1?node:node.parentElement;
@@ -2022,6 +2057,75 @@ document.addEventListener('keydown',e=>{
   FX.muted=!FX.muted; try{ localStorage.setItem('bb-sfx',FX.muted?'off':'on'); }catch(_){}
   toast.textContent=FX.muted?'Sound off (m)':'Sound on (m)'; toast.style.display='block'; setTimeout(()=>{toast.style.display='none'},1400);
 });
+// ---------- end card ----------
+// Every lesson (not plain: true boards) ends with Ultraman Mebius: his photo when the bridge has one configured
+// (/end-card.jpg, local only, see README), and a quote of battle sounds picked from the pool by workspace + lesson,
+// so a lesson always shows the same one. The kindle converter reads this same list and uses the same hash.
+const ENDCARD_QUOTES=[
+  "Tsaaah, tsahh.. tsaahh tsahh tsaaaah, Ning nung ning nung.. Tsahh tsahh.",
+  "Shuwatch!",
+  "Hmph… Sheah!",
+  "Seyah! Hah! Dyuwa…",
+  "Ning nung ning nung… ning nung ning nung… Shuwatch!",
+  "Dyuwaah! Hah, hah… Seyah!",
+  "Tsaaah… Hmph. Sheah!",
+  "Hah! Hah! Seyaaah!",
+  "Dyuwa… dyuwa… Ning nung ning nung.",
+  "Sheah! Tsaahh, tsahh… Shuwatch!",
+  "Hmph… hmph… Dyuwaaah!",
+  "Seyah, seyah! Ning nung ning nung… Hah!",
+  "Tsahh tsahh.. tsaaah. Hmph!",
+  "Shuwatch! Dyuwa… Sheah!",
+  "Hah… Hah… Tsaaaah!",
+  "Ning nung ning nung, ning nung.. Seyaaah!",
+  "Dyuwah! Tsahh, tsahh, tsahh… Hmph.",
+  "Sheaaah! Hah! Shuwatch!",
+  "Tsaaah, ning nung… tsaaah, ning nung… Dyuwa!",
+  "Hmph. Seyah! Seyah! Hah!",
+  "Ning nung.. ning nung.. ning nung.. Shuwatch!",
+  "Dyuwa… Tsaahh… Sheah!",
+  "Hah! Tsahh tsahh! Hmph… Seyaaah.",
+  "Shuwa… shuwa… Shuwatch!",
+  "Tsaaaah… tsaah.. Hah! Ning nung ning nung.",
+  "Seyah! Dyuwaah! Hmph… hmph.",
+  "Sheah, sheah.. Tsaaah, tsahh. Hah!",
+  "Ning nung ning nung… Dyuwa… Seyah!",
+  "Hmph! Tsaahh… Shuwatch!",
+  "Dyuwaaah… Hah. Ning nung ning nung.. Sheah!"
+];
+function endcardPick(key){ let h=0x811c9dc5; for(const c of new TextEncoder().encode(key)){ h^=c; h=Math.imul(h,0x01000193)>>>0; } return ENDCARD_QUOTES[h%ENDCARD_QUOTES.length]; }
+let endEl=null, endStop=null;
+function endCard(){
+  const want=MODE!=='grid'&&lessonId&&headerDone&&String(fmCache.plain||'').toLowerCase()!=='true';
+  if(!want){ if(endEl)endEl.remove(); return; }
+  const ec=state.end_card||{}, key=(ec.key||WS||'')+'/'+lessonId;
+  if(!endEl||endEl.dataset.key!==key){
+    if(endEl)endEl.remove();
+    endEl=document.createElement('aside'); endEl.id='endcard'; endEl.className='endcard'+(ec.image?'':' noimg'); endEl.dataset.key=key; endEl.setAttribute('aria-label','End of lesson');
+    endEl.innerHTML=`<div class="ec">${ec.image?'<div class="ecph"><img src="/end-card.jpg" alt="Ultraman Mebius kneeling in a ruined city" decoding="async"></div>':''}<div class="ecq"><p class="ecquote">\u201c${esc(endcardPick(key))}\u201d</p><p class="ecwho">\u2014 Ultraman Mebius \u2014</p><button type="button" class="ectimer" aria-label="Play the color timer"><span class="gem" aria-hidden="true"></span><span>Color timer</span></button></div></div>`;
+    const img=endEl.querySelector('img'); if(img)img.onerror=()=>endEl.classList.add('noimg');
+    endEl.querySelector('.ectimer').onclick=e=>endcardTimer(e.currentTarget);
+  }
+  endEl.hidden=!!streaming;
+  if(main.lastElementChild!==endEl)main.appendChild(endEl);
+}
+// The color timer: an 8-bit "ning nung ning nung" that speeds up like Ultraman running out of time. Only on a click,
+// same square-wave voice and the same m mute as the other cues; the light blinks red either way.
+function endcardTimer(btn){
+  if(endStop){ endStop(); return; }
+  const oscs=[]; let timer=0;
+  endStop=()=>{ clearTimeout(timer); oscs.forEach(o=>{ try{o.stop()}catch(_){} }); btn.classList.remove('on'); btn.setAttribute('aria-label','Play the color timer'); endStop=null; };
+  btn.classList.add('on'); btn.setAttribute('aria-label','Stop the color timer');
+  if(FX.muted){ toast.textContent='Sound off (m)'; toast.style.display='block'; setTimeout(()=>{toast.style.display='none'},1400); }
+  else try{ FX.audio=FX.audio||new (window.AudioContext||window.webkitAudioContext)(); const ac=FX.audio; if(ac.state==='suspended')ac.resume();
+    let t=ac.currentTime+.02, step=.2; const end=t+2.6;
+    while(t<end){ [988,740].forEach((f,i)=>{ const o=ac.createOscillator(), g=ac.createGain(), s=t+i*step; o.type='square'; o.frequency.value=f;
+        g.gain.setValueAtTime(0,s); g.gain.linearRampToValueAtTime(.035,s+.006); g.gain.setValueAtTime(.035,s+step*.55); g.gain.exponentialRampToValueAtTime(.0008,s+step*.9);
+        o.connect(g).connect(ac.destination); o.start(s); o.stop(s+step); oscs.push(o); });
+      t+=step*2; step=Math.max(.11,step*.9); }
+  }catch(_){}
+  timer=setTimeout(()=>endStop&&endStop(),2700);
+}
 async function restoreAnswers(){
   if(!lessonId)return;
   const got=await fetch(`/api/answers?id=${lessonId}${WSQ}`).then(r=>r.json()).catch(()=>({}));
@@ -2257,7 +2361,7 @@ async function boot(){
     if(r.reset){offset=0;hash='';await loadLessonWith(r);} else if(r.text){await loadLessonWith(r);}
     if(d&&d.brainstorm)applyBrainstorm(d.brainstorm);
     if(!was&&streaming)sfx('start'); else if(was&&!streaming)sfx('done'); else if(streaming&&main.querySelectorAll('h2').length>h2s)sfx('section');
-    setWriting(streaming);
+    setWriting(streaming); endCard();
   } finally{busy=false} }
   // A new board version (the skill was edited) never reloads under the reader: it offers a reload chip that keeps the place.
   window.boardUpdated=()=>{ if(document.getElementById('bbupd'))return; const b=document.createElement('button'); b.id='bbupd'; b.type='button'; b.textContent='Board updated · reload'; b.title='Reload to get the new board version. You stay where you are.';
@@ -2298,7 +2402,7 @@ async function loadLessonWith(r){
     }
     window.__ph=[];
   }
-  renderedUpto=segs.length; imageCredits(b); decorate(main); wire(); inlineSvgs(); buildToc(hot);
+  renderedUpto=segs.length; imageCredits(b); endCard(); decorate(main); wire(); inlineSvgs(); buildToc(hot);
   if(r.reset)restoreAnswers();
   if(place){ const bl=[...main.querySelectorAll(':scope > .blk')]; let best=null,bd=1e9; bl.forEach((x,i)=>{ if(x.textContent.slice(0,160)===place.sig&&Math.abs(i-place.i)<bd){bd=Math.abs(i-place.i);best=x;} });
     if(best) window.scrollTo(0,window.scrollY+best.getBoundingClientRect().top-place.top); main.style.minHeight=''; }

@@ -12,7 +12,7 @@
 - [Test 1 topic list — Canvas announcement 2026-09-01](sources/announcements/test1-topics.md)
   kind: topic-list · tier: 1 · Use for: what is in scope for Test 1.
 - [Practice Test 1 (Spring 2026)](sources/exams/practice-test-1.pdf)
-  kind: practice-exam · tier: 3 · Use for: problem ladders on K-maps, SOP, timing.
+  kind: practice-exam · tier: 3 · Use for: practice problems on K-maps, SOP, timing.
 - [HW2 — Boolean simplification](sources/hw/hw2.pdf)
   kind: hw · tier: 5 · assigned: yes · Use for: which skills are due; never solve its problems.
 - [Week 2 Lecture 2 slides](sources/slides/week2-l2.pdf)

@@ -8,7 +8,8 @@ Open items only. Shipped: the XP health bar that fills only with verified answer
 - **Quiet streaks:** a small "3 days" mark beside the folder name in the hub. No notifications.
 - **`/progress` ledger:** lessons finished, items answered, accuracy by topic, a heatmap of days.
 - **Handwriting:** grade a photo of handwritten work inline under the block, against the course rubric.
-- **Problem ladder from a review sheet** as a deck.
+- **Practice deck from a review sheet.**
+- **Non-STEM lesson template** for conceptual and memorization courses.
 - **Tablet layout** (the board is plain HTTP, so it can be served over a LAN).
 - **Timed exam mode:** n problems, a clock, then the rubric check.
 

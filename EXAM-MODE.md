@@ -1,6 +1,6 @@
 # Exam mode
 
-Active when RESOURCES.md has any entry with tier ≤ 4 (a topic list, professor notes, a practice exam, or a past exam). Then course lessons default to the Problem Ladder template and are built backward from the problems the student must solve.
+Active when RESOURCES.md has any entry with tier ≤ 4 (a topic list, professor notes, a practice exam, or a past exam). Then course lessons are exam-prep STEM lessons (TEMPLATES.md **STEM lessons**), built backward from the problems the student must solve.
 
 ## Build the topic map
 
@@ -43,10 +43,10 @@ Followed by one line per problem with its full text location (file + page), so l
 
 ## Using the map
 
-- `/blackboard learn <topic> for <course>` with a map → Problem Ladder for that topic, anchor = the highest-authority problem, variants = the other problems of that type plus one modified-number version.
+- `/blackboard learn <topic> for <course>` with a map → an exam-prep STEM lesson for that topic, its worked example = the highest-authority problem type, its practice = the other problems of that type plus one modified-number version.
 - `/blackboard learn for <course>` with no topic → the highest-priority topic not yet covered by a lesson.
 - Outside STEM lessons, every block carries `→ Exam: <problem>` or `→ background`. STEM exam-prep lessons carry no inline tags and open with the **Exam Topics Breakdown** (TEMPLATES.md).
-- Assigned homework in the map is never solved; ladders use modified-number analogs and end with a nudge naming the assigned problem.
+- Assigned homework in the map is never solved; lessons use modified-number analogs and end with a nudge naming the assigned problem.
 
 ## What the student sees first
 

@@ -13,6 +13,7 @@ Routes
   GET  /events?id=NNNN   SSE: `change` when the lesson file or state changes
   GET  /assets/<file>    $WS/lessons/assets/<file>
   GET  /anim/<path>      board/anim/<path>
+  GET  /end-card.jpg     the optional end-of-lesson photo (end_card_path()), 404 when none is configured
   POST /ask              {kind,...} -> appended to queue.jsonl, wake per host
   POST /open             {urls:[board lesson URLs]} -> opened in the default browser (for in-app panes that cannot open tabs)
   POST /define           {text,line,block} -> {text} dictionary definition of 1-5 selected words, in lesson context
@@ -61,6 +62,23 @@ def scan_roots():
         pass
     w = state().get("ws")
     return [os.path.dirname(os.path.dirname(os.path.abspath(w)))] if w else []
+
+
+def end_card_path():
+    """The optional photo on every lesson's end card. Local only, never shipped with the skill: BLACKBOARD_END_CARD, else
+    "end_card" in $BLACKBOARD_HOME/config.json, else ~/.config/blackboard/end-card.jpg. A path inside the skill folder is
+    refused, so the public mirror can never carry it. "" when there is none."""
+    p = os.environ.get("BLACKBOARD_END_CARD")
+    if not p:
+        try:
+            with open(os.path.join(HOME_DIR, "config.json")) as f:
+                p = json.load(f).get("end_card")
+        except Exception:
+            p = None
+    p = os.path.realpath(os.path.expanduser(p or "~/.config/blackboard/end-card.jpg"))
+    if p.startswith(os.path.realpath(ROOT) + os.sep):
+        return ""
+    return p if os.path.isfile(p) else ""
 
 
 _scan = {"t": 0, "v": [], "roots": None}
@@ -1092,7 +1110,8 @@ class H(BaseHTTPRequestHandler):
             body = {"ws": wsp, "slug": slug or slug_of(wsp), "current": current(slug), "agent": w.get("agent", st.get("agent", "claude")),
                     "page_version": int(max(os.path.getmtime(TMPL), os.path.getmtime(os.path.join(BOARD, "fig.js")))),
                     "layout": w.get("layout", st.get("layout", "tab")), "streaming": bool(w.get("streaming", st.get("streaming"))),
-                    "lessons": lessons_meta(wsp), "brainstorm": w.get("brainstorm")}
+                    "lessons": lessons_meta(wsp), "brainstorm": w.get("brainstorm"),
+                    "end_card": {"image": bool(end_card_path()), "key": slug_of(wsp) if wsp else ""}}
             if qs.get("all"):
                 body["workspaces"] = hub()
             return self.send(200, body)
@@ -1124,6 +1143,9 @@ class H(BaseHTTPRequestHandler):
         if path.startswith("/lib/"):
             lib = {"rough.js": os.path.join(ROOT, "node_modules", "roughjs", "bundled", "rough.js"), "fig.js": os.path.join(BOARD, "fig.js"), "slate.jpg": next((x for x in (os.path.join(BOARD, "slate-custom.jpg"), os.path.join(BOARD, "slate.jpg")) if os.path.exists(x)), "")}.get(os.path.basename(path))
             if lib: return self.static(lib)
+        if path == "/end-card.jpg":
+            p = end_card_path()
+            return self.static(p) if p else self.send(404, "no end card", "text/plain")
         if path.startswith("/anim/"):
             rel = os.path.normpath(path[len("/anim/"):])
             if rel.startswith(".."):

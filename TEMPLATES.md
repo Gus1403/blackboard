@@ -1,12 +1,8 @@
-# Lesson templates
+# Lesson template
 
-Every lesson is one markdown file, `lessons/NNNN-slug.md`, rendered on the board. Pick the template without asking:
+Every lesson is one markdown file, `lessons/NNNN-slug.md`, rendered on the board. There is one template, for STEM lessons (math, physics, engineering, CS): the rules below, **STEM lessons**, and the full model lesson [examples/stem/learn/lessons/0001-how-to-ace-your-second-integral-calculus-test.md](./examples/stem/learn/lessons/0001-how-to-ace-your-second-integral-calculus-test.md). Copy its structure, block types and format for any STEM lesson. A template for conceptual or memorization courses comes later; until then, use the same frame and rules and skip the STEM-only parts.
 
-- a question that is solved by manipulating symbols (algebra, limits, Boolean simplification, circuit analysis) → **Derivation**
-- a "what is / how does X work" question → **Concept Card**
-- course mode with a topic map (practice exams present) → **Problem Ladder**, with Derivation blocks inside for the steps
-
-## Board rules (all templates)
+## Board rules
 
 1. One idea per block. A block is a paragraph, a display equation, a figure, or a toggle. Never two mechanisms in one block.
 2. Question before answer. The reader sees the question, then predicts, then the answer appears.
@@ -61,7 +57,7 @@ Do not end with a "common mistake" or "why people get this wrong" paragraph.
 
 Tone target. Write like this:
 
-> You'll need to simplify $A + AB$. First, the symbols. $A$ and $B$ are each 0 or 1. $+$ is OR: the result is 1 if either side is 1. $AB$ is AND: the result is 1 only if both are 1. Now try both values of $A$. If $A = 1$: $1 + AB = 1$, because OR with a 1 is always 1. If $A = 0$: $AB = 0$, so $0 + 0 = 0$. Both times the answer is $A$. So $A + AB = A$. This is called absorption. Check: $A = 1$, $B = 0$ gives $1 + 0 = 1$.
+> You'll need to simplify $A + AB$. First, the symbols. $A$ and $B$ are each 0 or 1. $+$ is OR: the result is 1 if either side is 1. $AB$ is AND: the result is 1 only if both are 1. Now try both values of $A$. If $A = 1$: $1 + AB = 1$, because OR with a 1 is always 1. If $A = 0$: $AB = 0$, so $0 + 0 = 0$. Both times the answer is $A$. So $A + AB = A$. This is called absorption.
 
 Not like this: "AB is one piece, so work it out before the OR."
 
@@ -204,7 +200,7 @@ prev: 0003                 # previous lesson number, omit on the first
 
 ## Chapter 1 · Build an SOP
 
-…body (one of the three templates)…
+…body: method sections in the STEM order (see the model lesson)…
 
 ## Chapter 2 · Simplify it
 
@@ -307,9 +303,9 @@ The board scrolls a wide table horizontally rather than squeezing it, so a long 
 
 A markdown table is the default. `::: fig table` (see [FIGURES.md](./FIGURES.md)) is only for the case a markdown table cannot do: highlighting a specific cell or row to point at it from the prose.
 
-## Template 1 — Derivation
+## Derivations
 
-For anything solved step by step. Rules (from the board style research):
+The steps inside every worked example and solution:
 
 1. **Setup block first.** State what is given and wanted. Explain the next rule before applying it; introduce additional rules at the stage that needs them.
 2. **One operation per line.** One substitution, one expansion, one cancellation, one limit. Never two.
@@ -322,42 +318,6 @@ For anything solved step by step. Rules (from the board style research):
 9. **Layout.** Display math left-aligned, one `aligned` block per stage, a `###` heading per stage ("Setup", "Step 1 — width", …). Derivation steps never side by side; a figure may sit beside its caption.
 
 Add a `::: predict` before the result when the outcome is guessable ("what happens to F when A = 1?").
-
-## Template 2 — Concept Card
-
-For "what is / how does it work". Blocks in this order (the **Shape of each explanation** order), with caps:
-
-| # | Block | Rule | Cap |
-|---|---|---|---|
-| 1 | **What you need first** | The prerequisites, each in plain words. Optionally show the problem the concept solves by trying it without the concept. | 60 words |
-| 2 | **How it works** | Numbered steps, one per line, each naming what changes and why. A `::: predict` before the outcome. | 4–6 steps, ≤15 words each |
-| 3 | **One worked example** | The smallest real instance with numbers, code or wire values, worked through. Inline figure if useful. | 60 words + 1 figure |
-| 4 | **The rule** | *X is a [kind of thing] that [what makes it different], used to [why it exists].* Its course name. | 25 words |
-| 5 | **Analogy + where it breaks** | Optional. One analogy, then one line "breaks here:". | 2 lines |
-| 6 | **Distinguishing case** | Only when two concepts are confusable: one concrete case that exposes the difference. | 40 words |
-| 7 | **Quick check** | One question whose wrong options are the real confusions; answer behind a toggle. | 1 question |
-
-### Mini-example (neural network output)
-
-1. You need weighted sums and a function that turns a number into another number. A fixed rule ("cat if more than 40% of pixels are brown") fails on a brown dog, so the rule has to be learned.
-2. (i) multiply each input by its weight; (ii) add them and the bias; (iii) apply the activation; (iv) that number feeds the next layer; (v) the last layer's numbers are the output.
-3. Inputs (2, 3); weights (0.5, −1); bias 1 → $0.5·2 − 1·3 + 1 = −1$ → ReLU → 0. *[figure: 2 nodes → 1 node, weights on edges]*
-4. A neural network is a stack of layers that turns numbers into numbers by repeated weighted sums and a squashing function.
-5. Like a spreadsheet of formulas feeding each other. Breaks here: the weights are learned, not typed.
-7. If all weights are 0, the output is: (a) the input (b) activation(bias) (c) undefined.
-
-## Template 3 — Problem Ladder (exam mode)
-
-Used when `reference/topic-map.md` exists. Teaches a topic through the real problems that test it.
-
-1. **What this prepares you for.** The exam problems (source, number, type, points, priority) this topic covers. → Exam tags on every block from here on.
-2. **Ladder.** Table of 2–5 representative problems: source, type, the skill each teaches, what makes it different from the others. Variants, never duplicates.
-3. **Anchor problem.** Full problem text (a modified-number version of a real problem is fine, labelled "Modified-number version of <source>"). Then think-first prompts behind a toggle: what is asked, what is given, which principle, which equation, what to solve first. Then the solution as a Derivation, concepts introduced at the step that needs them, each with its one-liner.
-4. **Variants.** For each: full text, what changed, what stayed, the new skill, solution (Derivation).
-5. **Reusable method.** A checklist: when to use it, how to recognise the problem type, what to write first, which equations, in what order, what to check.
-6. **Quiz** with re-parameterised versions of the ladder problems.
-
-Assigned homework is never solved, partially solved, or set up. If a ladder problem is an assigned one, replace it with a modified-number analog and end the lesson with a nudge naming the assigned problem.
 
 ## Steps go down, never sideways (hard)
 
@@ -377,7 +337,7 @@ x &= -1,\; 3 &&\text{the limits}
 A title is a YouTube title, not a file name. Short, concrete, says what you will be able to do or understand after reading: "How to Solve All 5.5 Problems", "Test 1 Formula Sheet", "How Absorption Works", "How the NVIDIA DGX Spark Actually Works", "Split the Fraction First". Rules:
 
 - No em dashes, no colons, no "Problem 1 — every step" suffixes, no "Step by Step" padding.
-- Two to seven words. Lead with "How to", "How X Works", "Why X", or the thing itself.
+- Aim for two to seven words; a longer title is fine when it names the subject clearly, as in the calculus model lesson. Lead with "How to", "How X Works", "Why X", or the thing itself.
 - Name the subject in plain words, never the course code: "How to Ace Your Second Integral Calculus Test", not "How to Ace MATH 1552 Test 2". The course stays in `course:`, which the board shows above the title.
 - The `title:` in front matter and the `# ` line are the same string. The hub and the tab show it, so it must read well at a glance next to other courses' lessons.
 

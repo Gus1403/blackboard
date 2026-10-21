@@ -41,7 +41,7 @@ The first line is self-study: it reads primary sources and writes the lesson. Th
 ## What you get
 
 1. One board page at `http://127.0.0.1:7331`, one lesson at a time, written block by block while you watch.
-2. Fixed templates. Derivation, Concept Card, Problem Ladder. One operation per line, the reason in the margin, the answer boxed.
+2. One STEM lesson template ([example](examples/stem/learn/lessons/0001-how-to-ace-your-second-integral-calculus-test.md)): the tool, how to choose, one labeled worked example, your turn. One operation per line, the reason in the margin, the answer boxed. A non-STEM template comes later.
 3. Explain on select. Highlight words, click Explain. A chalk callout appears below the paragraph, with a lightbulb and title that fold and expand its body. A small × removes it.
    Highlight 1-5 words and click Definition instead for a small popup with what the term means in this lesson. Answers come back in about a second, or instantly for terms the lesson defines and for the ones precomputed in the background while you read. The selected term keeps a dotted underline; click it again to reopen the popup. These anchors survive reloads in the same browser. Nothing is written to the lesson file.
 4. A quiz at the end of every lesson. Multiple choice built in, flashcards on demand, graded by voice or text.

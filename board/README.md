@@ -50,6 +50,12 @@ A one-sentence meaning of the selected term as this lesson uses it, in a small p
 
 Docks on the right of every lesson page. A round button in the top bar and ⌘⇧. (Ctrl+Shift+. elsewhere) open and close it; the open state carries across lessons and the lesson column moves left. Each lesson has its own Claude Code session, run by `bridge.py` as `claude -p` in the workspace and resumed every turn, with history in `$WS/reference/chat/NNNN.json`; **+** archives that file as `NNNN-<time>.json` and starts fresh. Every turn names the lesson being read and lists its sources (`## Sources` and `RESOURCES.md`, resolved to files and URLs). Tool steps show live and fold away when the reply ends; the square button stops a reply; a reply keeps running and is saved if the page goes away. Model: `BLACKBOARD_CHAT_MODEL` (default `opus`) at medium effort. It may read only the workspace, TEMPLATES.md and the files the lesson cites, fetch only the sites the lesson cites, and search the web; edits only inside the workspace; anything else is denied without a prompt. Instructions: `chat-system.md`. It does not load the user's CLAUDE.md, hooks or MCP servers, and only the board's own pages may call it.
 
+## End card
+
+Every lesson except `plain: true` boards ends with a card: Ultraman Mebius beside a quote of his battle sounds (one of ~30 in `ENDCARD_QUOTES`, picked by workspace slug + lesson id, so a lesson always shows the same one), and a **Color timer** button that plays an 8-bit "ning nung" loop (click only, `m` mutes it). It stays out of the rail, contents map, search, Explain/Definition and XP, and hides while a lesson is streaming. The Kindle EPUB gets it as its last page.
+
+The photo is local and never part of the skill: `bridge.py` serves `/end-card.jpg` from `BLACKBOARD_END_CARD`, else `"end_card"` in `~/.cache/blackboard/config.json` (`{"end_card": "~/Pictures/mebius.jpg"}`), else `~/.config/blackboard/end-card.jpg`, and refuses a path inside the skill folder. With no photo the card shows the quote alone. Never commit the image: it is someone else's copyright.
+
 ## Slate surface
 
 `board: slate` in front matter gives a real-blackboard surface: `slate.jpg` ("Black smooth textured paper background" from magnific.com, Freepik free license: credit it when the skill is shared publicly), stacked on its mirror so it tiles and scrolls with the text, with a faint chalk bloom and grain (`chalk.png`) on text, math and diagrams. A `slate-custom.jpg` next to it replaces the photo. On trial; it may become the default.

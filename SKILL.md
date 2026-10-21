@@ -138,7 +138,7 @@ If `MISSION.md` is missing, write it from the course or topic and one question a
 
 # Lessons
 
-Read [TEMPLATES.md](./TEMPLATES.md), including its **Didactic writing contract**, **Titles** and **Photos**, before writing or rewriting a lesson. Apply that contract to explanations as well, scaled to the requested depth. Choose Derivation, Concept Card, or Problem Ladder without asking. The lesson frame and its slot order are in TEMPLATES.md (**Board rules** and **Lesson frame**).
+Read [TEMPLATES.md](./TEMPLATES.md), including its **Didactic writing contract**, **Titles** and **Photos**, before writing or rewriting a lesson. Apply that contract to explanations as well, scaled to the requested depth. STEM lessons follow the one template: TEMPLATES.md **STEM lessons** and the model lesson [examples/stem/learn/lessons/0001-how-to-ace-your-second-integral-calculus-test.md](./examples/stem/learn/lessons/0001-how-to-ace-your-second-integral-calculus-test.md); a non-STEM template comes later. The lesson frame and its slot order are in TEMPLATES.md (**Board rules** and **Lesson frame**).
 
 Before writing: read `learning-records/` (latest first) and `NOTES.md`. Include “Before we start” ONLY when the lesson actually builds on an earlier lesson (for example HW2 after HW1), not merely because its number is higher. Set `prev:` to that prerequisite lesson and take 1–2 relevant retrieval questions from its record, tagged `from lesson NNNN: <title>`. Omit the entire section for standalone lessons. Pick the zone of proximal development from the records and the mission; the user may also name the exact thing.
 
