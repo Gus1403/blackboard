@@ -53,7 +53,7 @@ A learning record written after a lesson gains one optional section:
 
 ```md
 ## Misconceptions
-- Believes two diagonal K-map cells can merge. Seen in 0004 quiz (score 2) and 0005 twist.
+- Believes two diagonal K-map cells can merge. Seen in 0004 quiz (score 2) and 0005 checkpoint.
 ```
 
 Write a line the second time the same wrong belief shows up. Later quizzes re-probe it in a new context; when it passes twice, mark the line `resolved (0007)`.

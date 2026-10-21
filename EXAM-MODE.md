@@ -45,7 +45,7 @@ Followed by one line per problem with its full text location (file + page), so l
 
 - `/blackboard learn <topic> for <course>` with a map → Problem Ladder for that topic, anchor = the highest-authority problem, variants = the other problems of that type plus one modified-number version.
 - `/blackboard learn for <course>` with no topic → the highest-priority topic not yet covered by a lesson.
-- Every block carries `→ Exam: <problem>` or `→ background`.
+- Outside STEM lessons, every block carries `→ Exam: <problem>` or `→ background`. STEM exam-prep lessons carry no inline tags and open with the **Exam Topics Breakdown** (TEMPLATES.md).
 - Assigned homework in the map is never solved; ladders use modified-number analogs and end with a nudge naming the assigned problem.
 
 ## What the student sees first

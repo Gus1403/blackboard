@@ -3,7 +3,40 @@
 A display equation with more than one `=` or any `\\Rightarrow` outside an aligned/cases block is a chain of steps on one line.
 The board's rule is one operation per line, reason in the margin. Prints warnings; exit 0 always."""
 import re, sys
-s = open(sys.argv[1]).read()
+
+def strip_why(t):
+    """\\why{math}{rule} (or \\why[name]{math}{rule}) -> math: the hint is board-only, every tool reads the plain math."""
+    out, i = "", 0
+    while True:
+        k = t.find("\\why", i)
+        if k < 0:
+            return out + t[i:]
+        j = k + 4
+        if j < len(t) and t[j].isalpha():
+            out += t[i:j]; i = j; continue
+        if j < len(t) and t[j] == "[":
+            e = t.find("]", j)
+            j = e + 1 if e > 0 else j
+        args = []
+        for _ in range(2):
+            while j < len(t) and t[j] == " ":
+                j += 1
+            if j >= len(t) or t[j] != "{":
+                break
+            d, q = 0, j
+            while q < len(t):
+                if t[q] == "\\":
+                    q += 2; continue
+                d += {"{": 1, "}": -1}.get(t[q], 0)
+                if d == 0:
+                    break
+                q += 1
+            args.append(t[j + 1:q]); j = q + 1
+        if len(args) < 2:
+            out += t[i:k + 4]; i = k + 4; continue
+        out += t[i:k] + strip_why(args[0]); i = j
+
+s = strip_why(open(sys.argv[1]).read())   # rule hints are not steps: judge the plain math
 warn = 0
 for m in re.finditer(r"\$\$(.*?)\$\$", s, re.S):
     body = m.group(1)
@@ -21,4 +54,23 @@ for m in re.finditer(r"(?<!\$)\$(?!\$)([^$\n]+)\$(?!\$)", s):
     if eqi >= 3 or ("\\Rightarrow" in m.group(1) and eqi >= 2):
         line = s[:m.start()].count("\n") + 1
         print(f"  lint: line {line}: a chain of steps inside inline math. Break it into a display block, one step per line.", file=sys.stderr); warn += 1
-if warn: print(f"  lint: {warn} sideways step(s). TEMPLATES.md: one operation per line.", file=sys.stderr)
+# worked steps strung through a prose sentence (answers, your-turn, why: lines): two or more "=" across a line's inline math
+body = re.sub(r"\$\$.*?\$\$", lambda m: "\n" * m.group(0).count("\n"), s, flags=re.S)
+body = re.sub(r"```.*?```", lambda m: "\n" * m.group(0).count("\n"), body, flags=re.S)
+for n, ln in enumerate(body.split("\n"), 1):
+    if ln.lstrip().startswith(("<!--", "|", "{")):
+        continue
+    # an option and its mistake line, or a question and its answer, are separate texts: judge each part of a "||" line
+    eqs = max(sum(len(re.findall(r"(?<![<>!:\\])=(?!=)", t)) for t in re.findall(r"(?<!\$)\$(?!\$)([^$\n]+)\$(?!\$)", part)) for part in ln.split("||"))
+    if eqs >= 2:
+        print(f"  lint: line {n}: equations chained through prose ({eqs} '=' in inline math). Write it as a worked solution: setup, aligned steps with reasons, boxed answer.", file=sys.stderr); warn += 1
+# tables faked in math: an array/tabular with \hline or | column rules is a table and belongs in a markdown board table
+for m in re.finditer(r"\\begin\{(array|tabular)\}\{([^}]*)\}(.*?)\\end\{\1\}", s, re.S):
+    if "|" in m.group(2) or "\\hline" in m.group(3):
+        line = s[:m.start()].count("\n") + 1
+        print(f"  lint: line {line}: a table built with \\begin{{{m.group(1)}}} and rules. Write it as a markdown table (TEMPLATES.md, Tables).", file=sys.stderr); warn += 1
+# size is a board level, never hand-set: \Large, \Huge and friends in math -> wrap the display in ::: big or ::: key
+for m in re.finditer(r"\\(Large|LARGE|large|Huge|huge)(?![A-Za-z])", s):
+    line = s[:m.start()].count("\n") + 1
+    print(f"  lint: line {line}: hand-sized math (\\{m.group(1)}). Wrap the display in ::: big (level 1) or ::: key (level 2) instead.", file=sys.stderr); warn += 1
+if warn: print(f"  lint: {warn} warning(s). TEMPLATES.md: one operation per line; tables as markdown tables.", file=sys.stderr)

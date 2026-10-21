@@ -6,7 +6,7 @@ Ask the learner to attempt checkpoint questions without looking back, then read 
 
 Research basis: [Weinstein et al. 2016](https://pubmed.ncbi.nlm.nih.gov/26950160/) found no delayed-retention superiority for interspersed versus end-only questions; [Szpunar et al. 2013](https://pmc.ncbi.nlm.nih.gov/articles/PMC3631699/) supports interim testing for lecture attention; [Rohrer et al. 2020](https://doi.org/10.1037/edu0000367) supports mixed mathematics practice. This hybrid is a practical design inference, not a proven universally optimal schedule.
 
-Answer design: large clickable cards on the dark board, chalk borders and text, with muted red triangle, blue diamond, gold circle, and green square icons by displayed position. Retain the source's option count; never add a fourth weak distractor just to fill a grid. Use two columns when answers fit, one column for long expressions and narrow screens. Keep native keyboard-accessible radios, visible focus, non-color correctness indicators, changeable answers, XP, and reload persistence.
+Answer design: large clickable cards on the dark board, chalk borders and text, with muted red triangle, blue diamond, gold circle, and green square icons by displayed position. Every multiple-choice item has exactly four options, shown as a 2×2 grid of cards (one column for long expressions and on narrow screens). True/false items keep two. Keep native keyboard-accessible radios, visible focus, non-color correctness indicators, changeable answers, XP, and reload persistence.
 
 Generation and grading both run headless in `bin/quiz.py`, called by `bridge.py` in a background thread the same way `bin/explain.py` is. Neither wakes the interactive agent, so a quiz works identically in cmux, the Claude app and the Codex app, and nothing lands in the chat.
 
@@ -14,12 +14,12 @@ The interactive agent runs a quiz by hand only when the user asks for one in cha
 
 ## Source fidelity (required; overrides generic item-writing preferences)
 
-Before writing any lesson quiz, More practice set, flashcard, or twist, inspect the user's relevant sources: practice exams, past exams, quizzes, problem sets, homework, and their answer keys. Match what the lesson actually teaches.
+Before writing any lesson quiz, More practice set or flashcard, inspect the user's relevant sources: practice exams, past exams, quizzes, problem sets, homework, and their answer keys. Match what the lesson actually teaches.
 
 - If a supplied question directly applies, reuse its structure with changed numbers, inputs, expressions, or context. Preserve its tested skill, reasoning steps, constraints, and difficulty. Recompute the answer and every alternative; changing numbers alone can make an item trivial or ambiguous.
 - Otherwise build a close analog of a relevant source question. Mirror its question pattern, wording/tone, distractor style, and difficulty. Do not substitute a vocabulary check for a multi-step exam problem.
 - If sources contain only free-response/freewrite questions, adapt those problems into MCQs. Preserve the reasoning required; add plausible alternatives from mistakes in that solution process.
-- Preserve the source's option count and meaningful features (including “except” or “none” when relevant). Generic preferences below apply only where the source gives no pattern. Exactly one defensible key remains mandatory.
+- Preserve the source's meaningful features (including “except” or “none” when relevant), but always write four options: when the source has fewer, add distractors from real mistakes on that problem. Generic preferences below apply only where the source gives no pattern. Exactly one defensible key remains mandatory.
 - Record the actual source filename and question/page plus what changed in a Markdown comment immediately before each authored item. For generated items, include that reference in the answer explanation. Never invent a source citation or claim to have read an unavailable question.
 - Independently invent questions only when there are no relevant supplied question sources, such as a non-school lesson without user-provided material. First inspect the available sources; missing extraction/access is not evidence that no relevant source exists. If expected sources cannot be read, report that gap rather than silently inventing exam-style questions.
 - Assigned work uses changed-parameter practice analogs. Test only taught material, but retain the source difficulty. This rule also applies to flashcards when requested: retain the source problem and assess its reasoning without alternatives.
@@ -75,14 +75,15 @@ What the board shows after an answer: `Score N / 5`, one line of rationale, the 
   - `5`
   ...
   ````
-- Match the source option count; default to 3 when there is no source pattern. Exactly one defensible key. Evaluate or derive every option before shipping. An equivalent expression is correct even when obtained in fewer or more steps; do not mark it wrong for skipping the preferred teaching sequence. If the stem asks for a specific intermediate step, state that constraint explicitly and ensure only one option meets it.
+- Always four options, exactly one correct (true/false keeps two). Each added distractor is a real, plausible mistake on that problem: a dropped sign, a wrong constant ($\tfrac{1}{a}$ for $a$), the wrong substitution or form, a forgotten chain-rule factor, a wrong bound. No joke options. Differentiate or simplify every distractor to make sure none is also correct. Spread the key over all four written positions across a lesson's items (the key letter is the key in written order; the board shuffles on render). Evaluate or derive every option before shipping. An equivalent expression is correct even when obtained in fewer or more steps; do not mark it wrong for skipping the preferred teaching sequence. If the stem asks for a specific intermediate step, state that constraint explicitly and ensure only one option meets it.
 - Every distractor is a real misconception or a common procedural error, taken from the student's own quiz log when available.
 - Options equal in length, grammar, specificity, and structure. No "all/none of the above", no negatives ("except"), no absolutes ("always/never").
 - No word from the stem appearing only in the key. The key is not the longest or the middle option.
 - At least half the items are application ("what would happen if…"), not recall.
 - Randomise option order on render.
 - Answers stay changeable on the board: the student can pick another option at any time and the newest pick is what counts (logged, restored on reload, XP). A wrong pick shows "Not quite" without revealing the key; the `why:` line appears once the right option is picked, in an olive callout like an Explain note. A `why:` with more than one step writes them down, not sideways: one short sentence, then `$$\begin{aligned} … \\ … \end{aligned}$$` on the same line, one operation per row.
-- Wrong pick → one line naming the misconception behind that option. No narration.
+- Wrong pick → one line naming the mistake behind that option, written after the option as `- option || the mistake`. The board shows it with the verdict, then the step reveal of the `why:`. No narration.
+- A `why:` with worked steps is stepped on the board: after the right pick it opens at its first piece and **Next step** reveals one row at a time; after a wrong pick the verdict and the why's first sentence (the hint) show first, then the same steps. So the first sentence of a worked `why:` is a hint that does not give the key away.
 
 ## Chat quiz (by hand)
 
@@ -90,7 +91,6 @@ Board quizzes run headless in `bin/quiz.py`. When the user asks for a quiz in ch
 
 - Below 3 on a first try: point to the concept without giving content, and ask again. Still below 3: state the principle in the abstract (that attempt caps at 3). Still below 3: show the one counterexample that breaks their claim, then the answer, and have them say it back in one sentence.
 - Three terse replies in a row ("idk", "yes", a single word): switch to a smaller binary-choice question, and return to the original after two right answers.
-- The lesson's `## Twist` (a changed input or a counterexample, answer behind a toggle) catches fluency without understanding. If it fails, write the misconception to the learning record.
 
 ## Logging
 
@@ -140,11 +140,12 @@ must: Rule 3 makes every co-function answer negative
 ```md
 ### Question 1
 
-::: mcq q1 b
+::: mcq q1 c
 Inputs $A = 1$, $B = 0$. Which expression evaluates to 1?
-- $A \cdot B$
-- $\overline{A} + B$
+- $A \cdot B$ || AND needs both inputs at 1, and $B$ is 0.
+- $\overline{A} + B$ || $\overline{A}$ is 0 and $B$ is 0, so the OR is 0.
 - $A + B$
+- $A \cdot \overline{A}$ || A variable AND its complement is always 0.
 why: OR needs only one input at 1, and $A$ is 1.
 :::
 
@@ -163,4 +164,4 @@ Missing: the rule has a name, $X\overline{Y} + XY = X$. Say it back in one sente
 :::
 ```
 
-`why:` is one line shown after any pick, right or wrong. Explain the operation or causal rule that produces the answer, not only its theorem name. Any explanation of a distractor must describe an error that could actually produce that distractor. Options are shuffled on render; the key letter (`a`/`b`/`c`) refers to the order written.
+`- option || mistake` gives that distractor its one-line feedback. `why:` is one line shown after any pick, right or wrong. Explain the operation or causal rule that produces the answer, not only its theorem name. Any explanation of a distractor must describe an error that could actually produce that distractor. Options are shuffled on render; the key letter (`a`/`b`/`c`) refers to the order written.

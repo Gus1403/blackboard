@@ -95,7 +95,7 @@ Never write a chain like "= ... = ..." inside a sentence. One equation per displ
 Output only the note. Do not repeat or quote the selected words at the start. No label, no quotation marks around the answer, no markdown heading."""
 
 length = "Length: explain the selected passage clearly in a short paragraph. Add steps or a display equation when needed to resolve the question. Avoid unrelated background." if depth == "line" else "Length: one paragraph, 4 to 8 sentences, plus one or two display equations."
-tag = 'End with " → Exam: <problem it serves>" if the lesson text names an exam problem for this block, otherwise end with " → background".' if course_mode(src) else "Do not add any trailing tag."
+tag = 'End with " → Exam: <problem it serves>" if the lesson text names an exam problem for this block, otherwise end with " → background".' if course_mode(src) and re.search(r"→ (Exam|background)\b", src) else "Do not add any trailing tag."  # STEM lessons carry no inline tags
 a, b, block = block_at(src, int(req.get("line") or 1))
 prompt = RULES.format(length=length, tag=tag) + f"""
 

@@ -128,9 +128,10 @@ CARD_FORMAT = """Return only a JSON array, no prose around it. Each element:
 "must" holds 2 to 4 points a correct spoken answer has to contain. They are graded against, never shown before the flip."""
 
 MCQ_FORMAT = """Return only a JSON array, no prose around it. Each element:
-{"q": "the stem", "options": ["...","...","..."], "key": 0, "why": "one line shown after any pick"}
-Match the source option count (2–8); default to 3 without a source pattern. "key" is the 0-based index of the single defensible answer.
-Every wrong option is a real misconception or a common procedural error.
+{"q": "the stem", "options": ["...","...","...","..."], "key": 0, "mistakes": ["", "the mistake behind option 2", "...", "..."], "why": "one line shown after any pick"}
+Exactly four options (two only for a true/false item). "key" is the 0-based index of the single defensible answer; vary it across items.
+Every wrong option is a real, plausible mistake on this problem (a dropped sign, a wrong constant, the wrong substitution or form, a forgotten chain-rule factor, a wrong bound), never a joke option, and none is also correct.
+"mistakes" is parallel to "options": one short line naming the mistake that gives each wrong option, "" for the key.
 Mirror the source option style. Without a source pattern, use balanced options and avoid all/none, negatives and absolutes.
 The stem must be answerable before reading the options. The key is not the longest option.
 If the stem shows more than one statement of code, put the code in a fenced ```java block with real line breaks and indentation (use \\n in the JSON string), then the question sentence on its own line after it. Never inline a class or several statements into the sentence."""
@@ -190,7 +191,8 @@ The lesson:
             # a stem with fenced code keeps its lines (the board shows a code box); prose stems stay one line
             q = "\n".join(l for l in q.split("\n") if l.strip()) if "```" in q else q.replace("\n", " ")
             lines = [f"::: mcq {iid} {key}", q]
-            lines += [f"- {o}" for o in opts]
+            miss = [str(m or "").replace("\n", " ").strip() for m in (it.get("mistakes") or [])]
+            lines += [f"- {o}" + (f" || {miss[i]}" if i < len(miss) and miss[i] and "abcdefgh"[i] != key else "") for i, o in enumerate(opts)]
             lines.append("why: " + str(it.get("why") or "").replace("\n", " "))
             lines.append(":::")
             blocks.append("\n".join(lines))

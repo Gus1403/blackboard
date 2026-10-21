@@ -58,20 +58,49 @@ strong{font-weight:600}
 .credit{font-size:13px;color:var(--dim);margin:0 0 18px}
 .hand{color:var(--acc);font-size:21px;font-style:italic}
 .tag{display:inline-block;font-size:16px;color:var(--acc);font-style:italic;margin-left:8px;vertical-align:middle;text-decoration:none}
-.blk{position:relative;padding:2px 0 2px 14px;margin:6px 0}
+.blk{position:relative;padding:2px 0;margin:6px 0}
 /* display math: the scroll box is the wrapper, with vertical padding, so tall
    glyphs (integral signs, fraction numerators) are never shaved by overflow */
-.mathrow{overflow-x:auto;overflow-y:hidden;padding:10px 2px;margin:8px 0}
+.mathrow{overflow-x:auto;overflow-y:hidden;padding:12px 16px;margin:8px 0}
+.katex .mnote.stacked{margin-left:.6em;padding-left:.6em;font-size:.76em;color:color-mix(in srgb,var(--acc) 45%,var(--dim))}
+.katex .mnote.first.stacked::before{position:static;display:inline-block;margin-right:.6em;vertical-align:1px}
 .katex-display{margin:0;padding:0;overflow:visible;text-align:left}
 .katex-display>.katex{text-align:left}.katex{font-size:1.12em}
 .katex .boxpad{border-color:var(--acc)!important}
+/* cheat sheet: cards of formulas to memorize, label in the table-header small caps, tags as muted margin notes */
+/* the sheet is wider than the reading column, like a printed page: two columns of cards when there is room, else one */
+.sheet{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,430px),1fr));gap:16px;margin:16px 0 24px;align-items:start;position:relative;left:50%;transform:translateX(-50%);width:min(1180px,calc((100vw - var(--chatw,0px)) / var(--z,1) - 96px));max-width:calc(100vw / var(--z,1) - 32px)}
+@media (max-width:760px){.sheet{width:100%;left:0;transform:none}}
+.sheetcard{min-width:0;border:1px solid #2a2a27;border-radius:10px;background:rgba(236,232,218,.025);padding:12px 16px 8px}
+.sheetlbl{margin:0 0 4px;font:500 13px var(--body);letter-spacing:.11em;text-transform:uppercase;color:var(--dim)}
+.sheetcard .mathrow{padding:6px 2px;margin:2px 0}
+.sheetcard .katex-display>.katex{font-size:1em}
+.sheetcard .sz2 .mathrow>.katex-display{font-size:1.2em}
+.sheetcard .sz1 .mathrow>.katex-display{font-size:1.45em}
+.sheetcard .katex .mnote{border-left:0;padding-left:0;margin-left:1.4em;color:var(--dim);font-size:.72em}
+.sheetcard .katex .mnote.first::before{content:none}
+.sheetcard .tablewrap{margin:4px 0 8px;padding:0}
+.sheetcard .tablewrap table{border-top:0;border-bottom:0}
+.sheetcard .tablewrap th{font-size:12px;padding:6px 16px 6px 0;min-width:0}
+.sheetcard .tablewrap td{padding:6px 16px 6px 0;font-size:16px}
+.sheetcard .tablewrap tbody tr:first-child td{padding-top:8px}
+.sheetcard .callout{margin:8px 0 8px;max-width:100%}
+.sheetcard p{margin:4px 0;max-width:none}
+/* size levels: level 1 (::: big) is the chapter's fundamental rule as a big visual, level 2 (::: key) a tool formula.
+   The scale sits on the KaTeX box, so fitMath's shrink-to-fit (on the row) still works on top of it. */
+.sz .mathrow{padding-top:16px;padding-bottom:16px}
+.sz1 .mathrow>.katex-display{font-size:1.75em}
+.sz2 .mathrow>.katex-display{font-size:1.38em}
+.sz1 .tablewrap td{font-size:1.12em}.sz1 .tablewrap td .katex{font-size:1.18em}
+.sz1{margin:10px 0 14px}
 /* tables: booktabs — rules only at top, under the header, and at the bottom.
    No vertical rules, no fills; row spacing does the separating. */
-.tablewrap{overflow-x:auto;overflow-y:hidden;padding:8px 0 12px;margin:20px 0 26px 14px}
+.tablewrap{overflow-x:auto;overflow-y:hidden;padding:8px 0 12px;margin:20px 0 26px}
+.blk:has(>h2,>h3)+.blk>.tablewrap:first-child{margin-top:0}
 .mathrow,.tablewrap,.mcqi .answer-copy,main pre{scrollbar-width:none}
 .mathrow::-webkit-scrollbar,.tablewrap::-webkit-scrollbar,.mcqi .answer-copy::-webkit-scrollbar,main pre::-webkit-scrollbar{display:none}
 .tablewrap table{border-collapse:collapse;width:auto;max-width:100%;font-variant-numeric:tabular-nums;border-top:1.5px solid var(--chalk);border-bottom:1.5px solid var(--chalk)}
-.tablewrap th{font-family:var(--body);font-weight:500;font-size:15px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);text-align:left;padding:12px 28px 10px 0;border-bottom:1px solid var(--rule);white-space:nowrap}
+.tablewrap th{font-family:var(--body);font-weight:500;font-size:15px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);text-align:left;vertical-align:bottom;padding:12px 28px 10px 0;border-bottom:1px solid var(--rule);white-space:normal;min-width:6.5em;line-height:1.3;text-wrap:balance}
 .tablewrap th .katex{text-transform:none;letter-spacing:normal;font-size:1.05em;color:var(--chalk)}
 /* math never breaks mid-formula: a math column that does not fit scrolls the
    table instead. Prose cells still wrap. */
@@ -92,6 +121,22 @@ summary::before{content:"";position:absolute;left:9px;top:13px;border:5px solid 
 details[open]>summary::before{transform:rotate(90deg) translate(-2px,2px)}
 details>div{padding:2px 6px 8px 28px;color:var(--dim)}
 details>div p{color:var(--dim)}
+/* Prerequisites / Contents: one group of full-width rows on the lesson's left edge, hairline rules, chevron on the right,
+   labels in the table-header small caps */
+details.prerequisites{margin:0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.blk:has(>details.prerequisites){margin:0;padding:0}
+.blk:has(>details.prerequisites)+.blk:has(>details.prerequisites)>details{border-top:0}
+.blk:has(>details.prerequisites):first-of-type,.blk:has(>details.prerequisites)+.blk:not(:has(>details.prerequisites)){margin-top:0}
+.blk:has(>details.prerequisites)+.blk:not(:has(>details.prerequisites)){margin-top:18px}
+details.prerequisites>summary{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-radius:0;font:500 15px var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+details.prerequisites>summary::before{content:none}
+details.prerequisites>summary::after{content:"";width:7px;height:7px;margin-right:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .15s}
+details.prerequisites[open]>summary::after{transform:rotate(-135deg) translate(-2px,-1px)}
+details.prerequisites>summary:hover{color:var(--chalk);background:rgba(255,255,255,.035)}
+details.prerequisites>summary:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+details.prerequisites>div{padding:0 0 12px 16px}
+.blk:has(>details.prerequisites)+.blk:has(>h2)>h2:first-child{margin-top:34px}
+details.prerequisites>div ul,details.prerequisites>div ol{margin:4px 0 0;padding-left:20px}
 .fold{margin:14px 0 20px;border:2px solid color-mix(in srgb,var(--acc) 78%,var(--chalk));border-radius:16px 9px 18px 10px/10px 17px 9px 15px;background:rgba(6,8,7,.34);box-shadow:inset 0 0 18px rgba(236,235,227,.035),0 0 6px color-mix(in srgb,var(--acc) 18%,transparent);color:var(--chalk);overflow:hidden}
 .exp{position:relative;font-size:20px}
 .exphead{display:flex;align-items:center;gap:6px;padding:6px 10px}
@@ -124,11 +169,22 @@ figure svg ::selection,figure svg::selection{background:transparent;fill:inherit
 .defpop .term{display:block;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
 .defpop .body .katex{font-size:1em}
 .defpop.err{border-left-color:#b4544f;color:var(--dim)}
+.katex [data-why]{cursor:pointer;border-bottom:1.5px dotted color-mix(in srgb,var(--acc) 75%,var(--dim));border-radius:1px;transition:border-color .15s,background .15s}
+.katex [data-why]:hover{border-bottom-color:var(--chalk);background:color-mix(in srgb,var(--acc) 12%,transparent)}
+.katex [data-why]:focus-visible{outline:1.5px solid var(--acc);outline-offset:2px}
+.katex [data-why][aria-expanded="true"]{border-bottom-style:solid;border-bottom-color:var(--acc);background:color-mix(in srgb,var(--acc) 16%,transparent)}
+.whypop{max-width:min(380px,calc(100vw - 16px));padding:10px 14px 12px}
+.whypop .body{font-size:17px;line-height:1.5;overflow-x:auto}
+.defpop.whypop .body .katex{font-size:1.2em}
 .defpop .nubi{display:inline-block;width:7px;height:7px;margin-left:2px;border-radius:50%;background:var(--acc);animation:blink 1s steps(2) infinite}
 .photo{margin:18px 0 22px}
 .photo img{width:100%;height:auto;display:block;border-radius:6px;filter:saturate(.85) brightness(.9)}
 .photo figcaption{font-size:15px;color:var(--dim);margin:8px 2px 0;line-height:1.45}
 .photo figcaption .credit{display:block;font-size:12.5px;opacity:.75;margin-top:2px}
+.imgcredits{margin:48px 0 0;font-size:12.5px;line-height:1.5;opacity:.8}
+.imgcredits.insrc{margin:10px 0 0;font-size:14px;opacity:1;color:var(--dim)}
+.imgcredits.insrc b{font-weight:500;color:var(--chalk)}
+details.sources>div li{margin:3px 0}
 .photo.side{float:right;width:44%;max-width:380px;margin:6px 0 16px 28px;clear:right}
 .sidepair{display:grid;grid-template-columns:minmax(0,1fr) 40%;gap:28px;align-items:start;margin:6px 0}
 .sidepair .photo.side{float:none;width:auto;max-width:none;margin:8px 0 0}
@@ -166,7 +222,24 @@ video.video{width:100%;border-radius:3px;background:#000;margin:12px 0;display:b
 .vb{display:inline-block;margin-left:10px;width:21px;height:21px;line-height:21px;text-align:center;border-radius:50%;color:#0c0c0c;font-size:13px;font-weight:700;vertical-align:-4px}
 .btn.primary{border-color:var(--chalk)}
 .btn:hover{border-color:var(--dim)}
-.trap{border-left:2px solid var(--acc);padding:2px 14px;margin:12px 0 12px 14px}
+/* "On the test" callout: amber tint, thin amber border with a left accent, line-art warning icon, small-caps label */
+:root{--amber:#d4a24a}
+.callout{width:fit-content;min-width:min(300px,100%);max-width:min(620px,100%);margin:14px 0 22px;padding:9px 16px 11px 15px;border:1px solid color-mix(in srgb,var(--amber) 30%,transparent);border-left:3px solid var(--amber);border-radius:4px 8px 8px 4px;background:color-mix(in srgb,var(--amber) 7%,#0d0d0c)}
+.cohead{display:flex;align-items:center;gap:7px;margin:0 0 4px;font:600 12px/1 var(--body);letter-spacing:.13em;text-transform:uppercase;color:var(--amber)}
+.cohead svg{flex:0 0 15px;width:15px;height:15px}
+.corow{display:flex;align-items:center;flex-wrap:wrap;gap:6px 18px;padding:4px 0 2px}
+.corow .cowrong,.corow .coright{display:inline-flex;align-items:center;gap:9px}
+.corow .comk{font:700 15px/1 var(--body)}
+.cowrong{color:var(--dim)}.cowrong .comk{color:color-mix(in srgb,var(--no) 75%,var(--dim))}
+.cowrong .cm{position:relative;opacity:.8}
+.cowrong .cm::after{content:'';position:absolute;left:-3px;right:-3px;top:50%;border-top:1.5px solid color-mix(in srgb,var(--no) 70%,var(--dim));transform:rotate(-4deg)}
+.coright{color:var(--chalk)}.coright .comk{color:var(--ok)}
+.coarr{color:color-mix(in srgb,var(--amber) 70%,var(--dim));font-size:18px}
+.cotext{color:#d8d3c4;font-size:17px;line-height:1.45}
+.cotext p{margin:2px 0 0;max-width:none}
+.corow+.cotext{margin-top:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:600px){.corow{flex-direction:column;align-items:flex-start}.coarr{display:none}}
 .quiz .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
 .quiz .lbl{color:var(--dim);font-size:16px;min-width:64px}
 .mcqi{margin:8px 0 22px 14px}
@@ -302,7 +375,41 @@ video.video{width:100%;border-radius:3px;background:#000;margin:12px 0;display:b
 .video{aspect-ratio:16/9;width:100%;border:0;border-radius:2px;margin:12px 0}
 .src{font-size:17px;color:var(--dim)}.src b{color:var(--chalk);font-weight:500}
 hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
-.check{border-left:1px solid var(--rule);padding:4px 18px}
+.check{margin:14px 0 18px}
+/* check-ins (Your turn, drills, practice-exam answers): one list of full-width rows on the lesson's left edge, like
+   Prerequisites/Contents: hairline rules between rows, chevron on the right, the answer in a tinted inset panel */
+.check>details{margin:0;border-bottom:1px solid var(--rule)}
+.check>details:first-child{border-top:1px solid var(--rule)}
+.check>details>summary{display:flex;align-items:center;gap:14px;padding:12px 6px 12px 2px;border-radius:0;font-size:19px;line-height:1.45;color:var(--chalk)}
+.check>details>summary::before{content:none}
+.check>details>summary::after{content:"";flex:0 0 7px;width:7px;height:7px;margin:0 6px 0 auto;border-right:1.5px solid var(--dim);border-bottom:1.5px solid var(--dim);transform:rotate(45deg) translateY(-2px);transition:transform .15s,border-color .15s}
+.check>details[open]>summary::after{transform:rotate(-135deg) translate(-2px,-1px);border-color:var(--chalk)}
+.check>details>summary:hover{background:rgba(255,255,255,.035)}
+.check>details>summary:hover::after{border-color:var(--chalk)}
+.check>details>summary:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.check>details>summary>.sq{flex:1;min-width:0}
+.check>details>summary .katex{font-size:1.05em}
+.check>details>div{margin:0 0 14px;padding:14px 20px 12px;border:1px solid #2a2a26;border-radius:8px;background:rgba(236,232,218,.035);color:var(--chalk)}
+.check>details>div p{color:var(--chalk);max-width:none}
+.check>details>div>.mathrow{padding:10px 4px;margin:6px 0}
+.check>details>div>:first-child{margin-top:0}
+/* step-by-step reveal */
+.rv .rv-off{display:none}
+.rv .mathrow.rv-clip{transition:height .3s cubic-bezier(.2,.8,.2,1)}
+.rv-in{animation:rvin .45s ease-out both}
+@keyframes rvin{from{opacity:0;filter:blur(2px);transform:translateY(3px)}to{opacity:1;filter:none;transform:none}}
+.stepctl{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:12px 0 4px}
+.stepnext{display:inline-flex;align-items:center;gap:10px;height:36px;padding:0 13px 0 16px;border:1px solid color-mix(in srgb,var(--acc) 62%,#3a3a3a);border-radius:999px;background:color-mix(in srgb,var(--acc) 12%,#101010);color:var(--chalk);font:500 16px/1 var(--body);cursor:pointer;box-shadow:0 0 12px color-mix(in srgb,var(--acc) 16%,transparent);transition:background .15s,border-color .15s,box-shadow .15s}
+.stepnext:hover{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 22%,#101010);box-shadow:0 0 16px color-mix(in srgb,var(--acc) 30%,transparent)}
+.stepnext:focus-visible{outline:2px solid var(--chalk);outline-offset:2px}
+.stepnext .stct{padding-left:10px;border-left:1px solid color-mix(in srgb,var(--acc) 40%,#333);font:500 12px/1 var(--body);letter-spacing:.09em;text-transform:uppercase;color:#b9b5aa;font-variant-numeric:lining-nums tabular-nums}
+.stepnext svg{width:14px;height:14px;color:color-mix(in srgb,var(--acc) 60%,var(--chalk))}
+.stepall{background:none;border:0;padding:4px 2px;color:var(--dim);font:15px var(--body);cursor:pointer;text-decoration:underline dotted;text-decoration-color:transparent;text-underline-offset:4px}
+.stepall:hover,.stepall:focus-visible{color:var(--chalk);text-decoration-color:currentColor;outline:none}
+.srlive{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.mcqi .fbb .fbhint{color:#b9b5aa;font-size:17px}
+.mcqi .fbb .fbmiss{color:#ece8da;margin-bottom:2px}
+@media print{.rv .rv-off{display:revert!important}.rv .mathrow{height:auto!important}.rv .katex *{visibility:visible!important}.stepctl{display:none!important}.check>details>div{display:block}}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1a1a1a;border:1px solid var(--rule);color:var(--chalk);padding:12px 16px;border-radius:6px;font-size:16px;max-width:90vw;display:none;z-index:8}
 .toast code{font-family:ui-monospace,Menlo,monospace;font-size:14px;color:var(--dim)}
 .toast .btn{margin-left:10px;font-size:14px;padding:3px 10px}
@@ -446,26 +553,66 @@ main h3{display:table;position:relative;padding-bottom:9px}
 #tocbtn .rl{position:relative;font:600 12px/1 var(--body);letter-spacing:.02em;font-variant-numeric:lining-nums tabular-nums}
 #tocbtn .ico{position:relative;width:16px;height:16px;color:var(--dim)}
 #tocbtn .dot{position:absolute;top:2px;left:2px;width:9px;height:9px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 2px #0c0c0c,0 0 6px var(--acc)}
-#tocshade{position:fixed;inset:0;background:#0009;z-index:1002;opacity:0;pointer-events:none;transition:opacity .2s}
+/* Contents as a level map: a card that drops from under the XP button on the left, so it lives beside the docked chat */
+#tocshade{position:fixed;top:0;left:0;bottom:0;right:var(--chatw,0px);background:#0007;z-index:1002;opacity:0;pointer-events:none;transition:opacity .2s}
 #tocshade.open{opacity:1;pointer-events:auto}
-#toc{position:fixed;top:0;right:0;bottom:0;width:min(340px,86vw);z-index:1003;background:#0f0f0f;border-left:1px solid var(--rule);transform:translateX(102%);transition:transform .24s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;box-shadow:-12px 0 40px #000a}
-#toc.open{transform:none}
-#toc .tochead{display:flex;align-items:baseline;gap:12px;padding:24px 72px 14px 22px;border-bottom:1px solid var(--rule)}
-#toc .tochead .xpsum{margin-left:auto;font:14px var(--body);color:var(--dim);white-space:nowrap;font-variant-numeric:lining-nums tabular-nums}
-#toc .tochead .xpsum b{color:var(--ok);font-weight:600}
-#toc .tochead b{font-family:var(--display);font-size:22px;font-weight:500;color:var(--chalk)}
-#toc .tochead kbd{font:13px var(--body);color:var(--dim);border:1px solid var(--rule);border-radius:4px;padding:1px 6px}
-#toc ol{list-style:none;margin:0;padding:10px 0 48px;overflow-y:auto;flex:1}
-#toc li a{display:flex;gap:10px;align-items:baseline;padding:7px 20px 7px 14px;color:var(--dim);text-decoration:none;font:17px/1.3 var(--body);border-left:3px solid transparent}
-#toc li a:hover{color:var(--chalk);background:#161616}
-#toc li.h3 a{padding-left:40px;font-size:15.5px}
-#toc li.in>a{color:var(--chalk)}
-#toc li.cur>a{color:var(--chalk);border-left-color:var(--acc);background:#141414}
-#toc .mk{flex:0 0 14px;font-size:13px;color:var(--ok)}
-#toc .lbl{flex:1;min-width:0}
-#toc .lbl .katex{font-size:1em}
-#toc .sc{font-size:14px;color:var(--chalk);white-space:nowrap}
-#toc .new{flex:0 0 7px;width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 6px var(--acc);align-self:center}
+#toc{position:fixed;top:var(--tocy,64px);left:var(--tocx,14px);width:min(400px,calc(100vw - 16px));max-height:calc(100vh - var(--tocy,64px) - 14px);z-index:1003;display:flex;flex-direction:column;background:#0e0e0d;border:1px solid #2a2a27;border-radius:12px;box-shadow:0 22px 60px #000d,0 0 0 1px #00000080;transform:translateX(-18px);opacity:0;visibility:hidden;transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .18s,visibility 0s linear .22s}
+#toc.open{transform:none;opacity:1;visibility:visible;transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .18s}
+html.chatopen #toc{right:auto}
+#toc .tochead{display:flex;align-items:baseline;gap:10px;padding:16px 18px 12px;border-bottom:1px solid var(--rule)}
+#toc .tochead b{font:500 20px var(--display);color:var(--chalk)}
+#toc .tochead kbd{font:12px var(--body);color:var(--dim);border:1px solid var(--rule);border-radius:4px;padding:0 6px}
+#toc .tochead .xpsum{margin-left:auto;font:9px/1 'Press Start 2P',monospace;letter-spacing:.04em;color:var(--dim);white-space:nowrap}
+#toc .tochead .xpsum b{font:inherit;color:#d9b44a}
+#toc ol{list-style:none;margin:0;padding:0}
+#toc>ol{position:relative;overflow-y:auto;flex:1;padding:14px 10px 18px 0;--path0:0px;--path1:0px;--pathfill:0px;scrollbar-width:thin;scrollbar-color:#2a2a2a transparent}
+/* the path: a dashed chalk track through every node, filled solid in the accent up to the reading position */
+#toc>ol::before,#toc>ol::after{content:'';position:absolute;left:33px;width:4px;margin-left:-2px;top:var(--path0);pointer-events:none}
+#toc>ol::before{height:calc(var(--path1) - var(--path0));background:repeating-linear-gradient(#3a3a36 0 6px,transparent 6px 10px)}
+#toc>ol::after{height:max(0px,calc(var(--pathfill) - var(--path0)));background:var(--acc);box-shadow:0 0 8px color-mix(in srgb,var(--acc) 55%,transparent)}
+#toc li.lv{position:relative;z-index:1}
+#toc li.lv>a{display:flex;align-items:center;gap:14px;padding:8px 12px 8px 20px;color:var(--dim);text-decoration:none;border-radius:0 8px 8px 0}
+#toc li.lv>a:hover{background:#171715;color:var(--chalk)}
+#toc li.lv>a:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+/* nodes: square 8-bit tiles. Cleared = filled accent, current = chalk with a pulsing glow, not started = dim outline */
+#toc .node{flex:0 0 26px;width:26px;height:26px;display:grid;place-items:center;border:2px solid #4a4a45;background:#0e0e0d;color:#77776f;font:8px/1 'Press Start 2P',monospace;box-shadow:inset -2px -2px 0 #00000055;image-rendering:pixelated}
+#toc .node svg{width:12px;height:12px;shape-rendering:crispEdges}
+#toc li.clr>a>.node{background:var(--acc);border-color:color-mix(in srgb,var(--acc) 60%,var(--chalk));color:var(--chalk);box-shadow:inset -2px -2px 0 #00000040,inset 2px 2px 0 #ffffff26}
+#toc li.cur>a>.node{background:var(--chalk);border-color:#fff;color:#0c0c0c;animation:nodeglow 1.2s steps(2) infinite}
+@keyframes nodeglow{0%{box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 55%,transparent),0 0 14px var(--acc)}50%{box-shadow:0 0 0 1px color-mix(in srgb,var(--acc) 40%,transparent),0 0 6px color-mix(in srgb,var(--acc) 60%,transparent)}}
+#toc .lvtxt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+#toc .lvk{font:600 11px/1.2 var(--body);letter-spacing:.12em;text-transform:uppercase;color:#77776f}
+#toc .lvn{font:17px/1.25 var(--body);color:inherit}
+#toc .lvn .katex{font-size:1em}
+#toc li.clr>a,#toc li.cur>a{color:var(--chalk)}
+#toc li.cur>a{background:linear-gradient(90deg,color-mix(in srgb,var(--acc) 16%,transparent),transparent 85%)}
+#toc li.cur .lvk{color:color-mix(in srgb,var(--acc) 55%,var(--chalk))}
+#toc .lvmeta{display:flex;align-items:center;gap:8px;min-height:0}
+#toc .lvmeta:empty{display:none}
+#toc .stars{font-size:13px;letter-spacing:1px;line-height:1.2;color:#4a4a45}
+#toc .stars i{font-style:normal}#toc .stars i.on{color:#d9b44a;text-shadow:0 0 6px #d9b44a77}
+#toc .here,#toc .lvtag{font:7px/1 'Press Start 2P',monospace;letter-spacing:.06em;text-transform:uppercase;padding:3px 5px 2px;border:1px solid currentColor;border-radius:2px}
+#toc .here{color:var(--chalk);background:color-mix(in srgb,var(--acc) 35%,transparent);border-color:color-mix(in srgb,var(--acc) 70%,var(--chalk))}
+#toc .lvtag.boss{color:#d9845a}#toc .lvtag.save{color:#7fb6a0}
+/* boss level and save point: same path, their own tile */
+#toc li.boss>a>.node{width:30px;height:30px;flex-basis:30px;margin:0 -2px;border-color:#a0573a;color:#d9845a}
+#toc li.boss.clr>a>.node{background:#a0573a;color:#1a0f0a}
+#toc li.save>a>.node{border-color:#4f8a74;color:#7fb6a0;border-radius:50%}
+#toc li.save.clr>a>.node{background:#4f8a74;color:#0c1a14}
+#toc li.quiz>a>.node{border-color:#8d7a3a;color:#d9b44a}
+#toc li.quiz.clr>a>.node{background:#8d7a3a;color:#1a140a}
+/* the current chapter's sections: small sub-nodes on the same path */
+#toc .subs{padding:0 0 6px}
+#toc .sub>a{display:flex;align-items:center;gap:14px;padding:4px 12px 4px 29px;color:var(--dim);text-decoration:none;font:15px/1.3 var(--body);border-radius:0 6px 6px 0}
+#toc .sub>a:hover{color:var(--chalk);background:#171715}
+#toc .sub>a:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+#toc .sn{flex:0 0 8px;width:8px;height:8px;border:1.5px solid #5a5a54;background:#0e0e0d;position:relative;z-index:1}
+#toc .sub.clr .sn{background:var(--acc);border-color:var(--acc)}
+#toc .sub.cur .sn{background:var(--chalk);border-color:var(--chalk);box-shadow:0 0 6px var(--acc)}
+#toc .sub.cur>a{color:var(--chalk)}
+#toc .sl{flex:1;min-width:0}#toc .sl .katex{font-size:1em}
+#toc .new{flex:0 0 7px;width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 6px var(--acc)}
+@media (prefers-reduced-motion:reduce){#toc li.cur>a>.node{animation:none;box-shadow:0 0 0 2px color-mix(in srgb,var(--acc) 55%,transparent),0 0 10px var(--acc)}}
 @media (prefers-reduced-motion:reduce){#toc,#tocshade{transition:none}}
 /* right-answer celebration: gold pixel burst, floating +1 XP, ring pulse; a bigger one when the quiz is cleared */
 #fx{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:1006;image-rendering:pixelated}
@@ -545,10 +692,11 @@ html.railmode main{padding-top:84px}
 :root{--chatpw:380px;--chatw:0px}
 html.chatopen{--chatw:var(--chatpw);--xpw:clamp(140px,calc((100vw - var(--chatpw))*.25),440px)}
 html.chatopen body{margin-right:var(--chatw)}
+/* with the chat docked, the column keeps a real side margin in the space that is left instead of running edge to edge */
+html.chatopen main{max-width:min(860px,calc((100vw - var(--chatw) - 120px) / var(--z,1)))}
 html.chatopen #topbar{right:var(--chatw)}
 html.chatopen #tocbtn{right:calc(14px + var(--chatw))}
 html.chatopen .rail{right:calc(6px + var(--chatw))}
-html.chatopen #toc{right:var(--chatw)}
 #chatbtn{position:fixed;top:14px;right:calc(14px + var(--chatw));z-index:1004;width:42px;height:42px;border:0;border-radius:50%;background:#0f0f0f;box-shadow:0 0 0 1px var(--rule);color:var(--dim);display:grid;place-items:center;cursor:pointer;padding:0}
 html.railmode #chatbtn{right:calc(14px + var(--chatw))}
 #topbar #tocbtn{position:relative;top:auto;right:auto !important;flex:0 0 var(--xpw);z-index:auto}
@@ -646,6 +794,7 @@ html.chatdrag,html.chatdrag *{user-select:none !important;cursor:col-resize !imp
 <main id="main"></main>
 <span class="pill" id="pill"><span data-k="line">Explain</span><span data-k="define" id="pilldef">Definition</span><span data-k="ask">Ask</span></span>
 <div class="defpop" id="defpop" role="dialog" aria-live="polite"></div>
+<div class="defpop whypop" id="whypop" role="dialog" aria-label="The rule behind this step"></div>
 <div class="toast" id="toast"></div>
 <div id="nub"></div>
 <button id="tocbtn" type="button" aria-label="Contents and XP (t)" title="Contents (t)" aria-controls="toc" aria-expanded="false"><svg class="ring" viewBox="0 0 38 38" aria-hidden="true"><circle class="trk" cx="19" cy="19" r="16"/><circle class="arc" cx="19" cy="19" r="16"/></svg><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 4h10M3 8h10M3 12h6"/></svg><span class="hplbl" hidden>XP</span><span class="hp" aria-hidden="true" hidden></span><span class="rl" hidden></span></button>
@@ -653,7 +802,7 @@ html.chatdrag,html.chatdrag *{user-select:none !important;cursor:col-resize !imp
 <button id="chatbtn" type="button" hidden aria-label="Chat about this lesson" aria-controls="chat" aria-expanded="false"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 3.5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H7l-3 2.5V11h-.5a1 1 0 0 1-1-1z"/></svg></button>
 <aside id="chat" aria-label="Study chat"><div id="chatgrip" role="separator" aria-orientation="vertical" aria-label="Drag to resize the chat. Double-click to reset." title="Drag to resize · double-click to reset"></div><div class="chead"><span class="ct">Chat</span><button type="button" class="cib" id="chatnew" title="New chat" aria-label="New chat"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></button><button type="button" class="cib" id="chatclose" aria-label="Close chat"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div><div class="cmid"><div id="chatlist" role="log" aria-live="polite"></div><button type="button" id="chatdown" hidden aria-label="Jump to the latest message" title="Jump to the latest message"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v10M3.5 8.5 8 13l4.5-4.5"/></svg></button></div><form id="chatform"><div id="chatsel" hidden><span class="cselt"></span><button type="button" class="cib" id="chatselx" aria-label="Remove the quoted selection" title="Remove the quoted selection"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg></button></div><textarea id="chatq" rows="1" placeholder="Ask about this lesson" aria-label="Message"></textarea><div class="cbar"><span class="cctx"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M4 1.8h5.5L12.5 5v9.2H4z"/><path d="M9.5 1.8V5h3"/></svg><span id="chatctx"></span></span><button type="submit" id="chatsend" aria-label="Send" disabled><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg></button></div></form></aside>
 <div id="tocshade"></div>
-<nav id="toc" aria-label="Lesson contents" aria-hidden="true" inert><div class="tochead"><b>Contents</b><kbd>t</kbd><span class="xpsum"></span></div><ol></ol></nav>
+<nav id="toc" aria-label="Lesson contents: level map" aria-hidden="true" inert><div class="tochead"><b>Contents</b><kbd>t</kbd><span class="xpsum"></span></div><ol></ol></nav>
 <script>
 const MODE="__MODE__", LESSON_ARG="__LESSON__", WS="__WS__";
 const WSB=WS?"/w/"+WS:"", WSQ=WS?"&ws="+WS:"";  // pages under /w/<slug>/ stay pinned to that workspace
@@ -686,12 +835,37 @@ scheduleReadingProgress();
 
 // ---------- markdown -> html ----------
 const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+// ---------- tap to see the rule: \why{math}{rule} (optionally \why[name]{math}{rule}) ----------
+// The math renders as usual with a faint dotted underline; a tap opens the general rule that produced it. The rule lives
+// in WHY_RULES and the math carries only its index (\htmlData{why=N}), so copy, Explain, search and kindle see plain math.
+const WHY_RULES=[], WHY_IX=new Map();
+function whyArgs(t,i){ // i at the char after \why: returns {name,a,b,end} or null (brace-matched)
+  let name='', j=i; while(t[j]===' ')j++;
+  if(t[j]==='['){ const k=t.indexOf(']',j); if(k<0)return null; name=t.slice(j+1,k); j=k+1; }
+  const grp=()=>{ while(t[j]===' ')j++; if(t[j]!=='{')return null; let d=0, k=j; for(;k<t.length;k++){ if(t[k]==='\\'){k++;continue} if(t[k]==='{')d++; else if(t[k]==='}'&&--d===0)break; } if(k>=t.length)return null; const g=t.slice(j+1,k); j=k+1; return g; };
+  const a=grp(); if(a===null)return null; const b=grp(); if(b===null)return null;
+  return {name,a,b,end:j};
+}
+function whyMap(t,f){ // replace each \why{…}{…} by f(args); \whyever (a longer command name) is left alone
+  let out='', i=0;
+  for(;;){ const k=t.indexOf('\\why',i); if(k<0){ out+=t.slice(i); return out; }
+    const g=/[A-Za-z]/.test(t[k+4]||'')?null:whyArgs(t,k+4);
+    if(!g){ out+=t.slice(i,k+4); i=k+4; continue; }
+    out+=t.slice(i,k)+f(g); i=g.end; } }
+const stripWhy=t=>t.indexOf('\\why')<0?t:whyMap(t,g=>stripWhy(g.a));
+function whyPre(t){ return t.indexOf('\\why')<0?t:whyMap(t,g=>{ const key=g.name+'\u0001'+g.b; let n=WHY_IX.get(key); if(n===undefined){ n=WHY_RULES.length; WHY_RULES.push({name:g.name.trim(),rule:g.b}); WHY_IX.set(key,n); } return `\\htmlData{why=${n}}{${whyPre(g.a)}}`; }); }
+const KTRUST=c=>c.command==='\\htmlClass'||c.command==='\\htmlData';
+// every formula on the board renders here: hints expanded, and the TeX annotation (what copy and Explain read) kept plain
+function ktx(t,display){
+  const html=katex.renderToString(whyPre(t),{displayMode:display,throwOnError:false,trust:KTRUST});
+  return t.indexOf('\\why')<0?html:html.replace(/(<annotation encoding="application\/x-tex">)[\s\S]*?(<\/annotation>)/,(m,a,b)=>a+esc(stripWhy(t))+b);
+}
 function mathify(src){
   const slots=[];
-  src=src.replace(/\$\$([\s\S]+?)\$\$/g,(m,t)=>{slots.push('<div class="mathrow">'+katex.renderToString(marginNotes(t),{displayMode:true,throwOnError:false,trust:c=>c.command==='\\htmlClass'})+'</div>');return '\n@@M'+(slots.length-1)+'@@\n';});
+  src=src.replace(/\$\$([\s\S]+?)\$\$/g,(m,t)=>{slots.push('<div class="mathrow" data-tex="'+encodeURIComponent(t)+'">'+ktx(marginNotes(t),true)+'</div>');return '\n@@M'+(slots.length-1)+'@@\n';});
   // inline math: $…$ on one line, no space just inside either $. "$100 and $80" is money: its would-be body "100 and " ends in a space.
   // A digit may open math ($4$, $0.5$): the closing $ must follow on the same line, which money never has.
-  src=src.replace(/(^|[^\\$])\$(?!\s)([^\n$]+?)(?<!\s)\$(?!\d)/g,(m,pre,t)=>{slots.push(katex.renderToString(t,{displayMode:false,throwOnError:false}));return pre+'@@M'+(slots.length-1)+'@@';});
+  src=src.replace(/(^|[^\\$])\$(?!\s)([^\n$]+?)(?<!\s)\$(?!\d)/g,(m,pre,t)=>{slots.push(ktx(t,false));return pre+'@@M'+(slots.length-1)+'@@';});
   src=src.replace(/\\\$/g,'$');
   return {src,slots};
 }
@@ -743,9 +917,11 @@ function container(raw){
           let tick=false; for(let i=0;i<l.length-1;i++){ if(l[i]==='`')tick=!tick; else if(!tick&&l[i]==='|'&&l[i+1]==='|') return [L.slice(0,k).concat(l.slice(0,i)).join('\n'),[l.slice(i+2)].concat(L.slice(k+1)).join('\n')]; } }
         return [t,'']; };
       const blockOrInline=t=>/^\s*(```|~~~)/m.test(t)?`<div class="qblock">${md(t)}</div>`:mdInline(t);
-      return '<div class="check">'+items.map(it=>{ const [q,a]=qa(it.join('\n').trim()); return `<details><summary>${blockOrInline(q.trim())}</summary><div>${md(a.trim())}</div></details>`; }).join('')+'</div>';
+      return '<div class="check">'+items.map(it=>{ const [q,a]=qa(it.join('\n').trim()); return `<details><summary><span class="sq">${blockOrInline(q.trim().replace(/\\displaystyle\s*/g,''))}</span></summary><div>${md(a.trim())}</div></details>`; }).join('')+'</div>';
     }
     case 'prerequisites': return `<details class="prerequisites"><summary>Prerequisites</summary><div>${md(inner)}</div></details>`;
+    case 'sources': return `<details class="prerequisites sources"><summary>Sources</summary><div>${md(inner)}</div></details>`;
+    case 'contents': return `<details class="prerequisites contents"><summary>Contents</summary><div>${md(inner)}</div></details>`;
     case 'numeric': return `<details><summary>numeric detail</summary><div>${md(inner)}</div></details>`;
     case 'predict':{
       const ls=inner.split('\n').filter(l=>l.trim()); const reveal=ls.find(l=>/^reveal:/.test(l));
@@ -769,7 +945,7 @@ function container(raw){
       const cap=kv.caption||rest.join(' ');
       const src=kv.src?(kv.src.startsWith('http')?kv.src:WSB+'/assets/'+kv.src.replace(/^assets\//,'')):'';
       const body=src?`<img src="${src}" alt="${esc(kv.alt||kv.query||'')}" loading="lazy">`:`<div class="finding">finding a photo of ${esc(kv.query||'…')}<span class="nubi"></span></div>`;
-      return `<figure class="photo ${side?'side':'wide'}">${body}<figcaption>${cap?mdInline(cap):''}${kv.credit?`<span class="credit">${esc(kv.credit)}</span>`:''}</figcaption></figure>`;
+      return `<figure class="photo ${side?'side':'wide'}">${body}<figcaption>${cap?mdInline(cap):esc(shortCap(kv.credit))}</figcaption></figure>`;
     }
     case 'figure':{
       const [path,flag]=arg.split(/\s+/); const src=path.startsWith('http')||path.startsWith('/')?path:WSB+'/assets/'+path.replace(/^assets\//,'');
@@ -804,20 +980,20 @@ function container(raw){
     }
     case 'mcq':{
       // stem lines, "- option" lines and a "why:" line; fenced code in the stem keeps its lines and indentation
-      const [item,key]=arg.split(/\s+/); const stemL=[], opts=[]; let why='', fence=false;
+      const [item,key]=arg.split(/\s+/); const stemL=[], opts=[], miss=[]; let why='', fence=false;
       for(const l of inner.split('\n')){
         if(/^\s*(```|~~~)/.test(l)){ fence=!fence; stemL.push(l); continue; }
         if(fence){ stemL.push(l); continue; }
         if(!l.trim())continue;
         if(/^why:/.test(l)) why=l.replace(/^why:\s*/,'');
-        else if(/^\s*-/.test(l)) opts.push(l.replace(/^\s*-\s*/,''));
+        else if(/^\s*-/.test(l)){ const o=l.replace(/^\s*-\s*/,''), k=o.indexOf(' || '); opts.push(k<0?o:o.slice(0,k)); miss.push(k<0?'':o.slice(k+4).trim()); }   // "- option || the mistake that gives it"
         else stemL.push(l);
       }
       const stem=stemL.join('\n'), stemBlock=/^\s*(```|~~~)/m.test(stem);
       // an option that is a whole statement of code (; or {) shows as a small preformatted box
       const optHtml=o=>{ const c=o.match(/^`([^`]+)`$/); return c&&/[;{]/.test(c[1])&&c[1].length>24?`<pre class="optcode"><code>${esc(c[1])}</code></pre>`:mdInline(o); };
       const order=opts.map((o,i)=>i).sort(()=>Math.random()-.5);
-      return `<div class="mcqi" data-item="${item}" data-key="${key||''}" data-why="${esc(why)}">${stemBlock?`<div class="q qblock">${md(stem)}</div>`:`<p class="q">${mdInline(stem)}</p>`}<div class="answers${opts.some(o=>o.length>100)?' long':''}" role="radiogroup" aria-label="Answer choices">${order.map((i,pos)=>`<label style="--answer-color:${['#de807c','#7aadd4','#d9bd65','#89b58a'][pos%4]}"><input type="radio" name="${item}" value="${'abcdefgh'[i]}"><span class="answer-icon" aria-hidden="true">${['▲','◆','●','■'][pos%4]}</span><span class="answer-copy">${optHtml(opts[i])}</span></label>`).join('')}</div><div class="fb"></div><button type="button" class="mreset" hidden aria-label="Reset this question" title="Clear the answer">↺ Reset</button></div>`;
+      return `<div class="mcqi" data-item="${item}" data-key="${key||''}" data-why="${esc(why)}">${stemBlock?`<div class="q qblock">${md(stem)}</div>`:`<p class="q">${mdInline(stem)}</p>`}<div class="answers${opts.some(o=>o.length>100)?' long':''}" role="radiogroup" aria-label="Answer choices">${order.map((i,pos)=>`<label style="--answer-color:${['#de807c','#7aadd4','#d9bd65','#89b58a'][pos%4]}"><input type="radio" name="${item}" value="${'abcdefgh'[i]}"${miss[i]?` data-miss="${esc(miss[i])}"`:''}><span class="answer-icon" aria-hidden="true">${['▲','◆','●','■'][pos%4]}</span><span class="answer-copy">${optHtml(opts[i])}</span></label>`).join('')}</div><div class="fb"></div><button type="button" class="mreset" hidden aria-label="Reset this question" title="Clear the answer">↺ Reset</button></div>`;
     }
     case 'score':{
       const [it,nn]=String(arg||'').split(/\s+/); const n=+nn||+it||0;
@@ -825,11 +1001,29 @@ function container(raw){
     }
     case 'card':{ return deckHtml([parseCard(raw)],{}); }
     case 'recall':{ return deckHtml([{id:arg||'r',q:inner.trim(),answer:'',must:[]}],{}); }
-    case 'trap': return `<div class="trap">${md(inner)}</div>`;
+    case 'trap': return calloutHtml(inner);
+    // size encodes importance: ::: big (level 1) for the one or two rules a chapter rests on, ::: key (level 2) for a
+    // tool formula; everything else is level 3, the normal size. Writers never hand-size with \Large or \Huge.
+    // cheat sheet: ::: sheet holds ::: group <label> cards (a 2-column grid on wide screens), formulas only
+    case 'sheet': return `<div class="sheet">${segments(inner,0).map(sg=>/^::: /.test(sg.raw)?container(sg.raw):md(sg.raw)).join('')}</div>`;
+    case 'group': return `<section class="sheetcard"><h4 class="sheetlbl">${mdInline(arg)}</h4>${segments(inner,0).map(sg=>/^::: /.test(sg.raw)?container(sg.raw):md(sg.raw)).join('')}</section>`;
+    case 'big': case 'key': return `<div class="sz ${kind==='big'?'sz1':'sz2'}">${segments(inner,0).map(sg=>/^::: /.test(sg.raw)?container(sg.raw):md(sg.raw)).join('')}</div>`;
+    case 'callout': return calloutHtml(inner);
     default: return `<div class="${kind}">${md(inner)}</div>`;
   }
 }
 
+// "On the test" callout: a grader deduction, as a contrast row (wrong form struck and muted, right form bright) plus at
+// most a few words. `wrong:` / `right:` lines are optional; a plain ⚠️ line renders as the same card with just its text.
+const CO_ICON='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M8 2.2 14.6 13.6H1.4z"/><path d="M8 6.4v3.4M8 11.7v.1"/></svg>';
+function calloutHtml(inner){
+  const kv={}, text=[];
+  inner.split('\n').forEach(l=>{ const m=l.match(/^\s*(wrong|right):\s*(.*)$/); if(m)kv[m[1]]=m[2].trim(); else if(l.trim())text.push(l.replace(/^\s*⚠️?\s*/,'')); });
+  const big=t=>mdInline(t.replace(/^\$(?!\$)(?!\\displaystyle)/,'$\\displaystyle '));   // display style, so x→∞ sits under lim
+  const row=(kv.wrong||kv.right)?`<div class="corow">${kv.wrong?`<span class="cowrong"><span class="comk" aria-hidden="true">✗</span><span class="sr">Wrong: </span><span class="cm">${big(kv.wrong)}</span></span>`:''}${kv.wrong&&kv.right?'<span class="coarr" aria-hidden="true">→</span>':''}${kv.right?`<span class="coright"><span class="comk" aria-hidden="true">✓</span><span class="sr">Right: </span><span class="cm">${big(kv.right)}</span></span>`:''}</div>`:'';
+  const t=text.join('\n').trim();
+  return `<aside class="callout" role="note" aria-label="On the test"><div class="cohead">${CO_ICON}<span>On the test</span></div>${row}${t?`<div class="cotext">${md(t)}</div>`:''}</aside>`;
+}
 function parseCard(raw){
   const m=raw.match(/^::: card\s*(\S*)/m); const ls=raw.split('\n').slice(1,-1);
   const must=ls.filter(l=>/^must:/.test(l.trim())).map(l=>l.trim().replace(/^must:\s*/,''));
@@ -857,6 +1051,32 @@ function deckHtml(cards,scores){
 }
 // Margin notes: in an aligned derivation, whatever follows `&&` on a row is the reason, not a step. Tag it so CSS can
 // set it apart (dashed chalk rule, accent colour, smaller); the first note of a block gets the "why" label.
+// Fit each display block in its column: shrink its math down to 86%, then put each reason under its step.
+function stackNotes(t){ // "&&\htmlClass{mnote}{reason}" -> the reason on its own row under the step (brace-matched)
+  let out='',i=0; const key='&&\\htmlClass{';
+  while(true){ const k=t.indexOf(key,i); if(k<0){out+=t.slice(i);break}
+    let p=k+key.length, d=1; while(p<t.length&&d){ if(t[p]==='{')d++; else if(t[p]==='}')d--; p++; } const cls=t.slice(k+key.length,p-1);
+    if(t[p]!=='{'){out+=t.slice(i,p);i=p;continue}
+    let q=p+1; d=1; while(q<t.length&&d){ if(t[q]==='\\'){q+=2;continue} if(t[q]==='{')d++; else if(t[q]==='}')d--; q++; }
+    out+=t.slice(i,k)+'\\\\ &\\htmlClass{'+cls+' stacked}{'+t.slice(p+1,q-1)+'}'; i=q; }
+  return out; }
+function fitMath(el){
+  if(!el.dataset.tex||!el.isConnected) return;
+  const fits=()=>el.scrollWidth<=el.clientWidth+1;
+  if(el.classList.contains('stacked')){ el.classList.remove('stacked'); el.innerHTML=ktx(marginNotes(decodeURIComponent(el.dataset.tex)),true); }
+  el.style.fontSize='';
+  if(fits()) return;
+  // shrink to the floor first: stacking the reasons under their steps is the last resort, never the first
+  for(const f of [.95,.9,.86,.83,.8]){ el.style.fontSize=f+'em'; if(fits()) return; }
+  const tex=marginNotes(decodeURIComponent(el.dataset.tex));
+  if(!/mnote/.test(tex)) return;
+  el.style.fontSize=''; el.classList.add('stacked');
+  el.innerHTML=ktx(stackNotes(tex),true);
+  if(!fits()) el.style.fontSize='.86em';
+}
+let fitT=0; function fitAllMath(){ clearTimeout(fitT); fitT=setTimeout(()=>{ main.querySelectorAll('.mathrow[data-tex]').forEach(fitMath); rvReapply(); whyWire(); },60); }
+window.addEventListener('resize',fitAllMath);
+if('ResizeObserver' in window) new ResizeObserver(fitAllMath).observe(document.body);
 function marginNotes(t){ if(!/\\begin\{(aligned|align\*?|alignedat)\}/.test(t)) return t; let first=true;
   return t.replace(/&&((?:(?!\\\\|\\end\{).)+)/g,(m,note)=>{ if(!note.trim()) return m; const c=first?'mnote first':'mnote'; first=false; return `&&\\htmlClass{${c}}{${note}}`; }); }
 function renderSegment(seg){
@@ -864,7 +1084,9 @@ function renderSegment(seg){
   const um=raw.match(/\nunits:\s*(.+)$/); if(um){units=um[1];raw=raw.replace(/\nunits:.*$/,'');}
   let html;
   if(/^::: /.test(raw)) html=container(raw);
-  else if(/^⚠️/.test(raw.trim())) html=`<div class="trap">${md(raw)}</div>`;
+  // older lessons write Contents as a bold line over a list: show it as the same collapsed drop-down
+  else if(/^\*\*Contents\*\*\s*\n/.test(raw.trim())) html=container('::: contents\n'+raw.trim().replace(/^\*\*Contents\*\*\s*\n/,'')+'\n:::');
+  else if(/^⚠️/.test(raw.trim())) html=calloutHtml(raw.trim());
   else html=md(raw);
   if(units) html+=`<details><summary>symbols &amp; units</summary><div>${md(units)}</div></details>`;
   const el=document.createElement('section'); el.className='blk'; el.id='b'+(++blocks); el.dataset.line=seg.line; el.innerHTML=html;
@@ -1079,16 +1301,33 @@ function applyAccent(fm){
   // `board: slate` in the front matter: a real-blackboard surface for this lesson (trial; may become the default)
   document.documentElement.classList.toggle('slate',String(fm.board||'').toLowerCase()==='slate');
 }
+// Captions only describe the image; author, license and source go in one "Image credits" line at the end of the lesson.
+function shortCap(credit){
+  if(!credit)return '';
+  return String(credit).split(/ · | by |\s\(|, via /)[0].replace(/^File:/,'').replace(/\.(jpe?g|png|webp|tiff?)$/i,'').trim();
+}
+function imageCredits(b){
+  const list=[];
+  if(fmCache.credit&&String(fmCache.plain||'').toLowerCase()!=='true')list.push(fmCache.credit);
+  for(const m of b.matchAll(/^::: photo[^\n]*\n([\s\S]*?)^:::\s*$/gm)){const c=m[1].match(/^credit:\s*(.+)$/m);if(c&&!list.includes(c[1].trim()))list.push(c[1].trim());}
+  let el=document.getElementById('imgcredits');
+  if(!list.length){if(el)el.remove();return}
+  if(!el){el=document.createElement('p');el.id='imgcredits';el.className='credit imgcredits';}
+  el.innerHTML='<b>Image credits</b> · '+list.map(esc).join(' · ');
+  // all attribution in one place: inside the Sources drop-down when the lesson has one, else at the end
+  const src=main.querySelector('details.sources>div');
+  if(src){ el.className='credit imgcredits insrc'; src.appendChild(el); } else main.appendChild(el);
+}
 function header(fm,meta){
   // plain: true is a temporary board: no eyebrow, lesson number, photo or byline, just the content (and a title if given)
   if(String(fm.plain||'').toLowerCase()==='true') return fm.title?`<h1 id="title">${esc(fm.title)}</h1>`:'';
   const num=lessonId||(meta&&meta.id)||'';
-  const parts=[]; if(fm.course)parts.push(esc(fm.course)); if(num)parts.push(`Lesson <b>${num}</b>`); if(fm.exam)parts.push(`<b>→ Exam:</b> ${esc(fm.exam)}`);
+  const parts=[]; if(num)parts.push(`Lesson <b>${num}</b>`);  // no course code or exam arrow in the kicker: course: and exam: stay metadata
   let h=`<div class="top"><div class="eyebrow">${parts.map(p=>`<span>${p}</span>`).join('')}</div></div>`;
   // banner first: the photo is the first thing on the page, title and byline under it
-  if(fm.photo){const src=fm.photo.startsWith('http')?fm.photo:WSB+'/assets/'+fm.photo.replace(/^assets\//,'');h+=`<img class="hero" src="${src}" alt="">`;if(fm.credit)h+=`<p class="credit">${esc(fm.credit)}</p>`;}
+  if(fm.photo){const src=fm.photo.startsWith('http')?fm.photo:WSB+'/assets/'+fm.photo.replace(/^assets\//,'');h+=`<img class="hero" src="${src}" alt="">`;const bcap=fm.caption||shortCap(fm.credit);if(bcap)h+=`<p class="credit">${esc(bcap)}</p>`;}
   if(fm.title) h+=`<h1 id="title">${esc(fm.title)}</h1>`;
-  if(fm.model) h+=`<p class="byline">by <span>${esc(fm.model)}</span></p>`;
+  if(fm.model){const who=/^(prof|dr)\.?\s/i.test(String(fm.model))?String(fm.model):'Prof. '+fm.model; h+=`<p class="byline">by <span>${esc(who)}</span></p>`;}
   return h;
 }
 let headerDone=false, body='';
@@ -1106,6 +1345,7 @@ async function loadLesson(){
   fresh.forEach((s,k)=>{ if(fmCache.title&&/^# /.test(s.raw)&&renderedUpto+k===0)return; // title already in header
     const el=renderSegment(s); main.appendChild(el); if(r.reset&&!streaming)return; animate(el);});
   renderedUpto=segs.length;
+  imageCredits(b);
   wire();
 }
 let renderedUpto=0, bodyStart=0, fmCache={};
@@ -1350,6 +1590,29 @@ function showDefine(text,blk,r){
 document.addEventListener('mousedown',e=>{ if(!defpop.contains(e.target)&&!pill.contains(e.target))hideDefine(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape')hideDefine(); });
 window.addEventListener('scroll',()=>{ if(defpop.style.display==='block')hideDefine(); },{passive:true});
+// ---------- the rule behind a step (\why hints): a small popup in the Definition popup's look ----------
+const whyPop=$('#whypop'); let whyAt=null;
+function whyWire(root){ (root||main).querySelectorAll('.katex [data-why]:not([tabindex])').forEach(el=>{ el.tabIndex=0; el.setAttribute('role','button'); el.setAttribute('aria-haspopup','dialog'); el.setAttribute('aria-expanded','false'); const r=WHY_RULES[+el.dataset.why]; el.setAttribute('aria-label','Show the rule'+(r&&r.name?': '+r.name:'')); }); }
+function whyHide(){ if(whyAt)whyAt.setAttribute('aria-expanded','false'); whyAt=null; whyPop.style.display='none'; }
+function whyShow(el){
+  const r=WHY_RULES[+el.dataset.why]; if(!r)return;
+  if(whyAt===el){ whyHide(); return; }   // a second tap closes it
+  whyHide(); hideDefine(); whyAt=el; el.setAttribute('aria-expanded','true');
+  whyPop.innerHTML=`<span class="term">${r.name?esc(r.name):'The rule'}</span><div class="body">${ktx('\\displaystyle '+r.rule,false)}</div>`;
+  whyPop.style.display='block';
+  const b=el.getBoundingClientRect(), w=whyPop.offsetWidth, h=whyPop.offsetHeight;
+  let left=b.left+window.scrollX+b.width/2-w/2; left=Math.max(8+window.scrollX,Math.min(left,window.scrollX+innerWidth-w-8-(document.documentElement.classList.contains('chatopen')?parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--chatw'))||0:0)));
+  let top=b.bottom+window.scrollY+8; if(b.bottom+h+14>innerHeight)top=b.top+window.scrollY-h-8;
+  whyPop.style.left=left+'px'; whyPop.style.top=top+'px';
+}
+document.addEventListener('click',e=>{ const el=e.target.closest&&e.target.closest('.katex [data-why]');
+  if(el&&!(window.getSelection().toString().trim())){ e.preventDefault(); e.stopPropagation(); whyShow(el); return; }
+  if(whyAt&&!whyPop.contains(e.target))whyHide(); },true);
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&whyAt){ const el=whyAt; whyHide(); el.focus({preventScroll:true}); return; }
+  const el=e.target.closest&&e.target.closest('.katex [data-why]'); if(el&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); e.stopPropagation(); whyShow(el); } },true);
+window.addEventListener('scroll',()=>{ if(whyAt&&!whyAt.getClientRects().length)whyHide(); },{passive:true});
+window.addEventListener('resize',whyHide);
 const foldOf=el=>el&&(el.classList.contains('fold')?el:(el.classList.contains('blk')&&el.firstElementChild&&el.firstElementChild.classList.contains('fold')?el.firstElementChild:null));
 function notesAfter(blk){ const out=[]; let n=blk.nextElementSibling; while(n){ const f=foldOf(n); if(!f)break; out.push(f); n=n.nextElementSibling; } return out; }
 function blockBefore(fold){ let n=fold.classList.contains('fold')&&fold.parentElement.classList.contains('blk')?fold.parentElement:fold; n=n.previousElementSibling; while(n&&foldOf(n))n=n.previousElementSibling; return n&&n.classList.contains('blk')&&!foldOf(n)?n:null; }
@@ -1518,6 +1781,7 @@ function wirePanel(q){
   };
 }
 function wire(){
+  fitAllMath();
   main.querySelectorAll('.interactive').forEach(wireInteractive);
   main.querySelectorAll('.exp[data-id]').forEach(e=>{
     const w=e.closest('.fold'),toggle=e.querySelector('.exptoggle');
@@ -1528,6 +1792,7 @@ function wire(){
   // a side photo and the block that follows it share a two-column row, so the text never jumps width mid-paragraph
   main.querySelectorAll('.blk > .photo.side').forEach(ph=>{ const b=ph.parentElement; if(b.parentElement.classList.contains('sidepair'))return; const nxt=b.nextElementSibling; if(!nxt||!nxt.classList.contains('blk')||nxt.querySelector('h2,h3,.photo,.figure,.quiz,.deck'))return; const pair=document.createElement('div'); pair.className='sidepair'; b.parentElement.insertBefore(pair,b); pair.appendChild(nxt); pair.appendChild(b); });
   restoreDefinitions();
+  whyWire();
   main.querySelectorAll('.predict .btn').forEach(b=>{b.onclick=()=>{const pr=b.closest('.predict');if(pr.dataset.done)return;pr.dataset.done=1;
     const key=+(pr.dataset.key??-1), choice=+b.dataset.choice, graded=key>=0, ok=graded&&choice===key;
     if(graded){ b.classList.add(ok?'ok':'no'); if(!ok){const kb=pr.querySelector(`.btn[data-choice="${key}"]`); if(kb)kb.classList.add('key');} }
@@ -1539,7 +1804,99 @@ function wire(){
   main.querySelectorAll('.deck').forEach(wireDeck);
   main.querySelectorAll('.mcqi input').forEach(inp=>{inp.onchange=()=>markMcq(inp.closest('.mcqi'),inp.value,true);});
   main.querySelectorAll('.mcqi .mreset').forEach(b=>{b.onclick=()=>resetMcq(b.closest('.mcqi'));});
+  // a check-in answer with worked steps opens one step at a time (see the step-by-step reveal below)
+  main.querySelectorAll('.check details').forEach(d=>{ if(d.dataset.rvw)return; d.dataset.rvw='1';
+    d.addEventListener('toggle',()=>{ if(!d.open)return; const box=d.querySelector(':scope>div'); if(!box)return; if(box._rv)rvApply(box,false); else rvSetup(box,1); }); });
 }
+
+// ---------- step-by-step reveal ----------
+// A solution the student works out themselves (a check-in answer, multiple-choice feedback with worked steps) opens one
+// step at a time: the lead sentence and the first piece (the boxed setup, else row 1 of the first derivation with its
+// margin note), then "Next step" adds one aligned row with its note, and the last press shows the boxed answer.
+// Taught worked examples are never stepped. Generic: it reads the rendered answer, no extra markup. Print shows all.
+const RV=new Set();
+// items: [{kind:'prose'|'math'|'rows', n}] in order -> {lead:[entries], steps:[[entries]]}; an entry is {i,row}.
+// Prose before the first math is the lead (always shown); prose between math joins the next step; trailing prose the last.
+function stepPlan(items){
+  const lead=[], steps=[]; let pend=[], seen=false;
+  items.forEach((it,i)=>{
+    if(it.kind==='prose'){ (seen?pend:lead).push({i,row:null}); return; }
+    seen=true;
+    const n=it.kind==='rows'?Math.max(1,it.n|0):1;
+    for(let r=0;r<n;r++){ steps.push(pend.concat([{i,row:it.kind==='rows'?r:null}])); pend=[]; }
+  });
+  if(pend.length){ if(steps.length)steps[steps.length-1].push(...pend); else lead.push(...pend); }
+  return {lead,steps};
+}
+// rows of one aligned display, grouped by source line: a KaTeX row holding only a margin note (stacked under its step
+// on a narrow column) belongs to the step above it
+function rvGroups(mr){
+  const cells=mathCells(mr); if(!cells||!cells.length)return null;
+  const by=new Map(); cells.forEach(c=>{ if(!by.has(c.row))by.set(c.row,[]); by.get(c.row).push(c); });
+  const groups=[]; [...by.keys()].sort((a,b)=>a-b).forEach(r=>{ const cs=by.get(r); if(groups.length&&cs.every(c=>c.note))groups[groups.length-1].push(...cs); else groups.push(cs.slice()); });
+  return groups;
+}
+function rvFade(el){ el.classList.remove('rv-in'); void el.offsetWidth; el.classList.add('rv-in'); el.addEventListener('animationend',()=>el.classList.remove('rv-in'),{once:true}); }
+// show rows 0..max of an aligned display, clip the box under the last one
+function rvRows(mr,max,anim){
+  if(max<0)return;
+  const groups=rvGroups(mr); if(!groups)return;
+  const was=mr.dataset.rvmax===undefined?-1:+mr.dataset.rvmax;
+  groups.forEach((g,gi)=>g.forEach(c=>c.hosts.forEach(h=>{ h.style.visibility=gi<=max?'':'hidden'; if(anim&&gi<=max&&gi>was)rvFade(h); })));
+  mr.dataset.rvmax=String(max);
+  const all=max>=groups.length-1;
+  const r=mr.getBoundingClientRect(), sc=mr.offsetHeight/(r.height||1);
+  const bottom=Math.max(...groups[Math.min(max,groups.length-1)].map(c=>c.bottom));
+  mr.classList.add('rv-clip');
+  const h=Math.ceil((bottom-r.top)*sc+14);
+  if(all){ if(anim&&mr.style.height){ mr.style.height=Math.ceil(mr.scrollHeight)+'px'; setTimeout(()=>{ if(mr.dataset.rvmax===String(max))mr.style.height=''; },340); } else mr.style.height=''; }
+  else mr.style.height=h+'px';
+}
+function rvApply(box,anim){
+  const st=box._rv; if(!st)return;
+  const vis=new Map(), mark=e=>{ const v=vis.get(e.i); vis.set(e.i,e.row==null?Infinity:Math.max(v===undefined?-1:v,e.row)); };
+  st.plan.lead.forEach(mark); st.plan.steps.slice(0,st.k).forEach(s=>s.forEach(mark));
+  st.items.forEach((it,i)=>{
+    const v=vis.get(i), on=v!==undefined, was=!it.el.classList.contains('rv-off');
+    it.el.classList.toggle('rv-off',!on);
+    if(it.kind==='rows'){ if(!on)delete it.el.dataset.rvmax; else rvRows(it.el,v===Infinity?1e9:v,anim); }
+    else if(on&&!was&&anim)rvFade(it.el);
+  });
+  rvCtl(box);
+}
+function rvGo(box,k){ const st=box._rv; if(!st)return; st.k=Math.max(0,Math.min(k,st.plan.steps.length)); rvApply(box,true); }
+const RV_ARROW='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v9M4 8.5 8 12.5l4-4"/></svg>';
+function rvCtl(box){
+  const st=box._rv, n=st.plan.steps.length; let c=st.ctl;
+  if(st.k>=n){ if(c){ const had=c.contains(document.activeElement); c.remove(); st.ctl=null; if(had){ box.tabIndex=-1; box.focus({preventScroll:true}); } } return; }
+  if(!c){
+    c=st.ctl=document.createElement('div'); c.className='stepctl';
+    c.innerHTML=`<button type="button" class="stepnext"><span class="stl">Next step</span><span class="stct"></span>${RV_ARROW}</button><button type="button" class="stepall">Show all</button><span class="srlive" aria-live="polite"></span>`;
+    c.querySelector('.stepnext').onclick=e=>{ e.stopPropagation(); rvGo(box,st.k+1); };
+    c.querySelector('.stepall').onclick=e=>{ e.stopPropagation(); rvGo(box,n); };
+    box.appendChild(c);
+  }
+  c.querySelector('.stct').textContent=`${st.k+1} of ${n}`;
+  c.querySelector('.stepnext').setAttribute('aria-label',`Next step, ${st.k+1} of ${n}`);
+  c.querySelector('.srlive').textContent=st.k?`Step ${st.k} of ${n} shown`:'';
+}
+// start: how many steps show at once (1 for an opened answer, 0 after a wrong pick: verdict and hint first)
+function rvSetup(box,start){
+  if(!box||box._rv||!box.isConnected)return;
+  const kids=[...box.children].filter(e=>!e.classList.contains('stepctl'));
+  if(!kids.some(e=>e.classList.contains('mathrow')))return;   // one-line feedback with no derivation stays as it is
+  const items=kids.map(el=>{
+    if(!el.classList.contains('mathrow'))return {el,kind:'prose'};
+    const tex=decodeURIComponent(el.dataset.tex||'');
+    if(/^\s*\\boxed\s*\{/.test(tex)||!/\\begin\{(aligned|align\*?|alignedat)\}/.test(tex))return {el,kind:'math'};   // the boxed setup grid is one piece
+    const g=rvGroups(el); return g&&g.length>1?{el,kind:'rows',n:g.length}:{el,kind:'math'};
+  });
+  const plan=stepPlan(items); if(plan.steps.length<2)return;
+  box._rv={items,plan,k:Math.max(0,Math.min(start,plan.steps.length)),ctl:null}; box.classList.add('rv'); RV.add(box);
+  rvApply(box,false);
+}
+// after a reflow or a math re-fit (which rebuilds the KaTeX inside a row), put every stepped answer back where it was
+function rvReapply(){ RV.forEach(b=>{ if(!b.isConnected){RV.delete(b);return;} if(b.getClientRects().length)rvApply(b,false); }); }
 
 // XP fills the top bar with verified answers only: a multiple-choice item answered right, or a flashcard graded 4 or 5. Scrolling adds nothing.
 const xpArc=document.querySelector('#tocbtn .arc'), xpText=document.querySelector('#tocbtn .rl'), xpIco=document.querySelector('#tocbtn .ico'), xpSum=document.querySelector('#toc .xpsum');
@@ -1565,7 +1922,12 @@ function markMcq(it,choice,live){
   it.dataset.choice=choice; it.classList.add('done'); const ok=choice===it.dataset.key;
   it.querySelectorAll('label').forEach(l=>l.classList.remove('right','wrong'));
   inp.closest('label').classList.add(ok?'right':'wrong');
-  it.querySelector('.fb').innerHTML=ok?`<div class="fbc ok"><div class="fbh">✓ Correct</div>${it.dataset.why?`<div class="fbb">${md(it.dataset.why)}</div>`:''}</div>`:'<div class="fbc bad"><div class="fbh">✕ Not quite</div><div class="fbb"><p>Pick another option to try again.</p></div></div>';
+  // right: the worked solution, stepped from its first piece. Wrong: the verdict and a one-line hint (the why's lead
+  // sentence), then the same solution behind "Next step"; a why with no worked steps stays hidden until the right pick.
+  const why=(it.dataset.why||'').replace(/\s*(\$\$[\s\S]+?\$\$)\s*/g,'\n\n$1\n\n'), worked=/\$\$/.test(why);   // each display on its own block, so the sentences around it stay paragraphs
+  it.querySelector('.fb').innerHTML=ok?`<div class="fbc ok"><div class="fbh">✓ Correct</div>${why?`<div class="fbb">${md(why)}</div>`:''}</div>`:`<div class="fbc bad"><div class="fbh">✕ Not quite</div><div class="fbb">${inp.dataset.miss?`<p class="fbmiss">${mdInline(inp.dataset.miss)}</p>`:''}<p class="fbhint">Pick another option to try again${worked?', or step through the solution':''}.</p>${worked?md(why):''}</div></div>`;
+  const fbb=it.querySelector('.fbb'); if(fbb&&worked){ fbb.querySelectorAll('.mathrow[data-tex]').forEach(fitMath); rvSetup(fbb,ok?1:0); }
+  whyWire(it);
   const rb=it.querySelector('.mreset'); if(rb)rb.hidden=false;
   if(live)ask({kind:'mcq',item:it.dataset.item,choice,correct:ok,sig:stemSig(it)});
   tocSig=''; xpUpdate(); scheduleToc();
@@ -1681,6 +2043,10 @@ function buildToc(hot){
     if(h.id&&h.id.startsWith('s-')&&!used.has(h.id))used.add(h.id); else h.id=tocSlug(text,used);
     return {h,lvl:h.tagName==='H2'?2:3,id:h.id,html:c.innerHTML,text};
   });
+  // the reading scale and the level map show the lesson's chapters and its Quiz only (not the topics breakdown, Sources
+  // or any other ## section); a lesson with no "Chapter …" headings keeps every ##
+  const main2=x=>/^chapter\b/i.test(x.text)||/^quiz\b/i.test(x.text);
+  if(tocItems.some(x=>x.lvl===2&&/^chapter\b/i.test(x.text))){ let keep=false; tocItems=tocItems.filter(x=>{ if(x.lvl===2)keep=main2(x); return keep; }); }
   tocItems.forEach((it,i)=>{ const nx=tocItems.slice(i+1).find(x=>x.lvl<=it.lvl); const a=kids.indexOf(it.h.closest('.blk')); const b=nx?kids.indexOf(nx.h.closest('.blk')):kids.length; it.blocks=kids.slice(a,Math.max(a+1,b)); });
   // what was just written gets a dot on its nearest heading until it is opened from the list
   (hot||[]).forEach(b=>{ let hit=[...b.querySelectorAll('h2,h3')].filter(tocEligible)[0]; let p=b.previousElementSibling; while(!hit&&p){ const hh=[...p.querySelectorAll('h2,h3')].filter(tocEligible); if(hh.length)hit=hh[hh.length-1]; p=p.previousElementSibling; } if(hit)tocNew.add(hit.id); });
@@ -1688,6 +2054,15 @@ function buildToc(hot){
   tocTicks.querySelectorAll('.tick').forEach(t=>t.onclick=()=>tocGo(t.dataset.id));
   tocSig=''; scheduleToc();
 }
+function tocStats(it){
+  const ms=it.blocks.flatMap(b=>[...b.querySelectorAll('.mcqi')]);
+  return {total:ms.length,right:ms.filter(m=>{const c=m.querySelector('input:checked');return m.classList.contains('done')&&c&&c.value===m.dataset.key}).length};
+}
+function tocKind(it){ return /practice (exam|test)|mock (exam|test)/i.test(it.text)?'boss':/cheat ?sheet|formula sheet/i.test(it.text)?'save':/^quiz\b/i.test(it.text)?'quiz':'ch'; }
+const TOC_GLYPH={
+  boss:'<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1 3h1v1h1V2h1v2h2V2h1v2h1V3h1v5H1z" fill="currentColor"/></svg>',
+  save:'<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1 1h7l1 1v7H1zM3 1v3h4V1M3 6h4v3H3z" fill="none" stroke="currentColor" stroke-width="1" shape-rendering="crispEdges"/></svg>',
+  quiz:'<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M3 2h4v1h1v2H7v1H5v1H4V5h2V3H4v1H3zM4 8h1v1H4z" fill="currentColor" shape-rendering="crispEdges"/></svg>'};
 function tocScore(it){
   const ms=it.blocks.flatMap(b=>[...b.querySelectorAll('.mcqi')]); if(!ms.length)return '';
   const done=ms.filter(m=>m.classList.contains('done')); if(!done.length)return '';
@@ -1716,21 +2091,48 @@ function tocUpdate(){
   const scores=tocItems.map(it=>it.lvl===2?tocScore(it):'');
   const sig=[cur,cur2,tocMax,scores.join(','),[...tocNew].join(','),tocItems.map(x=>x.id).join(',')].join('|');
   tocBtn.querySelector('.dot')?.remove(); if(tocNew.size)tocBtn.insertAdjacentHTML('beforeend','<span class="dot"></span>');
-  if(sig===tocSig)return; tocSig=sig;
+  if(sig===tocSig){ if(tocOpen)tocFillPath(); return; } tocSig=sig;
   const parentOf=i=>{for(let k=i;k>=0;k--)if(tocItems[k].lvl===2)return k;return -1};
-  tocList.innerHTML=tocItems.map((it,i)=>{
-    if(it.lvl===3&&(cur2<0||parentOf(i)!==cur2))return '';
-    const passed=it.lvl===2&&i<tocMax&&i!==cur2;
-    const cls=`h${it.lvl}${i===cur?' cur':''}${it.lvl===2&&i===cur2?' in':''}`;
-    return `<li class="${cls}"><a href="#${it.id}" data-id="${it.id}"><span class="mk">${passed?'✓':''}</span><span class="lbl">${it.html}</span>${scores[i]?`<span class="sc">${scores[i]}</span>`:''}${tocNew.has(it.id)?'<span class="new" title="new"></span>':''}</a></li>`;
+  // level map: chapters as nodes on one vertical path (cleared / you are here / not started, nothing locked),
+  // checkpoint stars, the current chapter's sections as small sub-nodes, the path filled up to the reading position
+  const H2=tocItems.map((it,i)=>[it,i]).filter(([it])=>it.lvl===2);
+  tocList.innerHTML=H2.map(([it,i],n)=>{
+    const st=tocStats(it), kind=tocKind(it), here=i===cur2, passed=i<tocMax&&!here;
+    const state=here?'cur':(passed||(st.total&&st.right===st.total))?'clr':'todo';
+    const m=it.text.match(/^chapter\s+(\d+)\s*[·:.\-–]\s*(.+)$/i);
+    const kicker=m?`Chapter ${m[1]}`:(kind==='quiz'?'Final quiz':''), name=m?it.html.replace(/^[\s\S]*?·\s*/,''):it.html;
+    const glyph=kind==='ch'?`<span class="nn">${m?m[1]:n+1}</span>`:TOC_GLYPH[kind];
+    const stars=st.total?`<span class="stars" aria-hidden="true">${'<i class="on">★</i>'.repeat(st.right)}${'<i>☆</i>'.repeat(st.total-st.right)}</span>`:'';
+    const tag=kind==='boss'?'<span class="lvtag boss">Boss</span>':kind==='save'?'<span class="lvtag save">Save point</span>':'';
+    const sr=`${it.text}. ${state==='cur'?'You are here':state==='clr'?'Cleared':'Not started'}${st.total?`. Checkpoint ${st.right} of ${st.total} right`:''}.`;
+    let subs='';
+    if(here){ const kids=[]; for(let k=i+1;k<tocItems.length&&tocItems[k].lvl===3;k++)kids.push([tocItems[k],k]);
+      if(kids.length)subs=`<ol class="subs">${kids.map(([x,k])=>`<li class="sub ${k===cur?'cur':k<cur?'clr':'todo'}"><a href="#${x.id}" data-id="${x.id}"${k===cur?' aria-current="location"':''}><span class="sn" aria-hidden="true"></span><span class="sl">${x.html}</span></a></li>`).join('')}</ol>`; }
+    return `<li class="lv ${kind} ${state}" data-i="${i}"><a href="#${it.id}" data-id="${it.id}" aria-label="${esc(sr)}"${here?' aria-current="location"':''}><span class="node" aria-hidden="true">${glyph}</span><span class="lvtxt">${kicker?`<span class="lvk">${kicker}</span>`:''}<span class="lvn">${name}</span><span class="lvmeta">${stars}${tag}${here?'<span class="here">You are here</span>':''}</span></span>${tocNew.has(it.id)?'<span class="new" title="new"></span>':''}</a>${subs}</li>`;
   }).join('');
+  tocFillPath();
+}
+// the path's fill reaches the current node plus the share of its chapter already read
+function tocFillPath(){
+  const nodes=[...tocList.querySelectorAll(':scope>li.lv>a>.node')]; if(!nodes.length)return;
+  const top=tocList.getBoundingClientRect().top, sc=tocList.offsetHeight/(tocList.getBoundingClientRect().height||1);
+  const ci=[...tocList.children].findIndex(li=>li.classList.contains('cur'));
+  const mid=el=>{ const r=el.getBoundingClientRect(); return (r.top+r.height/2-top)*sc; };
+  tocList.style.setProperty('--path0',mid(nodes[0])+'px'); tocList.style.setProperty('--path1',mid(nodes[nodes.length-1])+'px');
+  let y=mid(nodes[0]);
+  if(ci>=0){ const it=tocItems[+tocList.children[ci].dataset.i], next=nodes[ci+1];
+    y=mid(nodes[ci]);
+    if(next&&it){ const a=it.h.getBoundingClientRect().top+window.scrollY, nx=tocItems.slice(tocItems.indexOf(it)+1).find(x=>x.lvl===2), b2=nx?nx.h.getBoundingClientRect().top+window.scrollY:document.documentElement.scrollHeight; const f=Math.max(0,Math.min(1,(window.scrollY+120-a)/Math.max(1,b2-a))); y+=f*(mid(next)-y); } }
+  else if(tocMax>=0) y=mid(nodes[nodes.length-1]);
+  tocList.style.setProperty('--pathfill',y+'px');
 }
 function scheduleToc(){ if(!tocFrame)tocFrame=requestAnimationFrame(()=>{tocFrame=0;tocUpdate();}); }
 function tocToggle(open){
   tocOpen=open===undefined?!tocOpen:!!open;
   tocNav.classList.toggle('open',tocOpen); tocShade.classList.toggle('open',tocOpen);
   tocBtn.setAttribute('aria-expanded',String(tocOpen)); tocNav.inert=!tocOpen; tocNav.setAttribute('aria-hidden',String(!tocOpen));
-  if(tocOpen){ tocSig=''; tocUpdate(); tocList.querySelector('li.cur,li.in')?.scrollIntoView({block:'center'}); } else scheduleToc();
+  if(tocOpen){ const r=tocBtn.getBoundingClientRect(); document.documentElement.style.setProperty('--tocx',Math.max(8,Math.min(r.left,innerWidth-Math.min(400,innerWidth-16)-8))+'px'); document.documentElement.style.setProperty('--tocy',(r.bottom+8)+'px');
+    tocSig=''; tocUpdate(); tocList.querySelector('li.cur')?.scrollIntoView({block:'center'}); tocFillPath(); } else scheduleToc();
 }
 function tocGo(id,smooth=true){
   const it=tocItems.find(x=>x.id===id); if(!it)return;
@@ -1896,7 +2298,7 @@ async function loadLessonWith(r){
     }
     window.__ph=[];
   }
-  renderedUpto=segs.length; decorate(main); wire(); inlineSvgs(); buildToc(hot);
+  renderedUpto=segs.length; imageCredits(b); decorate(main); wire(); inlineSvgs(); buildToc(hot);
   if(r.reset)restoreAnswers();
   if(place){ const bl=[...main.querySelectorAll(':scope > .blk')]; let best=null,bd=1e9; bl.forEach((x,i)=>{ if(x.textContent.slice(0,160)===place.sig&&Math.abs(i-place.i)<bd){bd=Math.abs(i-place.i);best=x;} });
     if(best) window.scrollTo(0,window.scrollY+best.getBoundingClientRect().top-place.top); main.style.minHeight=''; }
@@ -1904,7 +2306,7 @@ async function loadLessonWith(r){
   const first=!!window.__firstLoad; window.__firstLoad=false;
   // deep link: /lessons/NNNN#e3 opens that note, #b12 scrolls to that block
   if(first&&r.reset&&location.hash&&location.hash.startsWith('#s-')&&tocItems.some(x=>x.id===location.hash.slice(1))){ const h=location.hash.slice(1); setTimeout(()=>tocGo(h,false),80); }
-  else if(first&&r.reset&&location.hash){ const h=location.hash.slice(1); const t=main.querySelector(`.exp[data-id="${h}"]`)||document.getElementById(h); if(t){ const f=t.closest('.fold'); if(f){f.classList.remove('closed');f.querySelector('.exptoggle')?.setAttribute('aria-expanded','true');} setTimeout(()=>t.scrollIntoView({block:'center'}),80); } }
+  else if(first&&r.reset&&location.hash){ const h=location.hash.slice(1); const t=main.querySelector(`.exp[data-id="${h}"]`)||document.getElementById(h); if(t){ const d=t.closest('details'); if(d) d.open=true; const f=t.closest('.fold'); if(f){f.classList.remove('closed');f.querySelector('.exptoggle')?.setAttribute('aria-expanded','true');} setTimeout(()=>t.scrollIntoView({block:'center'}),80); } }
 }
 // hash: the server hashes the first N bytes with md5; the client cannot md5 cheaply, so we ask the server for it on every reset
 // and keep offset/hash pairs consistent by only ever appending. loadLesson (initial) delegates to loadLessonWith.

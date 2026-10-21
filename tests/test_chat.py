@@ -71,5 +71,17 @@ class LessonSourcesTests(unittest.TestCase):
                                     '- https://example.org/power-rule')
 
 
+    def test_sources_dropdown_block_with_paths_in_a_comment(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = Path(tmp) / 'learn'
+            (ws / 'lessons').mkdir(parents=True); (ws / 'sources').mkdir()
+            (ws / 'sources/exam.txt').write_text('Q1\n')
+            lesson = ws / 'lessons/0001-x.md'
+            lesson.write_text('---\ntitle: X\n---\n\n::: sources\n<!-- files: `sources/exam.txt` -->\n- Fall 2017 Exam 2 · worked examples\n:::\n\n## Chapter 1 · A\n')
+            sources, cited = bridge.lesson_sources(str(ws), str(lesson))
+            self.assertEqual(sources, [str(ws / 'sources/exam.txt')])
+            self.assertIn('Fall 2017 Exam 2', cited)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -52,7 +52,7 @@
 
 Auto-tiering when files arrive (LMS pull or `add`): assignments → 5; file name matches practice/past/sample/exam/midterm/final → 3 or 4; module pages and slides → 6; announcements mentioning exam/test/quiz → 2; a page titled topics/syllabus/review → 1 or 2; everything else → 7. Show the tiering once and let the user correct it.
 
-Claim labels used inside lessons when a fact's authority matters: `officially stated`, `professor emphasized`, `repeated in practice`, `inferred`, `out of scope`.
+Claim labels for RESOURCES.md and a lesson's `::: sources` drop-down when a fact's authority matters (never inline in STEM lessons): `officially stated`, `professor emphasized`, `repeated in practice`, `inferred`, `out of scope`.
 
 ## Rules
 

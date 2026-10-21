@@ -260,9 +260,42 @@ def lessons_meta(wsp=None):
     return out
 
 
+def strip_why(t):
+    """\\why{math}{rule} (or \\why[name]{math}{rule}) -> math: the hint is board-only, every tool reads the plain math."""
+    out, i = "", 0
+    while True:
+        k = t.find("\\why", i)
+        if k < 0:
+            return out + t[i:]
+        j = k + 4
+        if j < len(t) and t[j].isalpha():
+            out += t[i:j]; i = j; continue
+        if j < len(t) and t[j] == "[":
+            e = t.find("]", j)
+            j = e + 1 if e > 0 else j
+        args = []
+        for _ in range(2):
+            while j < len(t) and t[j] == " ":
+                j += 1
+            if j >= len(t) or t[j] != "{":
+                break
+            d, q = 0, j
+            while q < len(t):
+                if t[q] == "\\":
+                    q += 2; continue
+                d += {"{": 1, "}": -1}.get(t[q], 0)
+                if d == 0:
+                    break
+                q += 1
+            args.append(t[j + 1:q]); j = q + 1
+        if len(args) < 2:
+            out += t[i:k + 4]; i = k + 4; continue
+        out += t[i:k] + strip_why(args[0]); i = j
+
+
 def _plain(line):
     """Readable text of one markdown line: LaTeX commands, markup and block fences removed."""
-    t = re.sub(r"\\(overline|bar|mathrm|text|textbf|mathbf|boxed)\{([^{}]*)\}", r"\2", line)
+    t = re.sub(r"\\(overline|bar|mathrm|text|textbf|mathbf|boxed)\{([^{}]*)\}", r"\2", strip_why(line))
     t = re.sub(r"\\[a-zA-Z]+", " ", t)
     t = re.sub(r"\\[,;:! ]|\\\\", " ", t)
     t = re.sub(r"[$*_`>#|{}]|^:::.*$|^\s*- ", " ", t)
@@ -846,7 +879,7 @@ def resolve_source(ref, wsp):
 
 
 def lesson_sources(wsp, lpath):
-    """(paths and URLs the lesson was written from, the lesson's own `## Sources` text), from that section and
+    """(paths and URLs the lesson was written from, the lesson's own sources text), from its `::: sources` block (or `## Sources`) and
     RESOURCES.md. The writer receipt (reference/lesson-writer-NNNN.json) records the model choice, not sources."""
     def read(p):
         try:
@@ -854,7 +887,10 @@ def lesson_sources(wsp, lpath):
                 return f.read()
         except OSError:
             return ""
-    m = re.search(r"^## Sources[^\n]*\n(.*?)(?=^#{1,2} |\Z)", read(lpath), re.S | re.M)
+    text = read(lpath)
+    # a `::: sources` drop-down near the top (its file paths may sit in an HTML comment inside it), or an older
+    # lesson's trailing `## Sources` section
+    m = re.search(r"^::: sources[^\n]*\n(.*?)^:::\s*$", text, re.S | re.M) or re.search(r"^## Sources[^\n]*\n(.*?)(?=^#{1,2} |\Z)", text, re.S | re.M)
     cited = m.group(1).strip() if m else ""
     out = []
     for doc in (cited, read(os.path.join(wsp, "RESOURCES.md"))):

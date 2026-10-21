@@ -2,7 +2,7 @@
 
 Open items only. Shipped: the XP health bar that fills only with verified answers, 8-bit sparks and sounds on right answers (Caio asked for them, so the original "no confetti, minimal sound" principle no longer holds), the chat panel.
 
-- **Gold rule in the hub** for a lesson whose XP bar is full; a double rule when the Twist is solved too.
+- **Gold rule in the hub** for a lesson whose XP bar is full.
 - **Boss quiz:** the final quiz stays dim ("reach the end") until the body has been scrolled through. Misses become the next lesson's check-in.
 - **Retention line:** when a card missed earlier is answered right a week later, one line: "You missed this on 9/8. Right today."
 - **Quiet streaks:** a small "3 days" mark beside the folder name in the hub. No notifications.
