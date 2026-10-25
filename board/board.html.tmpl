@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
 <script src="/lib/rough.js"></script>
 <script src="/lib/fig.js"></script>
+<script src="/lib/lesson-video.js"></script>
 <style>
 :root{--bg:#0c0c0c;--chalk:#e9e6df;--dim:#8a8a84;--acc:#9b3a4a;--acc2:#9b3a4a;--rule:#262626;--ok:#4ea672;--no:#c2564f;--display:'Playfair Display',Georgia,serif;--body:'Crimson Pro',Georgia,serif}
 *{box-sizing:border-box}
@@ -822,6 +823,7 @@ html.chatdrag,html.chatdrag *{user-select:none !important;cursor:col-resize !imp
 @media (max-width:760px){html.chatopen{--chatw:0px}#chat{width:100vw}#chatgrip{display:none}}
 @media (prefers-reduced-motion:reduce){#chat .cs.live::before,#chat .cthink::before{animation:none;opacity:1}}
 </style>
+<link rel="stylesheet" href="/lib/lesson-video.css">
 </head>
 <body>
 <div class="rail" id="reading-progress" role="progressbar" aria-label="Lesson reading position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><span class="fill"></span><div id="toc-ticks"></div></div>
@@ -2411,6 +2413,8 @@ async function loadLessonWith(r){
   // deep link: /lessons/NNNN#e3 opens that note, #b12 scrolls to that block
   if(first&&r.reset&&location.hash&&location.hash.startsWith('#s-')&&tocItems.some(x=>x.id===location.hash.slice(1))){ const h=location.hash.slice(1); setTimeout(()=>tocGo(h,false),80); }
   else if(first&&r.reset&&location.hash){ const h=location.hash.slice(1); const t=main.querySelector(`.exp[data-id="${h}"]`)||document.getElementById(h); if(t){ const d=t.closest('details'); if(d) d.open=true; const f=t.closest('.fold'); if(f){f.classList.remove('closed');f.querySelector('.exptoggle')?.setAttribute('aria-expanded','true');} setTimeout(()=>t.scrollIntoView({block:'center'}),80); } }
+  // lesson video (board/lesson-video.js): mounts only when this lesson has a video manifest; re-marks blocks after every render
+  if(window.LessonVideo)LessonVideo.refresh({lessonId,ws:WS,main,first,reset:!!r.reset,streaming,rvGo,rvGroups,src:body});
 }
 // hash: the server hashes the first N bytes with md5; the client cannot md5 cheaply, so we ask the server for it on every reset
 // and keep offset/hash pairs consistent by only ever appending. loadLesson (initial) delegates to loadLessonWith.
