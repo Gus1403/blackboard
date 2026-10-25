@@ -1,7 +1,11 @@
 ---
 name: blackboard
-description: Use when the user invokes /blackboard or $blackboard, or says "open the blackboard", "open my lessons" or "show lesson N". Teach with lessons, derivations, explain-on-select, and quizzes rendered on a persistent black board. Course mode uses the user's material or LMS; self-study uses primary sources.
+description: Opens and teaches on a persistent black board when the user invokes /blackboard or $blackboard, or asks to open the blackboard, open lessons, or show a lesson. Course mode uses the user's material or LMS; self-study uses primary sources.
 ---
+
+# Blackboard
+
+**Scope:** Open, write, and explain lessons on the board. **Precedence:** Direct user instructions and explicit lesson role policy govern routing. **Autonomy:** Resolve roles, dispatch teaching and review, and verify receipts. **Success/stop:** Publish only after lesson and routing checks pass; report concrete blockers.
 
 ## Temporary board
 
@@ -27,7 +31,7 @@ The user keeps studying on the live board (port 7331) while the skill is being c
 
 # Lesson author routing (required)
 
-Before a new lesson or substantial rewrite, read [LESSON-WRITER.md](./LESSON-WRITER.md). The chatting model coordinates; a separate writer agent authors the lesson using the best-supported teaching model available in the current host, with explicitly selected effort. Pick the writer before every lesson and dispatch with model and effort overrides; long lessons (two or more chapters) also get a live evidence check and a decision receipt. Do not silently inherit the parent model or hard-code a permanent winner. Even a parent already on the selected model delegates. For long lessons, when the writer finishes, a fresh tone-editor agent on the same model rewrites the prose to the Tone and Shape rules in TEMPLATES.md, without touching math, code, figures or quiz keys (see LESSON-WRITER.md **Tone pass**). A designated child writer or tone editor skips selection/delegation; never recurse. Explicit user model requests take precedence.
+Before a new lesson or substantial rewrite, read [LESSON-WRITER.md](./LESSON-WRITER.md). Run `python3 bin/lesson_routing.py resolve --workspace "$WS"` before model selection. A per-user policy at `${XDG_CONFIG_HOME:-$HOME/.config}/blackboard/lesson-routing.json` or optional `$WS/.blackboard/lesson-routing.json` explicitly selects author, reviewer, and support model **and effort**; a direct user request takes higher priority. When a policy is present, dispatch those exact roles, verify actual runtime identities, and check the routing receipt before final render/publication. A missing, unsupported, or mismatched required identity blocks publication; preserve existing lesson content and report the concrete blocker while independent support work continues. Without a policy, use the automatic selection in LESSON-WRITER.md. The chatting model coordinates; a separate writer authors the teaching. For long lessons, a fresh tone editor uses that same author's model and effort. A designated child skips selection/delegation; never recurse. This instruction directs agents; the CLI validates supplied evidence but cannot enforce the host's dispatch.
 
 # Modes
 
