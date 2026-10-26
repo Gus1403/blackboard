@@ -53,8 +53,9 @@ def locked():
 EXAMPLES = (ROOT / 'examples').resolve()
 
 def exempt(path):
-    # The skill's model lessons (examples/) are copies of a real lesson and may share its banner.
-    return Path(path).resolve().is_relative_to(EXAMPLES)
+    # The skill's model lessons (examples/) are copies of a real lesson and may share its banner; test fixtures are not lessons.
+    p = Path(path).resolve()
+    return p.is_relative_to(EXAMPLES) or any(seg in p.as_posix() for seg in ('/blackboard/examples/', '/blackboard/board/fixtures/'))
 
 def conflicts(owner, candidate, include_reservations=True):
     if exempt(owner): return None
@@ -96,6 +97,7 @@ def claim(owner, data, source, credit, out, lid):
 def audit():
     seen, errors = {}, []
     for p in lessons():
+        if exempt(p): continue
         fm = frontmatter(p)
         if fm.get('plain') == 'true': continue
         if not fm.get('photo'):

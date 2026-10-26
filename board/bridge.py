@@ -1143,6 +1143,10 @@ class H(BaseHTTPRequestHandler):
         if path.startswith("/lib/"):
             lib = {"rough.js": os.path.join(ROOT, "node_modules", "roughjs", "bundled", "rough.js"), "fig.js": os.path.join(BOARD, "fig.js"), "slate.jpg": next((x for x in (os.path.join(BOARD, "slate-custom.jpg"), os.path.join(BOARD, "slate.jpg")) if os.path.exists(x)), "")}.get(os.path.basename(path))
             if lib: return self.static(lib)
+        if path in ("/favicon.svg", "/favicon.ico"):
+            return self.static(os.path.join(BOARD, "favicon.svg"))
+        if path == "/apple-touch-icon.png":
+            return self.static(os.path.join(BOARD, "app-icon.png"))
         if path == "/end-card.jpg":
             p = end_card_path()
             return self.static(p) if p else self.send(404, "no end card", "text/plain")

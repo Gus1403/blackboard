@@ -164,7 +164,7 @@ title: Sum of Products from a Truth Table
 course: ECE 2020          # omit in self-study
 exam: Test 1, Q3–Q5       # omit if unknown / self-study
 model: GPT-6 Astra Medium # example only; use the actual session's full writer identity
-image: circuit board macro   # a photographable subject from the lesson's topic, never a chalkboard
+image: Java source code on a computer screen   # the lesson's literal subject, never a metaphor or a chalkboard
 photo: assets/0004.jpg     # filled by bin/image.sh
 credit: Photo by … (Openverse, CC0)   # shown only in the Image credits line
 caption: a short description of the banner   # optional; otherwise the title part of credit:
@@ -346,6 +346,8 @@ A title is a YouTube title, not a file name. Short, concrete, says what you will
 Captions are a short description of the image only (no longer than "Cornell University notebook and exam pages for Math 221, Spring 1973"): what to notice goes in the prose beside it, and author, license and source go in the lesson's **Image credits** line, which the board builds at the end of the lesson from every `credit:` (the banner's front matter and each `::: photo`).
 
 **The banner is the subject.** When the lesson is about a specific object (a machine, a chip, a building, an animal), the banner photo is that object, not a generic image of its category: a DGX Spark lesson opens with the DGX Spark, never with "a computer chip". If the free sources cannot produce the object itself, use the maker's press photo as the banner (`photo: assets/NNNN.jpg` copied from a press image, `credit: <maker> press image`) and leave `image:` for abstract lessons only. Check the banner after the first render; a wrong banner is worse than none.
+
+**`image:` is the literal subject, never a metaphor.** Name what a photo of the lesson's topic would actually show, with concrete nouns: "Java source code on a computer screen", "calculus integrals handwritten in a notebook", "graph of a function". Never a picture of a word in the lesson: contract → law books, interface → people meeting, sorting → library shelves, array → lockers, absolute value → folded paper are all wrong. `bin/image.sh` accepts only candidates whose title, description or tags contain the query's subject words as whole words (page, sheet, formula, paper, macro, notebook and similar generic words do not count), and names its pick on stderr (`image.sh: chose "<title>"`). The match is on metadata, not pixels: after picking, open the downloaded file and confirm it shows the subject; if not, change `image:` and re-roll.
 
 Real photographs go between topics **only when the lesson is talking about a physical thing** and a photo of that thing exists: a machine, a chip, a board, an organ, a building, an instrument. Then:
 
