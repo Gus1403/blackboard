@@ -1,0 +1,17 @@
+# generated inside a project that copied this runtime
+audio/
+chunks/
+qa/
+timeline.json
+timeline.js
+narr_filter.txt
+narration*.wav
+video_only.mp4
+final.mp4
+final.srt
+render.log
+finish.log
+RENDERED
+.render.lock
+tts.done
+__pycache__/

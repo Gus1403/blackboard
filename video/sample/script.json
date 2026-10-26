@@ -1,0 +1,24 @@
+{
+  "title": "Adding Two Vectors",
+  "subtitle": "Sample lesson · smoke test",
+  "voice": "XrExE9yKIg1WjnnlVkGX",
+  "chapters": ["Introduction", "Chapter 1 · Tip to tail", "Chapter 2 · Check yourself"],
+  "scenes": [
+    {"id": "s00", "chapter": 0, "visual": "Title card: kicker tag 'Sample lesson', big title 'Adding Two Vectors', italic hook 'tip to tail'.",
+     "cues": [{"id": "a", "say": "Welcome. Today we add two vectors."}]},
+    {"id": "s01", "chapter": 1, "visual": "Chapter card: Chapter 1, 'Tip to tail', tagline 'components add separately'.",
+     "cues": [{"id": "a", "say": "Chapter one. Tip to tail."}]},
+    {"id": "s02", "chapter": 1, "visual": "Grid figure on the left: A = <3,1> in blue from the origin (cue a), B = <1,2> in gold from the tip of A (cue b), sum <4,3> in green from origin (cue c). Derivation on the right: A+B = <3+1, 1+2> = <4,3>, boxed.",
+     "cues": [
+       {"id": "a", "say": "Vector A is three, one."},
+       {"id": "b", "say": "Put B, one, two, at the tip of A."},
+       {"id": "c", "say": "The sum is four, three."}
+     ]},
+    {"id": "s03", "chapter": 2, "visual": "CHECKPOINT header, MCQ 'What is <2,0> + <0,2>?' options A <2,2> (right), B <4,0>, C <0,4>, D <2,0>. Countdown during think; reveal on cue ans.",
+     "cues": [
+       {"id": "q", "say": "What is two, zero plus zero, two?"},
+       {"id": "think", "pause": 2},
+       {"id": "ans", "say": "The answer is A: two, two."}
+     ]}
+  ]
+}

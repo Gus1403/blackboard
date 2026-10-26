@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lesson video</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Patrick+Hand&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="stage">
+  <div id="board-tex"></div>
+  <div id="scenes"></div>
+  <div id="chrome">
+    <div id="chap"></div>
+    <div id="prog"><div id="prog-fill"></div></div>
+  </div>
+  <div id="subs"><span></span></div>
+</div>
+<script src="timeline.js"></script>
+<script src="engine.js"></script>
+<script>
+  // Scene files come from SPLIT.json ({"<file>": ["s00", ...], ...}, file order = scene order), loaded from
+  // scenes/<file>.js one at a time so each registration is attributed to its file. Serve this directory
+  // over http (`node capture.mjs serve`); browsers refuse to fetch SPLIT.json from file://.
+  // ?strict (full render, `capture.mjs check`): every scene must be registered by its own file.
+  // Otherwise missing files/scenes are warnings, so scene builders can preview while others work.
+  // Preview: ?t=12.5 or ?play[=start].
+  (() => {
+    const q = new URLSearchParams(location.search);
+    const strict = q.has('strict');
+    const errors = [], warnings = [];
+    window.VIDEO_ERRORS = errors; window.VIDEO_WARNINGS = warnings;
+    const TL = window.TIMELINE;
+    if (TL && TL.title) document.title = TL.title;
+    const loadScript = src => new Promise(ok => {
+      const s = document.createElement('script');
+      s.src = src; s.onload = () => ok(true); s.onerror = () => ok(false);
+      document.body.appendChild(s);
+    });
+    async function loadScenes() {
+      if (!TL || !Array.isArray(TL.scenes)) throw new Error('timeline.js missing or invalid: run tts.py first');
+      let split;
+      try {
+        const r = await fetch('SPLIT.json', { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        split = await r.json();
+      } catch (e) {
+        throw new Error(`cannot read SPLIT.json (${e.message}); serve this directory: node capture.mjs serve`);
+      }
+      if (!split || typeof split !== 'object' || Array.isArray(split)) throw new Error('SPLIT.json must be an object {file: [scene ids]}');
+      const files = Object.entries(split);
+      for (const [f, ids] of files) {
+        if (!/^[A-Za-z0-9_-]+$/.test(f)) throw new Error(`SPLIT.json: bad scene file name "${f}"`);
+        if (!Array.isArray(ids) || ids.some(i => typeof i !== 'string')) throw new Error(`SPLIT.json: "${f}" must list scene ids`);
+      }
+      const order = files.flatMap(([, ids]) => ids), want = TL.scenes.map(s => s.id);
+      if (order.join('\n') !== want.join('\n')) {
+        const dup = order.filter((x, i) => order.indexOf(x) !== i), miss = want.filter(x => !order.includes(x));
+        const extra = order.filter(x => !want.includes(x));
+        throw new Error(`SPLIT.json must list every timeline scene exactly once, in timeline order` +
+          (dup.length ? `; duplicated: ${dup.join(' ')}` : '') + (miss.length ? `; missing: ${miss.join(' ')}` : '') +
+          (extra.length ? `; not in timeline: ${extra.join(' ')}` : '') + (!dup.length && !miss.length && !extra.length ? '; order differs' : ''));
+      }
+      const { owner, errors: regErrors } = window.SCENES;
+      for (const [f, ids] of files) {
+        if (!ids.length) continue;
+        window.__SCENE_FILE = f;
+        const loaded = await loadScript(`scenes/${f}.js`);
+        window.__SCENE_FILE = null;
+        if (!loaded) { (strict ? errors : warnings).push(`scenes/${f}.js did not load`); continue; }
+        const mine = Object.keys(owner).filter(id => owner[id] === f);
+        const stray = mine.filter(id => !ids.includes(id)), missing = ids.filter(id => owner[id] !== f);
+        if (stray.length) (strict ? errors : warnings).push(`scenes/${f}.js registers scenes SPLIT.json gives elsewhere: ${stray.join(' ')}`);
+        if (missing.length) (strict ? errors : warnings).push(`scenes/${f}.js does not register: ${missing.join(' ')}`);
+      }
+      errors.push(...regErrors);
+    }
+    function showErrors() {
+      const box = document.createElement('pre');
+      box.style.cssText = 'position:absolute;left:60px;top:60px;right:60px;color:#d9645b;font:28px/1.3 monospace;white-space:pre-wrap;z-index:9';
+      box.textContent = 'VIDEO LOAD ERROR\n' + errors.join('\n');
+      document.getElementById('stage').appendChild(box);
+    }
+    window.VIDEO_READY = (async () => {
+      try { await loadScenes(); } catch (e) { errors.push(e.message); }
+      await window.ENGINE_READY;
+      if (errors.length) { showErrors(); return false; }
+      if (q.has('play')) {
+        const t0 = performance.now() - (parseFloat(q.get('play')) || 0) * 1000;
+        const loop = () => { seek((performance.now() - t0) / 1000); requestAnimationFrame(loop); };
+        loop();
+      } else seek(parseFloat(q.get('t') || '0'));
+      return true;
+    })();
+    window.VIDEO_READY.then(ok => { window.VIDEO_OK = ok; });
+  })();
+</script>
+</body>
+</html>

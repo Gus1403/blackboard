@@ -26,6 +26,7 @@ State lives in $BLACKBOARD_HOME/state.json (default ~/.cache/blackboard), writte
 """
 import unicodedata
 import calendar, fnmatch, glob, hashlib, json, os, re, shutil, signal, subprocess, sys, tempfile, threading, time, urllib.parse, uuid
+import math
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 BOARD = os.path.dirname(os.path.abspath(__file__))
@@ -196,6 +197,85 @@ def lesson_path(lid, wsp=None):
         if i == lid:
             return p
     return None
+
+
+def lesson_video(lid, wsp, slug=""):
+    """Return only verified, workspace-local media metadata to the lesson page."""
+    if not re.fullmatch(r"\d{4}", lid):
+        return {"available": False, "error": "Invalid lesson id."}
+    lesson = lesson_path(lid, wsp)
+    if not lesson:
+        return {"available": False, "error": "Lesson not found."}
+    workspace = os.path.realpath(wsp)
+    if not os.path.realpath(lesson).startswith(workspace + os.sep):
+        return {"available": False, "error": "Lesson video manifest is invalid."}
+    reference = os.path.realpath(os.path.join(wsp, "reference"))
+    manifest_path = os.path.realpath(os.path.join(reference, f"video-{lid}.json"))
+    if not reference.startswith(workspace + os.sep) or not manifest_path.startswith(reference + os.sep) or not os.path.isfile(manifest_path):
+        return {"available": False}
+    try:
+        with open(manifest_path, encoding="utf-8") as f:
+            manifest = json.load(f)
+        if not isinstance(manifest, dict) or manifest.get("version") != 1 or isinstance(manifest.get("version"), bool):
+            raise ValueError
+        if set(manifest) != {"version", "lessonId", "lessonSha256", "video", "duration", "captionsBurnedIn", "segments"}:
+            raise ValueError
+        source_hash = manifest["lessonSha256"]
+        if manifest.get("lessonId") != lid or not isinstance(source_hash, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", source_hash):
+            raise ValueError
+        video = manifest.get("video")
+        if not isinstance(video, str) or video != f"{lid}-lecture.mp4":
+            raise ValueError
+        assets = os.path.realpath(os.path.join(wsp, "lessons", "assets"))
+        media = os.path.realpath(os.path.join(assets, video))
+        if not assets.startswith(workspace + os.sep) or not media.startswith(assets + os.sep) or not os.path.isfile(media):
+            raise ValueError
+        duration = manifest.get("duration")
+        if isinstance(duration, bool) or not isinstance(duration, (int, float)) or not math.isfinite(duration) or duration <= 0:
+            raise ValueError
+        if not isinstance(manifest.get("captionsBurnedIn"), bool):
+            raise ValueError
+        segments = manifest.get("segments")
+        if not isinstance(segments, list) or not segments:
+            raise ValueError
+        with open(lesson, "rb") as f:
+            source = f.read()
+        mapping_valid = hashlib.sha256(source).hexdigest().lower() == source_hash.lower()
+        line_count = len(source.decode("utf-8").splitlines())
+        seen, previous_end = set(), 0
+        for segment in segments:
+            if not isinstance(segment, dict):
+                raise ValueError
+            if not {"id", "label", "start", "end", "line"} <= set(segment) or set(segment) - {"id", "label", "start", "end", "line", "step", "practice"}:
+                raise ValueError
+            sid, label = segment.get("id"), segment.get("label")
+            if not isinstance(sid, str) or not sid.strip() or sid in seen or not isinstance(label, str) or not label.strip():
+                raise ValueError
+            seen.add(sid)
+            start, end = segment.get("start"), segment.get("end")
+            if any(isinstance(x, bool) or not isinstance(x, (int, float)) or not math.isfinite(x) for x in (start, end)):
+                raise ValueError
+            if start < previous_end or end <= start or end > duration + 0.01:
+                raise ValueError
+            previous_end = end
+            line, step = segment.get("line"), segment.get("step")
+            if isinstance(line, bool) or not isinstance(line, int) or line < 1 or (mapping_valid and line > line_count):
+                raise ValueError
+            if step is not None and (isinstance(step, bool) or not isinstance(step, int) or step < 1):
+                raise ValueError
+            practice = segment.get("practice")
+            if practice is not None:
+                if not isinstance(practice, dict) or set(practice) != {"pauseAt", "revealAt"}:
+                    raise ValueError
+                pause, reveal = practice["pauseAt"], practice["revealAt"]
+                if any(isinstance(x, bool) or not isinstance(x, (int, float)) or not math.isfinite(x) for x in (pause, reveal)):
+                    raise ValueError
+                if not start <= pause < reveal <= end:
+                    raise ValueError
+        url = f"/w/{urllib.parse.quote(slug, safe='')}/assets/{video}" if slug else f"/assets/{video}"
+        return dict(manifest, available=True, mappingValid=mapping_valid, videoUrl=url)
+    except (OSError, UnicodeError, ValueError, TypeError, KeyError, json.JSONDecodeError):
+        return {"available": False, "error": "Lesson video manifest is invalid."}
 
 
 def scores(wsp=None):
@@ -1047,7 +1127,8 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
-        self.wfile.write(body)
+        if self.command != "HEAD":
+            self.wfile.write(body)
 
     def foreign(self):
         """A request sent by some other web page. The chat can read files and edit lessons, so only the board's own
@@ -1091,6 +1172,8 @@ class H(BaseHTTPRequestHandler):
                 self.end_headers()
                 return
         slug = slug or qs.get("ws", [""])[0]
+        if path == "/api/lesson-video" and slug and slug not in workspaces() and slug not in (st.get("workspaces") or {}):
+            return self.send(200, {"available": False, "error": "Workspace not found."})
         wsp = ws(slug)
         if path == "/health":
             return self.send(200, "ok", "text/plain")
@@ -1107,8 +1190,10 @@ class H(BaseHTTPRequestHandler):
                 return self.send(200, PENDING)
         if path == "/api/state":
             w = (st.get("workspaces") or {}).get(slug, {}) if slug else st
+            page_files = (TMPL, os.path.join(BOARD, "fig.js"), os.path.join(BOARD, "lesson-video.js"),
+                          os.path.join(BOARD, "lesson-video.css"))
             body = {"ws": wsp, "slug": slug or slug_of(wsp), "current": current(slug), "agent": w.get("agent", st.get("agent", "claude")),
-                    "page_version": int(max(os.path.getmtime(TMPL), os.path.getmtime(os.path.join(BOARD, "fig.js")))),
+                    "page_version": int(max(os.path.getmtime(p) for p in page_files if os.path.isfile(p))),
                     "layout": w.get("layout", st.get("layout", "tab")), "streaming": bool(w.get("streaming", st.get("streaming"))),
                     "lessons": lessons_meta(wsp), "brainstorm": w.get("brainstorm"),
                     "end_card": {"image": bool(end_card_path()), "key": slug_of(wsp) if wsp else ""}}
@@ -1124,6 +1209,8 @@ class H(BaseHTTPRequestHandler):
             frm = int(qs.get("from", ["0"])[0] or 0)
             h = qs.get("hash", [""])[0]
             return self.send(200, read_lesson(lid, frm, h, wsp))
+        if path == "/api/lesson-video":
+            return self.send(200, lesson_video(qs.get("id", [current(slug)])[0], wsp, slug))
         if path == "/events":
             return self.events(qs.get("id", [current(slug)])[0], slug)
         if path == "/api/chat":
@@ -1139,9 +1226,14 @@ class H(BaseHTTPRequestHandler):
             thread.update(running=bool(turn), pending={"text": turn.text, "steps": turn.steps} if turn else None)
             return self.send(200, thread)
         if path.startswith("/assets/"):
-            return self.static(os.path.join(lessons_dir(wsp), "assets", os.path.basename(path)))
+            assets = os.path.realpath(os.path.join(lessons_dir(wsp), "assets"))
+            if not assets.startswith(os.path.realpath(wsp) + os.sep):
+                return self.send(404, "missing", "text/plain")
+            return self.static(os.path.join(assets, os.path.basename(path)), assets)
         if path.startswith("/lib/"):
-            lib = {"rough.js": os.path.join(ROOT, "node_modules", "roughjs", "bundled", "rough.js"), "fig.js": os.path.join(BOARD, "fig.js"), "slate.jpg": next((x for x in (os.path.join(BOARD, "slate-custom.jpg"), os.path.join(BOARD, "slate.jpg")) if os.path.exists(x)), "")}.get(os.path.basename(path))
+            lib = {"rough.js": os.path.join(ROOT, "node_modules", "roughjs", "bundled", "rough.js"), "fig.js": os.path.join(BOARD, "fig.js"),
+                   "lesson-video.js": os.path.join(BOARD, "lesson-video.js"), "lesson-video.css": os.path.join(BOARD, "lesson-video.css"),
+                   "slate.jpg": next((x for x in (os.path.join(BOARD, "slate-custom.jpg"), os.path.join(BOARD, "slate.jpg")) if os.path.exists(x)), "")}.get(os.path.basename(path))
             if lib: return self.static(lib)
         if path in ("/favicon.svg", "/favicon.ico"):
             return self.static(os.path.join(BOARD, "favicon.svg"))
@@ -1157,14 +1249,76 @@ class H(BaseHTTPRequestHandler):
             return self.static(os.path.join(BOARD, "anim", rel))
         return self.send(404, "not found", "text/plain")
 
-    def static(self, p):
+    def do_HEAD(self):
+        if re.sub(r"^/w/[^/]+(?=/|$)", "", urllib.parse.urlparse(self.path).path) == "/events":
+            return self.send(405, "", "text/plain")
+        return self.do_GET()
+
+    def static(self, p, confined_to=None):
+        if confined_to and not os.path.realpath(p).startswith(os.path.realpath(confined_to) + os.sep):
+            return self.send(404, "missing", "text/plain")
         if not os.path.isfile(p):
             return self.send(404, "missing", "text/plain")
         ext = os.path.splitext(p)[1].lower()
         ctype = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif", ".svg": "image/svg+xml",
-                 ".mp4": "video/mp4", ".webp": "image/webp", ".txt": "text/plain", ".md": "text/plain"}.get(ext, "application/octet-stream")
-        with open(p, "rb") as f:
-            self.send(200, f.read(), ctype)
+                 ".mp4": "video/mp4", ".webp": "image/webp", ".txt": "text/plain", ".md": "text/plain",
+                 ".js": "text/javascript", ".css": "text/css"}.get(ext, "application/octet-stream")
+        try:
+            with open(p, "rb") as f:
+                size = os.fstat(f.fileno()).st_size
+                start, end, code = 0, size - 1, 200
+                range_header = self.headers.get("Range")
+                if range_header is not None:
+                    match = re.fullmatch(r"bytes=(\d*)-(\d*)", range_header.strip())
+                    if not match or not any(match.groups()):
+                        code = 416
+                    else:
+                        first, last = match.groups()
+                        if len(first) > 32 or len(last) > 32:
+                            code = 416
+                        elif first:
+                            start = int(first)
+                            end = int(last) if last else size - 1
+                            if start >= size or end < start:
+                                code = 416
+                            else:
+                                end = min(end, size - 1)
+                        else:
+                            suffix = int(last)
+                            if suffix == 0 or size == 0:
+                                code = 416
+                            else:
+                                start = max(0, size - suffix)
+                                end = size - 1
+                        if code != 416:
+                            code = 206
+                self.send_response(code)
+                self.send_header("Content-Type", ctype + ("; charset=utf-8" if ctype.startswith("text") else ""))
+                self.send_header("Accept-Ranges", "bytes")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Cache-Control", "no-store")
+                if code == 416:
+                    self.send_header("Content-Range", f"bytes */{size}")
+                    self.send_header("Content-Length", "0")
+                else:
+                    if code == 206:
+                        self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+                    self.send_header("Content-Length", str(end - start + 1))
+                self.end_headers()
+                if self.command == "HEAD" or code == 416:
+                    return
+                f.seek(start)
+                remaining = end - start + 1
+                while remaining:
+                    chunk = f.read(min(64 * 1024, remaining))
+                    if not chunk:
+                        return
+                    self.wfile.write(chunk)
+                    remaining -= len(chunk)
+        except (BrokenPipeError, ConnectionResetError):
+            return
+        except OSError:
+            return
 
     def events(self, lid, slug=""):
         self.send_response(200)
